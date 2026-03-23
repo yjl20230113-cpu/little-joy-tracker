@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>小美好时间线 - Little Joy Tracker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#dedcb1",
+                        "secondary-fixed-dim": "#7adc7d",
+                        "outline": "#897266",
+                        "on-tertiary-fixed-variant": "#6b3743",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006e21",
+                        "tertiary-fixed-dim": "#fbb3c1",
+                        "surface-container-high": "#eceabe",
+                        "surface": "#fefccf",
+                        "inverse-primary": "#ffb68d",
+                        "on-background": "#1d1d03",
+                        "tertiary": "#864e5a",
+                        "on-tertiary-fixed": "#360c19",
+                        "on-secondary-fixed": "#002105",
+                        "secondary-container": "#96f996",
+                        "error": "#ba1a1a",
+                        "background": "#fefccf",
+                        "on-surface-variant": "#564338",
+                        "primary-container": "#ff8c42",
+                        "secondary-fixed": "#96f996",
+                        "outline-variant": "#ddc1b3",
+                        "on-surface": "#1d1d03",
+                        "surface-bright": "#fefccf",
+                        "inverse-on-surface": "#f5f3c7",
+                        "inverse-surface": "#323214",
+                        "on-primary-fixed": "#331200",
+                        "surface-container": "#f2f0c4",
+                        "primary": "#9b4500",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbc9",
+                        "on-secondary-container": "#037524",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#ffb68d",
+                        "surface-container-highest": "#e6e5b9",
+                        "on-primary-container": "#6a2d00",
+                        "on-tertiary-container": "#612f3b",
+                        "surface-container-low": "#f8f6c9",
+                        "surface-tint": "#9b4500",
+                        "tertiary-fixed": "#ffd9df",
+                        "on-secondary-fixed-variant": "#005316",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#763300",
+                        "tertiary-container": "#dc98a6",
+                        "surface-variant": "#e6e5b9"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface font-body text-on-surface min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fefccf]/70 dark:bg-stone-900/70 backdrop-blur-xl flex justify-between items-center px-6 h-16 w-full shadow-sm shadow-[#1d1d03]/5">
+<div class="flex items-center gap-3 active:scale-95 transition-transform">
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border border-primary/10">
+<img alt="User Profile" data-alt="Soft illustrated avatar of a smiling person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4pJSMOJlxWOyBUvh2kwnAAYjzvEE1Shu5XMqRInKCU1uoIxfk1PMOcn8ZSZyg5kBoaCb28Fa2-B-wIfednbDHfBLhxFOFMnT2gJyinrWqBS4s8MNhQJ9o3IabUZYO-2yhOVIpg0IiwmcpsMcUXA1W0qzrMe80s31DC0Afbil7-elLZXaxXKRJMtQpb_fY7_y1n5E4MrRtRje9FkN7kY3C4IJXzQiANHHRD2WyUCk0292vVgTCY-eLlE4Jou0Lp0pCEWL9hVr4EbY"/>
+</div>
+<span class="text-xl font-extrabold tracking-tight text-[#9b4500] dark:text-[#ff8c42] font-headline">Little Joy Tracker</span>
+</div>
+<button class="material-symbols-outlined text-[#9b4500] dark:text-[#ff8c42] hover:opacity-80 transition-opacity active:scale-90" data-icon="auto_awesome">auto_awesome</button>
+</header>
+<!-- Sticky Filter Header -->
+<div class="sticky top-16 z-40 bg-surface/80 backdrop-blur-md pt-4 pb-2 space-y-3 px-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 overflow-x-auto hide-scrollbar flex-1 mr-4">
+<button class="px-5 py-1.5 rounded-full bg-primary text-white text-sm font-medium whitespace-nowrap shadow-sm shadow-primary/20 transition-all">全部</button>
+<button class="px-5 py-1.5 rounded-full bg-surface-container text-on-surface-variant text-sm font-medium whitespace-nowrap transition-all hover:bg-surface-container-high">你</button>
+<button class="px-5 py-1.5 rounded-full bg-surface-container text-on-surface-variant text-sm font-medium whitespace-nowrap transition-all hover:bg-surface-container-high">爸爸</button>
+<button class="px-5 py-1.5 rounded-full bg-surface-container text-on-surface-variant text-sm font-medium whitespace-nowrap transition-all hover:bg-surface-container-high">妈妈</button>
+</div>
+<button class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold shadow-sm shadow-tertiary/10 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span>AI 总结报告</span>
+</button>
+</div>
+<div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-1">
+<button class="px-4 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant text-xs font-medium whitespace-nowrap bg-surface-container-lowest">过去一周</button>
+<button class="px-4 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant text-xs font-medium whitespace-nowrap bg-surface-container-lowest">过去一个月</button>
+<button class="px-4 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant text-xs font-medium whitespace-nowrap bg-surface-container-lowest flex items-center gap-1">
+<span>自定义</span>
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+</button>
+</div>
+</div>
+<!-- Timeline Content -->
+<main class="px-6 mt-4 space-y-8">
+<!-- Day Group 1 -->
+<section class="space-y-4">
+<div class="flex items-center gap-4">
+<h2 class="font-headline font-bold text-lg text-on-surface">2023年10月27日</h2>
+<div class="h-[1px] flex-1 bg-outline-variant/20"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60">今天</span>
+</div>
+<div class="space-y-4">
+<!-- Record Card 1 -->
+<div class="flex gap-4 p-3 bg-surface-container-lowest rounded-2xl shadow-sm shadow-on-surface/5 active:scale-[0.98] transition-all">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Morning Coffee" class="w-full h-full object-cover" data-alt="A warm cup of latte with heart art in a sunlit window" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPIQDf474CzWlgbbtnGWrW8zQmgsmo0MBiU-RozxOK1NUZGs8qYUtJu3vStpQsqgrVHcDeB-hm61PBwpAiate8sC9DQDz2OjBU81lHAvGcLGeXsJcxdtX13shXYKzhWcMpoECdiv3xveR_iAba-cXbf5XksXjaXfLYdkiqTSnoeD-Dqd_iYd5usrY21whCFXy2mCejScBiXp7v3IPS2kcF2iwS119Es2vsG-_GjsmWcoSmrzZyRnYQKuMnuA5RKDE4YnBno-x99Ck"/>
+</div>
+<div class="flex flex-col justify-between flex-1 py-0.5">
+<div class="space-y-1">
+<div class="flex justify-between items-start">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold uppercase tracking-wider">平静</span>
+</div>
+<p class="text-sm font-medium text-on-surface leading-snug line-clamp-2">在窗边喝了一杯手冲咖啡，阳光刚好洒在桌子上，感觉时间都慢下来了。</p>
+</div>
+<span class="text-[10px] font-medium text-on-surface-variant/70 text-right">14:30</span>
+</div>
+</div>
+<!-- Record Card 2 -->
+<div class="flex gap-4 p-3 bg-surface-container-lowest rounded-2xl shadow-sm shadow-on-surface/5 active:scale-[0.98] transition-all">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Dog Walk" class="w-full h-full object-cover" data-alt="A happy golden retriever running in high green grass" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOomIGmEemielNsOS9c0KHnglvCUflGlq-IadyQlyCNctmf-gEvkKuwQmjqMd_BbvzEM36qdeRs_SDsZJHg96eQRPqMJ8BEV9T8LLnuSqscPdpRY6AJJwTMLBVNTK3iYJpQg4acHnKTgDxeyE_-scGnN3IC2vrOj8gjhG_2yeL1bxkCyRW_n5eBquYlEPRs-yp80XXvdfKStJAGhLw4RfxAyubiQdgZsM9Wg89w0k_WRfqYLYI3O-So8ZwOjyIE1byU2_cgIQWpUY"/>
+</div>
+<div class="flex flex-col justify-between flex-1 py-0.5">
+<div class="space-y-1">
+<div class="flex justify-between items-start">
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-bold uppercase tracking-wider">活力</span>
+</div>
+<p class="text-sm font-medium text-on-surface leading-snug line-clamp-2">带着狗狗去公园跑了一圈，它今天特别兴奋，追着蝴蝶跑了好远。</p>
+</div>
+<span class="text-[10px] font-medium text-on-surface-variant/70 text-right">09:15</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Day Group 2 -->
+<section class="space-y-4">
+<div class="flex items-center gap-4">
+<h2 class="font-headline font-bold text-lg text-on-surface">2023年10月26日</h2>
+<div class="h-[1px] flex-1 bg-outline-variant/20"></div>
+</div>
+<div class="space-y-4">
+<!-- Record Card 3 -->
+<div class="flex gap-4 p-3 bg-surface-container-lowest rounded-2xl shadow-sm shadow-on-surface/5 active:scale-[0.98] transition-all">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-3xl">restaurant</span>
+</div>
+<div class="flex flex-col justify-between flex-1 py-0.5">
+<div class="space-y-1">
+<div class="flex justify-between items-start">
+<span class="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-bold uppercase tracking-wider">满足</span>
+</div>
+<p class="text-sm font-medium text-on-surface leading-snug line-clamp-2">和家人一起尝试了新的餐厅，那个手工面条的味道让我想起了外婆做的饭。</p>
+</div>
+<span class="text-[10px] font-medium text-on-surface-variant/70 text-right">19:45</span>
+</div>
+</div>
+<!-- Record Card 4 -->
+<div class="flex gap-4 p-3 bg-surface-container-lowest rounded-2xl shadow-sm shadow-on-surface/5 active:scale-[0.98] transition-all">
+<div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+<img alt="Sunset" class="w-full h-full object-cover" data-alt="A vibrant pink and orange sunset over a city skyline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh7smTaLkGIcvovjC6I8X5PFCMYt7-OoayN5MzL3E-lwhYKsYtcDjDCevBJFnFJMT9d0lr_iMeXSRnjM9EMiQZIQS6O2MjP8H6S5Tso28NYjENNWvrVZljZ6zHQsiVFiJ28RpVjp8GCur8ofhTDKZ5Kuf5QyeMlX7GEgRTXBWnr6N6EHfvjmX9Ew_gYHL0HZBvTauznN-0G9WhGJC50IqBUDptuxp41wnf1u7Fdk1H6r7i2DENArUBLtQUu49VVsn9CJAFToWxM6U"/>
+</div>
+<div class="flex flex-col justify-between flex-1 py-0.5">
+<div class="space-y-1">
+<div class="flex justify-between items-start">
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold uppercase tracking-wider">惊喜</span>
+</div>
+<p class="text-sm font-medium text-on-surface leading-snug line-clamp-2">下班路上抬头看到了绝美的晚霞，粉紫色的天空治愈了一整天的疲惫。</p>
+</div>
+<span class="text-[10px] font-medium text-on-surface-variant/70 text-right">17:50</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Empty State Filler to show scrolling -->
+<div class="pt-8 pb-12 text-center space-y-2 opacity-40">
+<span class="material-symbols-outlined text-4xl">eco</span>
+<p class="text-xs font-medium italic">再往下翻，都是值得回味的小美好</p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-end pb-6 px-8 h-24 bg-white/80 dark:bg-stone-900/80 backdrop-blur-2xl rounded-t-[3rem] z-50 shadow-[0_-4px_20px_0_rgba(29,29,3,0.06)]">
+<button class="flex flex-col items-center justify-center text-[#564338] dark:text-stone-400 p-2 active:scale-90 transition-all duration-300 ease-out hover:text-[#9b4500] dark:hover:text-[#ff8c42]">
+<span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span>
+<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest">记录</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#ff8c42] text-white rounded-full p-3 mb-2 shadow-lg shadow-[#ff8c42]/20 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" data-icon="auto_stories" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest mt-1">时间线</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#564338] dark:text-stone-400 p-2 active:scale-90 transition-all duration-300 ease-out hover:text-[#9b4500] dark:hover:text-[#ff8c42]">
+<span class="material-symbols-outlined mb-1" data-icon="Insights">insights</span>
+<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest">洞察</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#564338] dark:text-stone-400 p-2 active:scale-90 transition-all duration-300 ease-out hover:text-[#9b4500] dark:hover:text-[#ff8c42]">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-widest">设置</span>
+</button>
+</nav>
+</body></html>

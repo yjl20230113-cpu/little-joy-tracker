@@ -1,0 +1,103 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { InsightView } from "./InsightView";
+
+describe("InsightView", () => {
+  const baseProps = {
+    activeTab: "insight" as const,
+    peopleFilters: [
+      { id: "all", label: "全部" },
+      { id: "person-self", label: "自己" },
+    ],
+    selectedPersonId: "all",
+    selectedRange: "week" as const,
+    customStartDate: "",
+    customEndDate: "",
+    message: "",
+    generateDisabled: false,
+    loading: false,
+    report: null,
+    onPersonChange: () => {},
+    onRangeChange: () => {},
+    onCustomStartDateChange: () => {},
+    onCustomEndDateChange: () => {},
+    onGenerate: () => {},
+    onShare: () => {},
+    onTabChange: () => {},
+  };
+
+  it("shows an empty state and disables generation when there is no data", () => {
+    render(
+      <InsightView
+        {...baseProps}
+        generateDisabled
+        emptyHint="先去记录一些小美好再来吧"
+      />,
+    );
+
+    expect(document.querySelector("button[disabled]")).toBeDisabled();
+  });
+
+  it("renders the new healing report cards and share button", async () => {
+    const onShare = vi.fn();
+
+    render(
+      <InsightView
+        {...baseProps}
+        emptyHint=""
+        onShare={onShare}
+        report={{
+          mood_weather: {
+            title: "灿烂",
+            icon: "Sun",
+            description:
+              "本阶段 85% 的时间，你处于被暖光轻轻托住的状态。你的成长表现为韧性。",
+          },
+          keywords: ["晚风", "散步", "晚霞", "热可可", "拥抱"],
+          personality: {
+            title: "细节捕捉大师",
+            description: "你总能看见生活里那些被忽略的微光。",
+          },
+          suggestions: [
+            {
+              title: "傍晚散步",
+              content: "当晚风出现时，你的心也跟着慢慢松弛下来。",
+              icon: "TreePine",
+            },
+            {
+              title: "热可可时间",
+              content: "给自己留一个小小的热饮仪式，让温柔有回响。",
+              icon: "Coffee",
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("灿烂")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText((content) => /^\d+%$/.test(content))).toBeInTheDocument();
+    });
+    expect(screen.getByText("细节捕捉大师")).toBeInTheDocument();
+    expect(screen.getByText("晚风")).toBeInTheDocument();
+    expect(screen.getByText("傍晚散步")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "保存/分享报告" }));
+
+    expect(onShare).toHaveBeenCalled();
+  });
+
+  it("keeps the top bar and bottom nav visible while showing an in-content loading mask", () => {
+    render(<InsightView {...baseProps} emptyHint="" loading />);
+
+    const overlay = screen.getByTestId("insight-loading-overlay");
+    const topBar = document.querySelector('[data-ui="app-topbar"]');
+    const bottomNav = document.querySelector('[data-ui="app-bottom-nav"]');
+
+    expect(screen.getByText("正在生成中...")).toBeInTheDocument();
+    expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "治愈社区" })).toBeInTheDocument();
+    expect(overlay).toBeInTheDocument();
+    expect(topBar && overlay.contains(topBar)).toBe(false);
+    expect(bottomNav && overlay.contains(bottomNav)).toBe(false);
+  });
+});

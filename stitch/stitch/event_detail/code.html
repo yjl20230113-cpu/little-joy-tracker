@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>小美好详情 - Little Joy Tracker</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#dedcb1",
+                        "secondary-fixed-dim": "#7adc7d",
+                        "outline": "#897266",
+                        "on-tertiary-fixed-variant": "#6b3743",
+                        "on-error": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006e21",
+                        "tertiary-fixed-dim": "#fbb3c1",
+                        "surface-container-high": "#eceabe",
+                        "surface": "#fefccf",
+                        "inverse-primary": "#ffb68d",
+                        "on-background": "#1d1d03",
+                        "tertiary": "#864e5a",
+                        "on-tertiary-fixed": "#360c19",
+                        "on-secondary-fixed": "#002105",
+                        "secondary-container": "#96f996",
+                        "error": "#ba1a1a",
+                        "background": "#fefccf",
+                        "on-surface-variant": "#564338",
+                        "primary-container": "#ff8c42",
+                        "secondary-fixed": "#96f996",
+                        "outline-variant": "#ddc1b3",
+                        "on-surface": "#1d1d03",
+                        "surface-bright": "#fefccf",
+                        "inverse-on-surface": "#f5f3c7",
+                        "inverse-surface": "#323214",
+                        "on-primary-fixed": "#331200",
+                        "surface-container": "#f2f0c4",
+                        "primary": "#9b4500",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#ffdbc9",
+                        "on-secondary-container": "#037524",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#ffb68d",
+                        "surface-container-highest": "#e6e5b9",
+                        "on-primary-container": "#6a2d00",
+                        "on-tertiary-container": "#612f3b",
+                        "surface-container-low": "#f8f6c9",
+                        "surface-tint": "#9b4500",
+                        "tertiary-fixed": "#ffd9df",
+                        "on-secondary-fixed-variant": "#005316",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#763300",
+                        "tertiary-container": "#dc98a6",
+                        "surface-variant": "#e6e5b9"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #fefccf;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body text-on-surface antialiased">
+<!-- Top AppBar (Back, Edit, Delete) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#fefccf]/70 backdrop-blur-xl transition-all">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-lowest/50 text-on-surface-variant active:scale-90 transition-transform">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant/60 hover:text-on-surface-variant transition-colors active:scale-90">
+<span class="material-symbols-outlined">edit</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant/60 hover:text-error transition-colors active:scale-90">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</header>
+<main class="min-h-screen pb-32">
+<!-- Hero Image Section -->
+<section class="relative w-full pt-4 px-4">
+<div class="aspect-[4/5] w-full overflow-hidden rounded-xl shadow-sm bg-surface-container-high relative">
+<img alt="A morning sun casting warm light on a small plant" class="w-full h-full object-cover" data-alt="Warm sunlight illuminating a small green plant leaf" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdF1j3bVQC9Maogkk3UkZjhO_KaAYEackN51_oRyrm-nmMecQb6sEeuFs_E7EoXB4krP4qvF6k9aVgb6vrNCWu-CO0duxlFGUTdb7ER8rbdnt-VuXMLTPpVKuMRYrIu4oOEjjXMbMuX9nD8Hflc_wWCqlIX0hdL6SsccV6Wp3SCBpe8eGGz8By0HTI0QrAb_FXGdR5ZXnApvOPDPSV6Fzwc1JtshA98u_mQdrLSxhpTJZzeFaF6OCvdDJLw2Ji3wVJTEUR2vJFvjg"/>
+<!-- Soft Tonal Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#fefccf]"></div>
+</div>
+</section>
+<!-- Content Area -->
+<article class="px-8 mt-[-2rem] relative z-10">
+<!-- Header Group -->
+<div class="flex flex-col gap-1 mb-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-bold tracking-widest uppercase">成长</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline-variant/30"></span>
+<span class="text-on-surface-variant text-[10px] font-medium tracking-widest uppercase">个人</span>
+</div>
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-primary leading-tight">秋天的第一颗嫩芽</h1>
+</div>
+<!-- Narrative Sections -->
+<div class="space-y-12">
+<!-- What Happened -->
+<section>
+<h2 class="font-headline text-sm font-bold tracking-[0.2em] uppercase text-on-surface-variant/50 mb-4">发生了什么</h2>
+<p class="text-xl leading-[1.8] text-on-surface font-light">今天，当这座城市还在半梦半醒之间时，我注意到阳台的花盆里冒出了第一颗小小的绿芽。在清晨微凉的空气中，它看起来如此脆弱，却又无比坚定。我就在那儿坐了十分钟，静静观察着晨光如何在它表面的露珠上闪烁。</p>
+</section>
+<!-- Why it was beautiful -->
+<section class="relative">
+<div class="absolute -left-4 top-0 bottom-0 w-[2px] bg-tertiary-container/30"></div>
+<h2 class="font-headline text-sm font-bold tracking-[0.2em] uppercase text-tertiary/60 mb-4">为什么觉得美好</h2>
+<p class="text-xl leading-[1.8] text-on-surface-variant italic font-serif">“它提醒我，成长并不需要等待完美的条件；只要能找到光，它就会努力向光而行。那一刻，四周有一种深沉的宁静，让整个世界显得更小、更温柔，也充满了静谧的潜能。”</p>
+</section>
+<!-- Metadata -->
+<footer class="pt-8 flex flex-col items-start gap-6 border-t border-outline-variant/10">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="Smiling woman in warm lighting portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdEQqDbYCUJv4pWyfHhJ6gU8Yz_4Azw5tzoIFo9mGilVLBHxhPPE2xxM9P7ZLzKK3Whji3VFd9rjZZGvUWdbqtFI64GL1ulajaLcKNzV8FlN844MVU1qGVdZmDI77Mu-R2znH84Swh3o1JeiHOKYuvFVxSf5tdeg8FsjBbp8abm9F8skV4SEsBVJcJ_kStWGAiiL61kEM5FmIels-gpEnHcb0muK1vJPOPmhTSyyEhMl0G3DmFbVCgRVMdb60qyHNtzEINMeOWLxQ"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">由我记录</span>
+<span class="text-[11px] text-on-surface-variant/60 tracking-wider">记录于 2023-10-27 14:30:25</span>
+</div>
+</div>
+<!-- Mood Chips (Micro-Moment Chips) -->
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant text-xs font-medium shadow-sm border border-outline-variant/10">平静</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant text-xs font-medium shadow-sm border border-outline-variant/10">充满希望</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-lowest text-on-surface-variant text-xs font-medium shadow-sm border border-outline-variant/10">晨光</span>
+</div>
+</footer>
+</div>
+</article>
+</main>
+<!-- Contextual Actions (Suppressing BottomNav for Detail View as per rules) -->
+<!-- Showing a focused Share FAB instead if applicable, but per rules focusing on Details UI -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg shadow-primary/30 flex items-center justify-center active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">share</span>
+</button>
+</div>
+</body></html>
