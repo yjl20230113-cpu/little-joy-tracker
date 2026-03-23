@@ -376,7 +376,7 @@ export default function EventDetailPage() {
 
   if (booting) {
     return (
-      <main className="joy-grid flex min-h-screen items-center justify-center px-4 py-6 sm:px-6">
+      <main className="joy-grid flex min-h-dvh items-center justify-center px-4 py-6 sm:min-h-screen sm:px-6">
         <div className="joy-card flex w-full max-w-sm items-center gap-3 rounded-[2rem] px-5 py-4 text-sm text-[var(--muted)]">
           <LoaderCircle className="size-4 animate-spin text-[var(--primary)]" />
           {copy.loading}
@@ -386,9 +386,9 @@ export default function EventDetailPage() {
   }
 
   return (
-    <main className="joy-grid h-screen overflow-hidden px-4 py-4 sm:px-6 sm:py-6">
-      <div className="mx-auto flex h-full w-full min-h-0 justify-center">
-        <div className="flex h-full min-h-0 w-full max-w-[38rem] min-w-[20rem]">
+    <main className="joy-grid h-dvh overflow-hidden sm:px-6 sm:py-6">
+      <div className="flex h-full w-full min-h-0 justify-center">
+        <div className="flex h-full min-h-0 w-full sm:max-w-[38rem] sm:min-w-[20rem]">
           <TimelineView
             activeTab="timeline"
             groups={[]}

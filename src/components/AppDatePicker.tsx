@@ -143,9 +143,9 @@ export function AppDatePicker({
           });
           setIsOpen((current) => !current);
         }}
-        className={`inline-flex w-full items-center justify-between gap-3 rounded-full bg-white px-4 py-3 text-sm font-bold text-[var(--primary)] shadow-[0_14px_28px_-24px_rgba(29,29,3,0.4)] ${buttonClassName}`}
+        className={`inline-flex w-full items-center justify-between gap-3 rounded-full bg-white px-3.5 py-2.5 text-[0.95rem] font-semibold text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.22)] ${buttonClassName}`}
       >
-        <span className="inline-flex items-center gap-3">
+        <span className="inline-flex items-center gap-2.5">
           <CalendarDays className="size-4" />
           <span>{buttonLabel ? `${buttonLabel} ${formatDateValue(value)}` : formatDateValue(value)}</span>
         </span>
@@ -156,31 +156,35 @@ export function AppDatePicker({
         <div
           data-testid="app-date-picker-panel"
           data-side={placement}
-          className={`absolute z-30 w-[min(20rem,calc(100vw-2rem))] rounded-[1.75rem] border border-[rgba(155,69,0,0.1)] bg-white/96 p-4 shadow-[0_32px_60px_-36px_rgba(29,29,3,0.42)] backdrop-blur ${
+          className={`absolute z-30 w-[min(18rem,calc(100vw-2rem))] rounded-[1.25rem] border border-[rgba(155,69,0,0.1)] bg-white/96 p-3.5 shadow-[0_24px_40px_-28px_rgba(29,29,3,0.28)] backdrop-blur ${
             placement === "bottom"
-              ? "top-[calc(100%+0.75rem)]"
-              : "bottom-[calc(100%+0.75rem)]"
+              ? "top-[calc(100%+0.625rem)]"
+              : "bottom-[calc(100%+0.625rem)]"
           } ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
           <div className="flex items-center justify-between">
-            <div className="text-lg font-black tracking-[-0.03em] text-[var(--foreground)]">
+            <div className="text-base font-bold tracking-[-0.03em] text-[var(--foreground)]">
               {formatMonthHeading(visibleMonth.year, visibleMonth.month)}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => setVisibleMonth((current) => addMonths(current.year, current.month, -1))}
-                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--primary)]"
+                onClick={() =>
+                  setVisibleMonth((current) => addMonths(current.year, current.month, -1))
+                }
+                className="flex size-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--primary)]"
                 aria-label="上个月"
               >
                 <ChevronLeft className="size-4" />
               </button>
               <button
                 type="button"
-                onClick={() => setVisibleMonth((current) => addMonths(current.year, current.month, 1))}
-                className="flex size-9 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--primary)]"
+                onClick={() =>
+                  setVisibleMonth((current) => addMonths(current.year, current.month, 1))
+                }
+                className="flex size-8 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--primary)]"
                 aria-label="下个月"
               >
                 <ChevronRight className="size-4" />
@@ -188,15 +192,15 @@ export function AppDatePicker({
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs font-bold text-[var(--muted)]">
+          <div className="mt-3 grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold text-[var(--muted)]">
             {weekdayLabels.map((label) => (
-              <span key={label} className="py-2">
+              <span key={label} className="py-1.5">
                 {label}
               </span>
             ))}
           </div>
 
-          <div className="mt-1 grid grid-cols-7 gap-2">
+          <div className="mt-1 grid grid-cols-7 gap-1.5">
             {calendarCells.map((cell) => {
               const isSelected = cell.value === value;
 
@@ -208,9 +212,9 @@ export function AppDatePicker({
                     onChange(cell.value);
                     setIsOpen(false);
                   }}
-                  className={`flex aspect-square items-center justify-center rounded-[1rem] text-sm font-semibold transition-colors ${
+                  className={`flex aspect-square items-center justify-center rounded-[0.85rem] text-[0.92rem] font-semibold transition-colors ${
                     isSelected
-                      ? "bg-[var(--outline-strong)] text-white shadow-[0_12px_20px_-16px_rgba(29,29,3,0.65)]"
+                      ? "bg-[var(--outline-strong)] text-white shadow-[0_10px_16px_-16px_rgba(29,29,3,0.48)]"
                       : cell.isCurrentMonth
                         ? "text-[var(--foreground)] hover:bg-[var(--surface-soft)]"
                         : "text-[var(--outline-strong)]/55 hover:bg-[var(--surface-soft)]"
@@ -222,7 +226,7 @@ export function AppDatePicker({
             })}
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-sm font-bold">
+          <div className="mt-3 flex items-center justify-between text-[0.9rem] font-semibold">
             {allowClear ? (
               <button
                 type="button"

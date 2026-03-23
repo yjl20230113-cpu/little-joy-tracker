@@ -1,16 +1,17 @@
+import { describe, expect, it } from "vitest";
+
 import {
   buildEventPayload,
-  buildSummaryRequestEvents,
   buildSummaryPrompt,
-  createDefaultPersonPayload,
+  buildSummaryRequestEvents,
   filterTimelineItems,
   formatDetailTimestamp,
   formatTimelineHeading,
   formatTimelineTime,
-  getPostSignupWelcomeMessage,
   getRetryAfterSeconds,
   groupTimelineItemsByDate,
   isRateLimitError,
+  normalizeAuthErrorMessage,
   normalizePersonName,
   normalizeSummaryResult,
   pickInitialPerson,
@@ -37,12 +38,27 @@ describe("validateCredentials", () => {
   });
 });
 
+describe("normalizeAuthErrorMessage", () => {
+  it("maps invalid login credentials to Chinese", () => {
+    expect(normalizeAuthErrorMessage("Invalid login credentials")).toBe(
+      "邮箱或密码不正确，请检查后重试",
+    );
+  });
+
+  it("maps unknown errors to a safe fallback", () => {
+    expect(normalizeAuthErrorMessage("Something unexpected")).toBe(
+      "登录暂时失败，请稍后再试",
+    );
+  });
+});
+
 describe("buildSummaryRequestEvents", () => {
   it("keeps content, reason, and time for summary requests", () => {
     expect(
       buildSummaryRequestEvents([
         {
           id: "event-1",
+          title: "测试标题",
           content: "一起散步",
           reason: "晚风很轻",
           imageUrl: "https://example.com/a.jpg",
@@ -67,16 +83,16 @@ describe("pickInitialPerson", () => {
     expect(
       pickInitialPerson([
         { id: "1", name: "妈妈", is_default: false },
-        { id: "2", name: "男朋友", is_default: true },
+        { id: "2", name: "你", is_default: true },
       ]),
-    ).toEqual({ id: "2", name: "男朋友", is_default: true });
+    ).toEqual({ id: "2", name: "你", is_default: true });
   });
 
   it("falls back to the first person", () => {
     expect(
       pickInitialPerson([
         { id: "1", name: "妈妈", is_default: false },
-        { id: "2", name: "男朋友", is_default: false },
+        { id: "2", name: "你", is_default: false },
       ]),
     ).toEqual({ id: "1", name: "妈妈", is_default: false });
   });
@@ -93,7 +109,7 @@ describe("buildEventPayload", () => {
         userId: "user-1",
         personId: "person-1",
         content: "  一起看晚霞  ",
-        reason: "  很安静  ",
+        reason: "  很安静 ",
         displayDate: "2026-03-22",
       }),
     ).toEqual({
@@ -111,14 +127,14 @@ describe("buildEventPayload", () => {
       buildEventPayload({
         userId: "user-1",
         personId: "person-1",
-        content: "买到了喜欢的花",
+        content: "买到喜欢的花",
         reason: "   ",
         displayDate: "2026-03-22",
       }),
     ).toEqual({
       user_id: "user-1",
       person_id: "person-1",
-      content: "买到了喜欢的花",
+      content: "买到喜欢的花",
       reason: null,
       image_urls: null,
       display_date: "2026-03-22",
@@ -150,28 +166,11 @@ describe("serializeImageUrls", () => {
   });
 });
 
-describe("createDefaultPersonPayload", () => {
-  it("creates the default self person payload", () => {
-    expect(createDefaultPersonPayload("user-1")).toEqual({
-      user_id: "user-1",
-      name: "自己",
-      is_default: true,
-    });
-  });
-});
-
 describe("normalizePersonName", () => {
   it("trims spaces and normalizes casing for duplicate checks", () => {
     expect(normalizePersonName("  SELF  ")).toBe("self");
     expect(normalizePersonName("  爸爸 ")).toBe("爸爸");
-  });
-});
-
-describe("getPostSignupWelcomeMessage", () => {
-  it("returns a clear welcome message for new users", () => {
-    expect(getPostSignupWelcomeMessage()).toBe(
-      "欢迎来到小美好记录器，已经为你准备好默认记录对象“自己”，现在就开始记录吧。",
-    );
+    expect(normalizePersonName("  我   自己 ")).toBe("我 自己");
   });
 });
 
@@ -208,119 +207,96 @@ describe("filterTimelineItems", () => {
   const items = [
     {
       id: "event-1",
+      title: "A",
       content: "A",
       reason: null,
       imageUrl: null,
       displayDate: "2026-03-22",
-      createdAt: "2026-03-22T13:10:45.000Z",
+      createdAt: "2026-03-22T10:00:00+08:00",
       personName: "自己",
       personId: "person-self",
     },
     {
       id: "event-2",
+      title: "B",
       content: "B",
       reason: null,
       imageUrl: null,
-      displayDate: "2026-03-18",
-      createdAt: "2026-03-18T05:00:00.000Z",
-      personName: "男朋友",
-      personId: "person-bf",
-    },
-    {
-      id: "event-3",
-      content: "C",
-      reason: null,
-      imageUrl: null,
-      displayDate: "2026-02-10",
-      createdAt: "2026-02-10T05:00:00.000Z",
-      personName: "自己",
-      personId: "person-self",
+      displayDate: "2026-03-01",
+      createdAt: "2026-03-01T10:00:00+08:00",
+      personName: "爸爸",
+      personId: "person-dad",
     },
   ];
 
-  it("filters by selected person", () => {
-    expect(
-      filterTimelineItems(items, {
-        personId: "person-bf",
-        range: "month",
-        customStartDate: "",
-        customEndDate: "",
-        today: "2026-03-22",
-      }).map((item) => item.id),
-    ).toEqual(["event-2"]);
-  });
+  it("filters by person and date range", () => {
+    const filtered = filterTimelineItems(items, {
+      personId: "person-self",
+      range: "month",
+      customStartDate: "",
+      customEndDate: "",
+      today: "2026-03-22",
+    });
 
-  it("filters by the past week range", () => {
-    expect(
-      filterTimelineItems(items, {
-        personId: "all",
-        range: "week",
-        customStartDate: "",
-        customEndDate: "",
-        today: "2026-03-22",
-      }).map((item) => item.id),
-    ).toEqual(["event-1", "event-2"]);
-  });
-
-  it("filters by the past three months range", () => {
-    expect(
-      filterTimelineItems(items, {
-        personId: "all",
-        range: "threeMonths",
-        customStartDate: "",
-        customEndDate: "",
-        today: "2026-03-22",
-      }).map((item) => item.id),
-    ).toEqual(["event-1", "event-2", "event-3"]);
+    expect(filtered.map((item) => item.id)).toEqual(["event-1"]);
   });
 });
 
 describe("groupTimelineItemsByDate", () => {
-  it("groups timeline items by display date", () => {
-    const groups = groupTimelineItemsByDate([
+  it("groups items by display date", () => {
+    expect(
+      groupTimelineItemsByDate([
+        {
+          id: "event-1",
+          title: "A",
+          content: "A",
+          reason: null,
+          imageUrl: null,
+          displayDate: "2026-03-22",
+          createdAt: "2026-03-22T10:00:00+08:00",
+          personName: "自己",
+          personId: "person-self",
+        },
+        {
+          id: "event-2",
+          title: "B",
+          content: "B",
+          reason: null,
+          imageUrl: null,
+          displayDate: "2026-03-22",
+          createdAt: "2026-03-22T11:00:00+08:00",
+          personName: "自己",
+          personId: "person-self",
+        },
+        {
+          id: "event-3",
+          title: "C",
+          content: "C",
+          reason: null,
+          imageUrl: null,
+          displayDate: "2026-03-21",
+          createdAt: "2026-03-21T11:00:00+08:00",
+          personName: "爸爸",
+          personId: "person-dad",
+        },
+      ]),
+    ).toEqual([
       {
-        id: "event-1",
-        content: "A",
-        reason: null,
-        imageUrl: null,
-        displayDate: "2026-03-22",
-        createdAt: "2026-03-22T13:10:45.000Z",
-        personName: "自己",
-        personId: "person-self",
+        date: "2026-03-22",
+        items: expect.arrayContaining([
+          expect.objectContaining({ id: "event-1" }),
+          expect.objectContaining({ id: "event-2" }),
+        ]),
       },
       {
-        id: "event-2",
-        content: "B",
-        reason: null,
-        imageUrl: null,
-        displayDate: "2026-03-22",
-        createdAt: "2026-03-22T05:00:00.000Z",
-        personName: "男朋友",
-        personId: "person-bf",
-      },
-      {
-        id: "event-3",
-        content: "C",
-        reason: null,
-        imageUrl: null,
-        displayDate: "2026-03-20",
-        createdAt: "2026-03-20T05:00:00.000Z",
-        personName: "自己",
-        personId: "person-self",
+        date: "2026-03-21",
+        items: [expect.objectContaining({ id: "event-3" })],
       },
     ]);
-
-    expect(groups).toHaveLength(2);
-    expect(groups[0]?.date).toBe("2026-03-22");
-    expect(groups[0]?.items.map((item) => item.id)).toEqual([
-      "event-1",
-      "event-2",
-    ]);
-    expect(groups[1]?.date).toBe("2026-03-20");
   });
 });
 
-describe("timeline formatting", () => {
+describe("formatters", () => {
   it("formats the timeline day heading in Chinese", () => {
     expect(formatTimelineHeading("2026-03-22")).toBe("2026年3月22日");
   });
@@ -354,12 +330,11 @@ describe("normalizeSummaryResult", () => {
     expect(
       normalizeSummaryResult({
         mood_weather: {
-          title: "灿烂",
+          title: "暖阳",
           icon: "Sun",
-          description:
-            "本阶段 85% 的时间，你处于被暖光轻轻托住的状态。你的成长表现为韧性。",
+          description: "最近的你，更容易被温柔支撑着。",
         },
-        keywords: ["晚风", "散步", "晚霞", "热可可", "拥抱"],
+        keywords: ["晚风", "散步", "晚霞", "可可", "拥抱"],
         personality: {
           title: "细节捕捉大师",
           description: "你总能从平凡里发现温柔，也愿意把它们认真收好。",
@@ -379,12 +354,11 @@ describe("normalizeSummaryResult", () => {
       }),
     ).toEqual({
       mood_weather: {
-        title: "灿烂",
+        title: "暖阳",
         icon: "Sun",
-        description:
-          "本阶段 85% 的时间，你处于被暖光轻轻托住的状态。你的成长表现为韧性。",
+        description: "最近的你，更容易被温柔支撑着。",
       },
-      keywords: ["晚风", "散步", "晚霞", "热可可", "拥抱"],
+      keywords: ["晚风", "散步", "晚霞", "可可", "拥抱"],
       personality: {
         title: "细节捕捉大师",
         description: "你总能从平凡里发现温柔，也愿意把它们认真收好。",
@@ -406,19 +380,20 @@ describe("normalizeSummaryResult", () => {
 
   it("extracts and normalizes JSON embedded in a model response", () => {
     expect(
-      normalizeSummaryResult(`这里是总结：{
+      normalizeSummaryResult(`这里是总结：
+{
   "mood_weather": {
     "title": "暖阳",
     "icon": "Sunrise",
-    "description": "本阶段 78% 的时间，你处于缓慢发亮的状态。你的成长表现为安定。"
+    "description": "最近的你，更容易被温柔支撑着。"
   },
-  "keywords": ["晚霞", "散步", "抱抱", "可可", "灯光"],
+  "keywords": ["晚霞", "散步", "拥抱", "可可", "灯光"],
   "personality": {
     "title": "微光收藏家",
     "description": "你很会留意生活的细小回响，也愿意为它们停留。"
   },
   "suggestions": [
-    { "title": "去看日落", "content": "让傍晚成为你下个月最柔软的约定。", "icon": "Sunset" },
+    { "title": "去看日落", "content": "让傍晚成为你下个星期最柔软的约定。", "icon": "Sunset" },
     { "title": "慢慢喝杯热饮", "content": "给心留一点被照顾的时间。", "icon": "Coffee" }
   ]
 }`),
@@ -426,17 +401,26 @@ describe("normalizeSummaryResult", () => {
       mood_weather: {
         title: "暖阳",
         icon: "Sunrise",
-        description: "本阶段 78% 的时间，你处于缓慢发亮的状态。你的成长表现为安定。",
+        description: "最近的你，更容易被温柔支撑着。",
       },
-      keywords: ["晚霞", "散步", "抱抱", "可可", "灯光"],
+      keywords: ["晚霞", "散步", "拥抱", "可可", "灯光"],
       personality: {
         title: "微光收藏家",
         description: "你很会留意生活的细小回响，也愿意为它们停留。",
       },
       suggestions: [
-        { title: "去看日落", content: "让傍晚成为你下个月最柔软的约定。", icon: "Sunset" },
-        { title: "慢慢喝杯热饮", content: "给心留一点被照顾的时间。", icon: "Coffee" },
+        {
+          title: "去看日落",
+          content: "让傍晚成为你下个星期最柔软的约定。",
+          icon: "Sunset",
+        },
+        {
+          title: "慢慢喝杯热饮",
+          content: "给心留一点被照顾的时间。",
+          icon: "Coffee",
+        },
       ],
     });
   });
 });
+

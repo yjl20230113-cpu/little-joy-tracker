@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { useState } from "react";
+import { vi } from "vitest";
 import { AuthScreen } from "./AuthScreen";
 
 describe("AuthScreen", () => {
   const baseCopy = {
     signInTitle: "欢迎回来",
-    signUpTitle: "创建你的小美好账号",
+    signUpTitle: "创建你的新账号",
     signInDescription: "输入邮箱和密码，直接回到你的速记页面。",
     signUpDescription: "第一次使用就在这里注册，成功后会直接进入应用。",
     emailLabel: "邮箱地址",
@@ -18,8 +21,10 @@ describe("AuthScreen", () => {
     switchToSignIn: "已有账号？去登录",
   };
 
-  it("renders a denser top-aligned auth layout with a brand header", () => {
-    const { container } = render(
+  function renderAuthScreen(
+    overrides: Partial<ComponentProps<typeof AuthScreen>> = {},
+  ) {
+    return render(
       <AuthScreen
         authMode="sign-in"
         email=""
@@ -33,40 +38,96 @@ describe("AuthScreen", () => {
         onPasswordChange={() => {}}
         onSubmit={() => {}}
         onToggleMode={() => {}}
+        {...overrides}
       />,
     );
+  }
 
-    const layout = container.querySelector('[data-ui="auth-layout"]');
-    const panel = container.querySelector('[data-ui="auth-panel"]');
+  it("renders a fully localized auth screen without the removed hint bar", () => {
+    renderAuthScreen();
 
     expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
+    expect(screen.getByText("继续记录今天的小美好")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "欢迎回来" })).toBeInTheDocument();
-    expect(layout).toHaveClass("max-w-[32rem]");
-    expect(layout).toHaveClass("items-start");
-    expect(panel).toHaveClass("justify-start");
+    expect(
+      screen.queryByText(/邮箱密码登录后可直接进入记录页/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses a shorter signup helper chip so it stays on one line", () => {
+    renderAuthScreen({ authMode: "sign-up" });
+
+    expect(screen.getByText("注册后自动进入记录页")).toBeInTheDocument();
+  });
+
+  it("submits from the keyboard when pressing Enter in the password field", () => {
+    const onSubmit = vi.fn();
+
+    renderAuthScreen({
+      email: "joy@example.com",
+      password: "secret123",
+      onSubmit,
+    });
+
+    fireEvent.keyDown(screen.getByPlaceholderText("请输入密码"), {
+      key: "Enter",
+      code: "Enter",
+      charCode: 13,
+    });
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("toggles password visibility without changing the value", () => {
+    renderAuthScreen({ password: "secret123" });
+
+    const passwordInput = screen.getByPlaceholderText("请输入密码");
+    expect(passwordInput).toHaveAttribute("type", "password");
+
+    fireEvent.click(screen.getByRole("button", { name: "显示密码" }));
+
+    expect(passwordInput).toHaveAttribute("type", "text");
+    expect(screen.getByRole("button", { name: "隐藏密码" })).toBeInTheDocument();
+  });
+
+  it("clears only the password value", () => {
+    function Harness() {
+      const [password, setPassword] = useState("secret123");
+
+      return (
+        <AuthScreen
+          authMode="sign-in"
+          email="joy@example.com"
+          password={password}
+          errors={{}}
+          authMessage=""
+          authLoading={false}
+          retryAfterSeconds={0}
+          copy={baseCopy}
+          onEmailChange={() => {}}
+          onPasswordChange={setPassword}
+          onSubmit={() => {}}
+          onToggleMode={() => {}}
+        />
+      );
+    }
+
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "清空密码" }));
+
+    expect(screen.getByPlaceholderText("请输入密码")).toHaveValue("");
   });
 
   it("switches the secondary action copy with auth mode", () => {
     const onToggleMode = vi.fn();
 
-    render(
-      <AuthScreen
-        authMode="sign-in"
-        email=""
-        password=""
-        errors={{}}
-        authMessage=""
-        authLoading={false}
-        retryAfterSeconds={0}
-        copy={baseCopy}
-        onEmailChange={() => {}}
-        onPasswordChange={() => {}}
-        onSubmit={() => {}}
-        onToggleMode={onToggleMode}
-      />,
-    );
+    renderAuthScreen({
+      authMode: "sign-up",
+      onToggleMode,
+    });
 
-    fireEvent.click(screen.getByRole("button", { name: "还没有账号？去注册" }));
+    fireEvent.click(screen.getByRole("button", { name: "已有账号？去登录" }));
 
     expect(onToggleMode).toHaveBeenCalledTimes(1);
   });

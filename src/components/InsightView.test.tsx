@@ -93,7 +93,7 @@ describe("InsightView", () => {
     const topBar = document.querySelector('[data-ui="app-topbar"]');
     const bottomNav = document.querySelector('[data-ui="app-bottom-nav"]');
 
-    expect(screen.getByText("正在生成中...")).toBeInTheDocument();
+    expect(screen.getByText("AI 正在翻看你们的回忆...")).toBeInTheDocument();
     expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "治愈社区" })).toBeInTheDocument();
     expect(overlay).toBeInTheDocument();

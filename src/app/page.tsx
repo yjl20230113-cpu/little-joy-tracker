@@ -24,13 +24,12 @@ import { TimelineView } from "@/components/TimelineView";
 import {
   buildEventPayload,
   buildSummaryRequestEvents,
-  createDefaultPersonPayload,
   filterTimelineItems,
   groupTimelineItemsByDate,
-  getPostSignupWelcomeMessage,
   getRetryAfterSeconds,
   isRateLimitError,
   normalizePersonName,
+  normalizeAuthErrorMessage,
   pickInitialPerson,
   serializeImageUrls,
   type SummaryReport,
@@ -45,10 +44,7 @@ import { supabase } from "@/lib/supabase";
 type AuthMode = "sign-in" | "sign-up";
 
 const copy = {
-  heading: "\u90ae\u7bb1\u767b\u5f55\u540e\uff0c\u5c31\u80fd\u76f4\u63a5\u5f00\u8bb0\u3002",
-  intro:
-    "\u8fd9\u4e00\u7248\u5148\u7528 Supabase \u539f\u751f\u90ae\u7bb1\u5bc6\u7801\u767b\u5f55\uff0c\u786e\u4fdd\u8bb0\u5f55\u53ef\u4ee5\u7a33\u5b9a\u5199\u5165 events \u8868\u3002",
-  signInTitle: "\u6b22\u8fce\u56de\u6765",
+  signInTitle: "\u6b22\u8fce\u4f7f\u7528\u5c0f\u7f8e\u597d",
   signUpTitle: "\u521b\u5efa\u4f60\u7684\u5c0f\u7f8e\u597d\u8d26\u53f7",
   signInDescription:
     "\u8f93\u5165\u90ae\u7bb1\u548c\u5bc6\u7801\uff0c\u76f4\u63a5\u56de\u5230\u4f60\u7684\u901f\u8bb0\u9875\u9762\u3002",
@@ -67,12 +63,8 @@ const copy = {
   retryWaitSuffix: " \u79d2\u540e\u91cd\u8bd5",
   rateLimitFriendly: "\u64cd\u4f5c\u592a\u9891\u7e41\u5566\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u54e6~",
   loading: "\u6b63\u5728\u8fde\u63a5 Supabase...",
-  registerHint:
-    "\u5982\u679c\u4f60\u8fd8\u6ca1\u6709 Supabase \u8d26\u53f7\uff0c\u53ef\u4ee5\u5148\u7528\u540c\u4e00\u5957\u90ae\u7bb1\u5bc6\u7801\u76f4\u63a5\u6ce8\u518c\u3002",
-  autoPersonMessage:
-    "\u9996\u6b21\u767b\u5f55\u4f1a\u81ea\u52a8\u51c6\u5907\u9ed8\u8ba4\u8bb0\u5f55\u5bf9\u8c61\u201c\u81ea\u5df1\u201d\u3002",
   saved: "\u5df2\u4fdd\u5b58\u5230 events \u8868\uff0c\u56fe\u7247\u4e5f\u5df2\u5199\u5165 image_urls\u3002",
-  emptyPeople: "\u6b63\u5728\u51c6\u5907\u8bb0\u5f55\u5bf9\u8c61\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002",
+  emptyPeople: "\u8bf7\u5148\u521b\u5efa\u4e00\u4e2a\u8bb0\u5f55\u5bf9\u8c61\u3002",
   confirmEmail:
     "\u6ce8\u518c\u6210\u529f\uff0c\u5982\u679c\u4f60\u5728 Supabase \u5f00\u4e86\u90ae\u7bb1\u786e\u8ba4\uff0c\u8bf7\u5148\u53bb\u90ae\u7bb1\u5b8c\u6210\u9a8c\u8bc1\u3002",
   signInSuccess: "\u767b\u5f55\u6210\u529f\uff0c\u53ef\u4ee5\u5f00\u59cb\u8bb0\u5f55\u4e86\u3002",
@@ -97,7 +89,7 @@ const copy = {
 const imageBucket =
   process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || "joy-images";
 const todayString = new Date().toISOString().slice(0, 10);
-const pendingWelcomeKey = "little-joy-tracker:pending-welcome";
+const bootTimeoutMs = 2500;
 
 type EventRow = {
   id: string;
@@ -261,7 +253,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState<HomeTab>("quick-entry");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState(copy.autoPersonMessage);
+  const [message, setMessage] = useState("");
   const [people, setPeople] = useState<QuickEntryPerson[]>([]);
   const [selectedPersonId, setSelectedPersonId] = useState("");
   const [content, setContent] = useState("");
@@ -326,21 +318,51 @@ export default function HomePage() {
 
   useEffect(() => {
     let mounted = true;
+    let settled = false;
 
-    async function bootstrap() {
-      const {
-        data: { session: initialSession },
-      } = await supabase.auth.getSession();
-
-      if (!mounted) {
+    const timeoutId = window.setTimeout(() => {
+      if (!mounted || settled) {
         return;
       }
 
-      setSession(initialSession);
-      if (initialSession) {
-        setAuthMessage(copy.signInSuccess);
-      }
+      settled = true;
+      setSession(null);
+      setAuthMessage("连接超时，请刷新页面后重试。");
       setBooting(false);
+    }, bootTimeoutMs);
+
+    async function bootstrap() {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
+
+        if (!mounted || settled) {
+          return;
+        }
+
+        settled = true;
+        window.clearTimeout(timeoutId);
+        setSession(initialSession);
+        if (initialSession) {
+          setAuthMessage(copy.signInSuccess);
+        }
+      } catch (error) {
+        if (!mounted || settled) {
+          return;
+        }
+
+        settled = true;
+        window.clearTimeout(timeoutId);
+        setSession(null);
+        setAuthMessage(
+          error instanceof Error ? normalizeAuthErrorMessage(error.message) : copy.unknownError,
+        );
+      } finally {
+        if (mounted && settled) {
+          setBooting(false);
+        }
+      }
     }
 
     bootstrap();
@@ -366,6 +388,7 @@ export default function HomePage() {
 
     return () => {
       mounted = false;
+      window.clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
@@ -387,32 +410,7 @@ export default function HomePage() {
         return;
       }
 
-      let nextPeople = (data ?? []) as QuickEntryPerson[];
-
-      if (nextPeople.length === 0) {
-        const { data: inserted, error: insertError } = await supabase
-          .from("persons")
-          .insert(createDefaultPersonPayload(session.user.id))
-          .select("id, name, is_default")
-          .single();
-
-        if (insertError) {
-          setMessage(insertError.message);
-          return;
-        }
-
-        nextPeople = inserted ? [inserted as QuickEntryPerson] : [];
-
-        if (typeof window !== "undefined") {
-          const shouldShowWelcome =
-            window.sessionStorage.getItem(pendingWelcomeKey) === "true";
-
-          if (shouldShowWelcome) {
-            setMessage(getPostSignupWelcomeMessage());
-            window.sessionStorage.removeItem(pendingWelcomeKey);
-          }
-        }
-      }
+      const nextPeople = (data ?? []) as QuickEntryPerson[];
 
       setPeople(nextPeople);
       setSelectedPersonId(
@@ -557,7 +555,23 @@ export default function HomePage() {
       return copy.rateLimitFriendly;
     }
 
-    return message;
+    return normalizeAuthErrorMessage(message);
+  }
+
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    setErrors((current) => ({ ...current, email: "" }));
+    if (retryAfterSeconds === 0) {
+      setAuthMessage("");
+    }
+  }
+
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    setErrors((current) => ({ ...current, password: "" }));
+    if (retryAfterSeconds === 0) {
+      setAuthMessage("");
+    }
   }
 
   async function handleAuthSubmit() {
@@ -598,10 +612,6 @@ export default function HomePage() {
       setAuthMessage(formatAuthErrorMessage(error.message));
       setAuthLoading(false);
       return;
-    }
-
-    if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(pendingWelcomeKey, "true");
     }
 
     if (data.session) {
@@ -1167,7 +1177,7 @@ export default function HomePage() {
 
   if (booting) {
     return (
-      <main className="joy-grid flex min-h-screen items-center justify-center px-4 py-6 sm:px-6">
+      <main className="joy-grid flex min-h-dvh items-center justify-center px-4 py-6 sm:min-h-screen sm:px-6">
         <div className="joy-card flex w-full max-w-sm items-center gap-3 rounded-[2rem] px-5 py-4 text-sm text-[var(--muted)]">
           <LoaderCircle className="size-4 animate-spin text-[var(--primary)]" />
           {copy.loading}
@@ -1201,22 +1211,24 @@ export default function HomePage() {
           switchToSignUp: copy.switchToSignUp,
           switchToSignIn: copy.switchToSignIn,
         }}
-        onEmailChange={setEmail}
-        onPasswordChange={setPassword}
+        onEmailChange={handleEmailChange}
+        onPasswordChange={handlePasswordChange}
         onSubmit={handleAuthSubmit}
         onToggleMode={() => {
           setAuthMode((current) => (current === "sign-in" ? "sign-up" : "sign-in"));
           setAuthMessage("");
           setErrors({});
+          setPassword("");
+          setRetryAfterSeconds(0);
         }}
       />
     );
   }
 
   return (
-    <main className="joy-grid h-screen overflow-hidden px-4 py-4 sm:px-6 sm:py-6">
-      <div className="mx-auto flex h-full w-full min-h-0 justify-center">
-        <div className="flex h-full min-h-0 w-full max-w-[38rem] min-w-[20rem]">
+    <main className="joy-grid h-dvh overflow-hidden sm:px-6 sm:py-6">
+      <div className="flex h-full w-full min-h-0 justify-center">
+        <div className="flex h-full min-h-0 w-full sm:max-w-[38rem] sm:min-w-[20rem]">
           {activeTab === "quick-entry" ? (
             <QuickEntry
               people={people}

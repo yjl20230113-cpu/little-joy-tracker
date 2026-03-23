@@ -119,12 +119,7 @@ describe("EventDetailPanel", () => {
   });
 
   it("uses the same image trigger content shape as quick entry when an image exists", () => {
-    render(
-      <EventDetailPanel
-        {...baseProps}
-        editing
-      />,
-    );
+    render(<EventDetailPanel {...baseProps} editing />);
 
     const media = screen.getByTestId("detail-editor-media");
     const trigger = media.querySelector("button");

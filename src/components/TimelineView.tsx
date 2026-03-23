@@ -80,11 +80,11 @@ export function TimelineView({
         rightSlot={topBarRightSlot}
       />
 
-      <div className="joy-app-content joy-scroll-hidden px-4 pb-7 pt-4 sm:px-6">
+      <div className="joy-app-content joy-scroll-hidden px-3 pb-5 pt-2.5 sm:px-4.5">
         {detailContent ? (
           detailContent
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-3.5">
             <TimelineFilters
               peopleFilters={peopleFilters}
               selectedPersonId={selectedPersonId}
@@ -99,39 +99,39 @@ export function TimelineView({
             />
 
             {message ? (
-              <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.72),rgba(255,255,255,0.82))] px-4 py-3 text-sm font-semibold text-[var(--primary)]">
+              <div className="rounded-[0.95rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.72),rgba(255,255,255,0.82))] px-3 py-2 text-[0.84rem] font-semibold text-[var(--primary)]">
                 {message}
               </div>
             ) : null}
 
-            <div className="space-y-8 pb-10">
+            <div className="space-y-5 pb-7">
               {groups.length === 0 ? (
-                <div className="joy-card flex flex-col items-center justify-center gap-4 rounded-[2rem] px-5 py-16 text-center">
-                  <div className="flex size-16 items-center justify-center rounded-full bg-[rgba(120,111,66,0.18)] text-[rgba(120,111,66,0.7)]">
-                    <Sparkles className="size-7" />
+                <div className="joy-card flex flex-col items-center justify-center gap-3.5 rounded-[1.25rem] px-4.5 py-10 text-center">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(120,111,66,0.18)] text-[rgba(120,111,66,0.7)]">
+                    <Sparkles className="size-6" />
                   </div>
-                  <p className="text-base font-semibold text-[var(--muted)]">{copy.empty}</p>
-                  <p className="text-sm italic text-[var(--outline-strong)]">{copy.emptyHint}</p>
+                  <p className="text-[0.94rem] font-semibold text-[var(--muted)]">{copy.empty}</p>
+                  <p className="text-[0.8rem] italic text-[var(--outline-strong)]">{copy.emptyHint}</p>
                 </div>
               ) : (
                 groups.map((group) => (
-                  <section key={group.date} className="space-y-5">
-                    <div className="flex items-center gap-4 pt-1">
-                      <h3 className="shrink-0 text-[1.65rem] font-black tracking-[-0.045em] text-[var(--foreground)]">
+                  <section key={group.date} className="space-y-3.5">
+                    <div className="flex items-center gap-2.5 pt-0.5">
+                      <h3 className="shrink-0 text-[1.4rem] font-black tracking-[-0.04em] text-[var(--foreground)]">
                         {formatTimelineHeading(group.date)}
                       </h3>
                       <div className="h-px flex-1 bg-[rgba(225,205,110,0.55)]" />
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-2.5">
                       {group.items.map((item) => (
                         <button
                           key={item.id}
                           type="button"
                           onClick={() => onEventOpen(item.id)}
-                          className="flex w-full items-center gap-3 rounded-[1.6rem] bg-white/94 px-4 py-4 text-left shadow-[0_10px_22px_-20px_rgba(29,29,3,0.18)] transition-transform hover:-translate-y-0.5 sm:gap-4 sm:px-5"
+                          className="flex w-full items-center gap-2.5 rounded-[1.1rem] bg-white/94 px-3 py-3 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3.5"
                         >
-                          <div className="relative size-20 shrink-0 overflow-hidden rounded-[1.5rem] bg-[var(--surface-soft)] sm:size-22">
+                          <div className="relative size-[3.75rem] shrink-0 overflow-hidden rounded-[0.9rem] bg-[var(--surface-soft)] sm:size-16">
                             {item.imageUrl ? (
                               <Image
                                 src={item.imageUrl}
@@ -142,31 +142,31 @@ export function TimelineView({
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center text-[var(--primary)]/50">
-                                <CalendarDays className="size-8 sm:size-9" />
+                                <CalendarDays className="size-6 sm:size-6.5" />
                               </div>
                             )}
                           </div>
 
-                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
-                            <div className="space-y-2">
-                              <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-3 py-1 text-xs font-bold tracking-[0.08em] text-[var(--primary)]">
+                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
+                            <div className="space-y-1">
+                              <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-[0.68rem] font-bold tracking-[0.05em] text-[var(--primary)]">
                                 {item.personName}
                               </span>
-                              <p className="line-clamp-2 text-[1.06rem] font-black leading-7 tracking-[-0.04em] text-[var(--foreground)] sm:text-[1.15rem]">
+                              <p className="line-clamp-2 text-[0.94rem] font-black leading-5.5 tracking-[-0.03em] text-[var(--foreground)]">
                                 {item.title?.trim() ||
                                   fallbackMemoryTitle(item.content)}
                               </p>
-                              <p className="line-clamp-2 text-sm leading-6 text-[var(--muted)]">
+                              <p className="line-clamp-2 text-[0.84rem] leading-5.5 text-[var(--muted)]">
                                 {item.content}
                               </p>
                               {item.reason ? (
-                                <p className="line-clamp-1 text-sm italic leading-6 text-[var(--outline-strong)]">
+                                <p className="line-clamp-1 text-[0.76rem] italic leading-5 text-[var(--outline-strong)]">
                                   {item.reason}
                                 </p>
                               ) : null}
                             </div>
 
-                            <span className="text-right text-sm font-semibold text-[var(--outline-strong)]">
+                            <span className="text-right text-[0.74rem] font-semibold text-[var(--outline-strong)]">
                               {formatTimelineTime(item.createdAt)}
                             </span>
                           </div>

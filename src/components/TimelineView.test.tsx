@@ -110,11 +110,7 @@ describe("TimelineView", () => {
         customEndDate=""
         message=""
         topBarTitle=""
-        topBarLeftSlot={
-          <button type="button">
-            返回
-          </button>
-        }
+        topBarLeftSlot={<button type="button">返回</button>}
         topBarRightSlot={
           <>
             <button type="button">编辑</button>
@@ -144,8 +140,6 @@ describe("TimelineView", () => {
     expect(document.querySelector('[data-ui="app-topbar"]')).toBeInTheDocument();
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /All/i })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /A quiet walk home together/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /A quiet walk home together/i })).not.toBeInTheDocument();
   });
 });

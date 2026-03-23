@@ -19,10 +19,6 @@ const copy = {
   hintTitle: "小小的你",
   hintBody:
     "以后这里可以继续放头像、昵称、偏好设置和导出入口。现在先把最重要的账号信息安顿好。",
-  record: "记录",
-  timeline: "时间线",
-  insight: "洞察",
-  profile: "个人",
 };
 
 export function ProfileView({
@@ -38,26 +34,28 @@ export function ProfileView({
 
       <AppTopBar title="Little Joy Tracker" leadingIcon={UserRound} trailingIcon={Sparkles} />
 
-      <div className="joy-app-content joy-scroll-hidden px-4 pb-6 pt-4 sm:px-6">
-        <div className="space-y-5 pb-8">
-          <section className="joy-card rounded-[2rem] px-5 py-6 sm:px-6">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--primary)]/62">
+      <div className="joy-app-content joy-scroll-hidden px-3 pb-4.5 pt-2.5 sm:px-4.5">
+        <div className="space-y-3.5 pb-6">
+          <section className="joy-card rounded-[1.25rem] px-3.5 py-3.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/62">
               {copy.title}
             </p>
-            <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+            <p className="mt-1.5 text-[0.9rem] leading-6 text-[var(--muted)]">
               {copy.subtitle}
             </p>
           </section>
 
-          <section className="joy-soft-panel rounded-[2rem] px-5 py-5 sm:px-6">
+          <section className="joy-soft-panel rounded-[1.25rem] px-3.5 py-3.5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--muted)]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--muted)]">
                   {copy.emailLabel}
                 </p>
-                <div className="mt-4 inline-flex max-w-full items-center gap-3 rounded-[1.4rem] bg-white/92 px-4 py-3 text-[var(--primary)] shadow-[0_16px_28px_-24px_rgba(29,29,3,0.28)]">
+                <div className="mt-2.5 inline-flex max-w-full items-center gap-3 rounded-[0.9rem] bg-white/92 px-3 py-2.5 text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.2)]">
                   <Mail className="size-4 shrink-0" />
-                  <span className="min-w-0 break-all text-sm font-semibold">{email}</span>
+                  <span className="min-w-0 break-all text-[0.88rem] font-semibold">
+                    {email}
+                  </span>
                 </div>
               </div>
 
@@ -72,23 +70,23 @@ export function ProfileView({
             </div>
           </section>
 
-          <section className="joy-card rounded-[2rem] px-5 py-6 sm:px-6">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)]">
-                <Sparkles className="size-5" />
+          <section className="joy-card rounded-[1.25rem] px-3.5 py-3.5">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10.5 shrink-0 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)]">
+                <Sparkles className="size-4" />
               </div>
               <div>
-                <h2 className="text-lg font-black tracking-[-0.03em] text-[var(--primary)]">
+                <h2 className="text-[1rem] font-black tracking-[-0.02em] text-[var(--primary)]">
                   {copy.hintTitle}
                 </h2>
-                <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+                <p className="mt-1.5 text-[0.88rem] leading-6.5 text-[var(--muted)]">
                   {copy.hintBody}
                 </p>
               </div>
             </div>
 
             {message ? (
-              <div className="mt-5 rounded-[1.4rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.58),rgba(255,255,255,0.76))] px-4 py-3 text-sm font-semibold text-[var(--primary)]">
+              <div className="mt-3.5 rounded-[0.9rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.58),rgba(255,255,255,0.76))] px-3 py-2 text-[0.82rem] font-semibold text-[var(--primary)]">
                 {message}
               </div>
             ) : null}

@@ -19,6 +19,6 @@ describe("AppTopBar", () => {
     expect(
       container.querySelector('[data-ui="app-topbar-trailing"]'),
     ).toBeInTheDocument();
-    expect(screen.getByText("Little Joy Tracker")).toHaveClass("text-[1.3rem]");
+    expect(screen.getByText("Little Joy Tracker")).toHaveClass("text-[1.0625rem]");
   });
 });

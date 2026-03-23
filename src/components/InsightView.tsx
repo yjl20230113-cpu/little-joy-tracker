@@ -16,10 +16,7 @@ import {
 } from "lucide-react";
 import type { SummaryReport, TimelineRange } from "../lib/app-logic";
 import type { HomeTab } from "./QuickEntry";
-import {
-  TimelineFilters,
-  type TimelineFilterOption,
-} from "./TimelineFilters";
+import { TimelineFilters, type TimelineFilterOption } from "./TimelineFilters";
 import { AppBottomNav } from "./AppBottomNav";
 import { AppTopBar } from "./AppTopBar";
 
@@ -54,10 +51,6 @@ const copy = {
   portrait: "性格画像",
   suggestions: "行动建议",
   share: "保存/分享报告",
-  record: "记录",
-  timeline: "时间线",
-  insight: "洞察",
-  profile: "个人",
 };
 
 const keywordColors = [
@@ -104,19 +97,19 @@ export function InsightView({
 
       <AppTopBar title="Little Joy Tracker" leadingIcon={Sparkles} trailingIcon={BookOpen} />
 
-      <div className="joy-app-content joy-scroll-hidden relative px-4 pb-6 pt-4 sm:px-6">
-        <div className="space-y-5 pb-10">
-          <section className="joy-card rounded-[2rem] px-5 py-5 sm:px-6">
+      <div className="joy-app-content joy-scroll-hidden relative px-3 pb-4.5 pt-2.5 sm:px-4.5">
+        <div className="space-y-3.5 pb-7">
+          <section className="joy-card rounded-[1.25rem] px-3.5 py-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--primary)]/62">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/62">
                 {copy.title}
               </p>
-              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+              <p className="mt-1.5 text-[0.9rem] leading-6 text-[var(--muted)]">
                 {copy.subtitle}
               </p>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-3.5">
               <TimelineFilters
                 peopleFilters={peopleFilters}
                 selectedPersonId={selectedPersonId}
@@ -131,7 +124,7 @@ export function InsightView({
               />
             </div>
 
-            <div className="joy-soft-panel mt-5 rounded-[1.65rem] p-3">
+            <div className="joy-soft-panel mt-3.5 rounded-[1rem] p-2">
               <button
                 type="button"
                 onClick={onGenerate}
@@ -144,36 +137,36 @@ export function InsightView({
           </section>
 
           {report ? (
-            <div className="space-y-4">
-              <article className="joy-card overflow-hidden rounded-[2rem] px-5 py-6 shadow-[0_16px_30px_-26px_rgba(29,29,3,0.24)]">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--primary)]/55">
+            <div className="space-y-3">
+              <article className="joy-card overflow-hidden rounded-[1.25rem] px-3.5 py-4.5 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.weather}
                 </p>
-                <div className="mt-4 flex items-start justify-between gap-4">
+                <div className="mt-2.5 flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-[2.35rem] font-black tracking-[-0.06em] text-[var(--primary)]">
+                    <h3 className="text-[1.625rem] font-black tracking-[-0.045em] text-[var(--primary)]">
                       {report.mood_weather.title}
                     </h3>
-                    <p className="mt-4 max-w-md text-[0.98rem] leading-8 text-[var(--muted)]">
+                    <p className="mt-2.5 max-w-md text-[0.9rem] leading-6.5 text-[var(--muted)]">
                       {report.mood_weather.description}
                     </p>
                   </div>
-                  <div className="flex flex-col items-center rounded-[1.6rem] bg-[rgba(255,219,201,0.56)] px-4 py-4 text-[var(--primary)]">
-                    <InsightIcon iconName={report.mood_weather.icon} className="size-8" />
+                  <div className="flex flex-col items-center rounded-[0.9rem] bg-[rgba(255,219,201,0.56)] px-3 py-2.5 text-[var(--primary)]">
+                    <InsightIcon iconName={report.mood_weather.icon} className="size-6" />
                     <AnimatedPercentage key={moodPercentTarget} target={moodPercentTarget} />
                   </div>
                 </div>
               </article>
 
-              <article className="joy-soft-panel rounded-[1.8rem] px-5 py-5">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--primary)]/55">
+              <article className="joy-soft-panel rounded-[1.1rem] px-3.5 py-3.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.keywords}
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex flex-wrap gap-2">
                   {report.keywords.map((keyword, index) => (
                     <span
                       key={`${keyword}-${index}`}
-                      className={`rounded-full px-3 py-2 text-sm font-bold ${keywordColors[index % keywordColors.length]}`}
+                      className={`rounded-full px-2.5 py-1.5 text-[0.78rem] font-bold ${keywordColors[index % keywordColors.length]}`}
                     >
                       {keyword}
                     </span>
@@ -181,37 +174,37 @@ export function InsightView({
                 </div>
               </article>
 
-              <article className="joy-card rounded-[1.9rem] px-5 py-6 shadow-[0_16px_30px_-26px_rgba(29,29,3,0.24)]">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--primary)]/55">
+              <article className="joy-card rounded-[1.25rem] px-3.5 py-4.5 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.portrait}
                 </p>
-                <h3 className="mt-3 text-[2rem] font-black tracking-[-0.05em] text-[var(--primary)]">
+                <h3 className="mt-2 text-[1.4rem] font-black tracking-[-0.04em] text-[var(--primary)]">
                   {report.personality.title}
                 </h3>
-                <p className="mt-4 text-[0.98rem] leading-8 text-[var(--muted)]">
+                <p className="mt-2.5 text-[0.9rem] leading-6.5 text-[var(--muted)]">
                   {report.personality.description}
                 </p>
               </article>
 
-              <article className="joy-soft-panel rounded-[1.8rem] px-5 py-5">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.28em] text-[var(--tertiary)]/70">
+              <article className="joy-soft-panel rounded-[1.1rem] px-3.5 py-3.5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                   {copy.suggestions}
                 </p>
-                <div className="mt-4 space-y-3">
+                <div className="mt-2.5 space-y-2">
                   {report.suggestions.map((suggestion, index) => (
                     <div
                       key={`${suggestion.title}-${index}`}
-                      className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,249,235,0.95),rgba(255,255,255,0.96))] px-4 py-4"
+                      className="rounded-[0.95rem] bg-[linear-gradient(180deg,rgba(255,249,235,0.95),rgba(255,255,255,0.96))] px-3 py-3"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-[rgba(255,140,66,0.16)] text-[var(--primary)]">
-                          <InsightIcon iconName={suggestion.icon} className="size-5" />
+                      <div className="flex items-start gap-2.5">
+                        <div className="mt-0.5 flex size-8.5 shrink-0 items-center justify-center rounded-full bg-[rgba(255,140,66,0.16)] text-[var(--primary)]">
+                          <InsightIcon iconName={suggestion.icon} className="size-4" />
                         </div>
                         <div>
-                          <p className="text-base font-black tracking-[-0.03em] text-[var(--foreground)]">
+                          <p className="text-[0.94rem] font-black tracking-[-0.02em] text-[var(--foreground)]">
                             {suggestion.title}
                           </p>
-                          <p className="mt-1 text-sm leading-7 text-[var(--muted)]">
+                          <p className="mt-1 text-[0.82rem] leading-6 text-[var(--muted)]">
                             {suggestion.content}
                           </p>
                         </div>
@@ -236,11 +229,11 @@ export function InsightView({
         {loading ? (
           <div
             data-testid="insight-loading-overlay"
-            className="absolute inset-x-4 top-4 bottom-6 z-20 flex items-center justify-center rounded-[2rem] bg-[rgba(255,252,207,0.68)] backdrop-blur-[2px] sm:inset-x-6"
+            className="absolute inset-x-3 top-2.5 bottom-4.5 z-20 flex items-center justify-center rounded-[1.35rem] bg-[rgba(255,252,207,0.68)] backdrop-blur-[2px] sm:inset-x-4.5"
           >
-            <div className="rounded-full bg-[rgba(255,253,190,0.92)] px-6 py-3 text-center shadow-[0_12px_22px_-18px_rgba(29,29,3,0.2)]">
-              <p className="text-base font-black tracking-[-0.03em] text-[var(--primary)]">
-                正在生成中...
+            <div className="rounded-full bg-[rgba(255,253,190,0.92)] px-4.5 py-2.5 text-center shadow-[0_10px_18px_-18px_rgba(29,29,3,0.18)]">
+              <p className="text-[0.94rem] font-black tracking-[-0.03em] text-[var(--primary)]">
+                {copy.loading}
               </p>
             </div>
           </div>
@@ -250,8 +243,8 @@ export function InsightView({
       <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
 
       {message ? (
-        <div className="pointer-events-none absolute inset-x-4 bottom-28 z-20 flex justify-center">
-          <div className="max-w-md rounded-full bg-[rgba(79,32,48,0.92)] px-5 py-3 text-center text-sm font-semibold text-white shadow-[0_14px_26px_-22px_rgba(29,29,3,0.42)]">
+        <div className="pointer-events-none absolute inset-x-4 bottom-23 z-20 flex justify-center">
+          <div className="max-w-md rounded-full bg-[rgba(79,32,48,0.92)] px-4 py-2 text-center text-[0.78rem] font-semibold text-white shadow-[0_10px_18px_-16px_rgba(29,29,3,0.28)]">
             {message}
           </div>
         </div>
@@ -320,7 +313,7 @@ function AnimatedPercentage({ target }: { target: number }) {
   }, [target]);
 
   return (
-    <span className="mt-3 text-3xl font-black tracking-[-0.05em] [animation:joy-bounce_0.9s_ease-out]">
+    <span className="mt-2 text-[1.45rem] font-black tracking-[-0.05em] [animation:joy-bounce_0.9s_ease-out]">
       {value}%
     </span>
   );

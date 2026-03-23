@@ -5,7 +5,7 @@ describe("QuickEntry", () => {
   it("opens a bottom action sheet for camera and gallery selection", () => {
     const { container } = render(
       <QuickEntry
-        people={[{ id: "person-1", name: "男朋友", is_default: true }]}
+        people={[{ id: "person-1", name: "自己", is_default: true }]}
         selectedPersonId="person-1"
         content="walk together"
         reason="soft wind"
@@ -83,6 +83,38 @@ describe("QuickEntry", () => {
     expect(container.querySelector('[data-ui="quick-entry-media-trigger"]')).toBeDisabled();
   });
 
+  it("does not render the bottom status row when there is no message", () => {
+    const { container } = render(
+      <QuickEntry
+        people={[]}
+        selectedPersonId=""
+        content=""
+        reason=""
+        displayDate="2026-03-22"
+        saving={false}
+        uploading={false}
+        message=""
+        selectedImageName=""
+        imagePreviewUrl={null}
+        activeTab="quick-entry"
+        onPersonChange={() => {}}
+        onTabChange={() => {}}
+        onCreatePerson={async () => true}
+        onDeletePerson={async () => ({ ok: true })}
+        onContentChange={() => {}}
+        onReasonChange={() => {}}
+        onDateChange={() => {}}
+        onImageChange={() => {}}
+        onRemoveImage={() => {}}
+        onSave={(event) => event.preventDefault()}
+        onCancel={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /记录给：/ })).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="quick-entry-message"]')).not.toBeInTheDocument();
+  });
+
   it("lets the bottom navigation switch to the profile tab", () => {
     const onTabChange = vi.fn();
 
@@ -116,6 +148,40 @@ describe("QuickEntry", () => {
     fireEvent.click(screen.getByRole("button", { name: "个人中心" }));
 
     expect(onTabChange).toHaveBeenCalledWith("profile");
+  });
+
+  it("does not render a composer cancel button in the footer actions", () => {
+    const { container } = render(
+      <QuickEntry
+        people={[{ id: "person-1", name: "自己", is_default: true }]}
+        selectedPersonId="person-1"
+        content=""
+        reason=""
+        displayDate="2026-03-22"
+        saving={false}
+        uploading={false}
+        message=""
+        selectedImageName=""
+        imagePreviewUrl={null}
+        activeTab="quick-entry"
+        onPersonChange={() => {}}
+        onTabChange={() => {}}
+        onCreatePerson={async () => true}
+        onDeletePerson={async () => ({ ok: true })}
+        onContentChange={() => {}}
+        onReasonChange={() => {}}
+        onDateChange={() => {}}
+        onImageChange={() => {}}
+        onRemoveImage={() => {}}
+        onSave={(event) => event.preventDefault()}
+        onCancel={() => {}}
+      />,
+    );
+
+    const footer = container.querySelector("form > .joy-blur-panel");
+
+    expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
+    expect(footer?.textContent).not.toContain("取消");
   });
 
   it("closes the action sheet when cancel is tapped", () => {

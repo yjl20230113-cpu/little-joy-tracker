@@ -116,20 +116,8 @@ export function serializeImageUrls(imageUrls: string[]) {
   return imageUrls.length > 0 ? JSON.stringify(imageUrls) : null;
 }
 
-export function createDefaultPersonPayload(userId: string) {
-  return {
-    user_id: userId,
-    name: "自己",
-    is_default: true,
-  };
-}
-
 export function normalizePersonName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("zh-CN");
-}
-
-export function getPostSignupWelcomeMessage() {
-  return "欢迎来到小美好记录器，已经为你准备好默认记录对象“自己”，现在就开始记录吧。";
 }
 
 export function getRetryAfterSeconds(message: string) {
@@ -139,6 +127,36 @@ export function getRetryAfterSeconds(message: string) {
 
 export function isRateLimitError(message: string) {
   return /rate limit|too many requests|for security purposes/i.test(message);
+}
+
+export function normalizeAuthErrorMessage(message: string) {
+  const normalized = message.trim();
+
+  if (/invalid login credentials/i.test(normalized)) {
+    return "邮箱或密码不正确，请检查后重试";
+  }
+
+  if (/user already registered/i.test(normalized)) {
+    return "这个邮箱已经注册过了，请直接登录";
+  }
+
+  if (/email not confirmed/i.test(normalized)) {
+    return "请先前往邮箱完成验证，再回来登录";
+  }
+
+  if (/password should be at least/i.test(normalized)) {
+    return "密码至少需要 6 位";
+  }
+
+  if (/signups are disabled/i.test(normalized) || /signup is disabled/i.test(normalized)) {
+    return "当前暂不支持注册，请联系管理员";
+  }
+
+  if (/network error|fetch failed|failed to fetch|load failed/i.test(normalized)) {
+    return "网络连接不稳定，请稍后再试";
+  }
+
+  return "登录暂时失败，请稍后再试";
 }
 
 export function buildEventPayload(input: EventInput): EventPayload {

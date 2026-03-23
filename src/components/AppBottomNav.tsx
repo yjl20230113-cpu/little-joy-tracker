@@ -34,9 +34,9 @@ export function AppBottomNav({
   return (
     <nav
       data-ui="app-bottom-nav"
-      className="joy-blur-panel joy-safe-bottom relative z-10 flex h-[7rem] shrink-0 items-center rounded-t-[2.7rem] px-4 pb-4 pt-3 sm:px-5"
+      className="joy-blur-panel joy-safe-bottom relative z-10 flex shrink-0 items-start rounded-none border-x-0 border-b-0 border-t border-[rgba(155,69,0,0.06)] px-2 pb-1 pt-1 sm:h-[5.8rem] sm:items-center sm:rounded-t-[1.8rem] sm:border-x sm:border-b sm:px-3.5 sm:pb-2.5 sm:pt-2"
     >
-      <div className="grid w-full grid-cols-4 gap-2.5">
+      <div className="grid w-full grid-cols-4 gap-1">
         {navItems.map(({ tab, icon: Icon, labelKey }) => {
           const active = activeTab === tab;
 
@@ -46,14 +46,14 @@ export function AppBottomNav({
               type="button"
               data-active={active}
               onClick={() => onTabChange(tab)}
-              className={`flex h-[5.35rem] w-full flex-col items-center justify-center gap-1.5 rounded-[2.3rem] px-2 text-[0.82rem] font-medium tracking-[0.03em] transition-all duration-200 ${
+              className={`mx-auto flex h-[4.05rem] w-[92%] flex-col items-center justify-center gap-0.5 rounded-[1.55rem] px-1.5 text-[0.74rem] font-medium leading-tight tracking-[0.01em] transition-all duration-200 ${
                 active
-                  ? "translate-y-[-4px] bg-[var(--primary-wash)] text-[var(--primary)] shadow-[0_12px_24px_-18px_rgba(155,69,0,0.22)]"
+                  ? "bg-[rgba(255,219,201,0.88)] text-[var(--primary)] shadow-[0_8px_14px_-14px_rgba(155,69,0,0.18)]"
                   : "text-[var(--muted)]"
               }`}
             >
-              <Icon className={`${active ? "size-6" : "size-5.5"}`} />
-              <span className="leading-none">{labels[labelKey]}</span>
+              <Icon className={active ? "size-[1.28rem]" : "size-[1.22rem]"} />
+              <span className="text-center">{labels[labelKey]}</span>
             </button>
           );
         })}
