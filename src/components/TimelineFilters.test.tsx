@@ -20,10 +20,10 @@ describe("TimelineFilters", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /过去三个月/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /三个月/ })).toBeInTheDocument();
     expect(screen.queryByTestId("app-date-picker-panel")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /过去三个月/ }));
+    fireEvent.click(screen.getByRole("button", { name: /三个月/ }));
 
     expect(onRangeChange).toHaveBeenCalledWith("threeMonths");
   });

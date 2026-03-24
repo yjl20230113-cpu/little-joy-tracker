@@ -21,9 +21,9 @@ type TimelineFiltersProps = {
 };
 
 const copy = {
-  week: "过去一周",
-  month: "过去一个月",
-  threeMonths: "过去三个月",
+  week: "一周",
+  month: "一个月",
+  threeMonths: "三个月",
   summary: "AI 总结报告",
 };
 
