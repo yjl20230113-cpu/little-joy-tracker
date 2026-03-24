@@ -24,6 +24,7 @@ type UploadImageToStorageArgs = {
   bucket: string;
   userId: string;
   file: File;
+  pathPrefix?: string;
   prepareFile?: (file: File) => Promise<File>;
   now?: () => number;
 };
@@ -64,6 +65,7 @@ export async function uploadImageToStorage({
   bucket,
   userId,
   file,
+  pathPrefix = "",
   prepareFile = compressImageFile,
   now = Date.now,
 }: UploadImageToStorageArgs) {
@@ -75,7 +77,10 @@ export async function uploadImageToStorage({
   const safeName = preparedFile.name
     .replace(/\.[^.]+$/, "")
     .replace(/[^a-zA-Z0-9_-]/g, "-");
-  const filePath = `${userId}/${now()}-${safeName}.${extension}`;
+  const normalizedPrefix = pathPrefix.trim().replace(/^\/+|\/+$/g, "");
+  const filePath = normalizedPrefix
+    ? `${normalizedPrefix}/${userId}/${now()}-${safeName}.${extension}`
+    : `${userId}/${now()}-${safeName}.${extension}`;
   const bucketClient = storage.from(bucket);
   const { error } = await bucketClient.upload(filePath, preparedFile, {
     upsert: false,

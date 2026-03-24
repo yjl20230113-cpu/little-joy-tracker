@@ -2,7 +2,6 @@ import type { ChangeEventHandler, FormEventHandler } from "react";
 import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
-  CalendarDays,
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -64,43 +63,35 @@ type QuickEntryProps = {
 };
 
 const copy = {
-  badge: "\u8f7b\u5feb\u901f\u8bb0",
   brand: "Little Joy Tracker",
-  recordFor: "\u8bb0\u5f55\u7ed9\uff1a",
-  recordForEmpty: "\u8bf7\u9009\u62e9",
-  upload: "\u6dfb\u52a0\u7167\u7247\u6216\u89c6\u9891",
-  uploading: "\u6b63\u5728\u5904\u7406\u56fe\u7247...",
-  actionSheetTitle: "\u9009\u62e9\u4e00\u79cd\u65b9\u5f0f",
-  capture: "\u62cd\u7167",
-  pick: "\u4ece\u624b\u673a\u76f8\u518c\u9009\u62e9",
-  remove: "\u79fb\u9664\u5f53\u524d\u7167\u7247",
-  dismissSheet: "\u53d6\u6d88",
-  mediaHint:
-    "\u624b\u673a\u4e0a\u53ef\u4ee5\u76f4\u63a5\u62cd\u7167\uff0c\u4e5f\u53ef\u4ee5\u4ece\u76f8\u518c\u6311\u9009\u3002",
-  momentLabel: "\u90a3\u4e2a\u77ac\u95f4",
-  momentPlaceholder: "\u53d1\u751f\u4e86\u4ec0\u4e48\uff1f",
-  reasonLabel: "\u6b64\u65f6\u611f\u609f",
-  reasonPlaceholder: "\u4e3a\u4ec0\u4e48\u89c9\u5f97\u7f8e\u597d\uff1f",
-  today: "\u4eca\u5929",
-  publish: "\u4fdd\u5b58\u5230\u5c0f\u7f8e\u597d",
-  publishing: "\u53d1\u9001\u4e2d...",
-  record: "\u8bb0\u5f55",
-  timeline: "\u65f6\u95f4\u8f74",
-  insight: "\u6d1e\u5bdf",
-  profile: "\u4e2a\u4eba",
-  createPerson: "\u65b0\u5efa\u4eba\u5458",
-  createPlaceholder: "\u6bd4\u5982\uff1a\u81ea\u5df1\u3001\u7238\u7238\u3001\u5c0f\u732b",
-  createConfirm: "\u521b\u5efa",
-  duplicatePerson: "\u8fd9\u4e2a\u540d\u5b57\u5df2\u7ecf\u5b58\u5728\uff0c\u6362\u4e00\u4e2a\u5427\u3002",
-  deletePerson: "\u5220\u9664",
-  deleteConfirmTitle: "\u786e\u8ba4\u5220\u9664\u4eba\u5458",
-  deleteConfirmBodyPrefix:
-    "\u5f53\u524d\u8be5\u4eba\u5458\u5df2\u6709 ",
-  deleteConfirmBodySuffix:
-    " \u6761\u8bb0\u5f55\uff0c\u662f\u5426\u8981\u5220\u9664\u8be5\u4eba\u5458\u53ca\u8bb0\u5f55\uff1f",
-  keepPerson: "\u5148\u4e0d\u5220",
-  confirmDelete: "\u5220\u9664\u4eba\u5458\u53ca\u8bb0\u5f55",
-  dateLabel: "\u4eca\u5929",
+  recordFor: "记录给：",
+  recordForEmpty: "请选择",
+  upload: "添加照片或视频",
+  uploading: "正在处理图片...",
+  actionSheetTitle: "选择一种方式",
+  capture: "拍照",
+  pick: "从手机相册选择",
+  remove: "移除当前照片",
+  dismissSheet: "取消",
+  mediaHint: "手机上可以直接拍照，也可以从相册挑选。",
+  titleLabel: "这个瞬间的标题",
+  titlePlaceholder: "比如：春日晚风",
+  momentLabel: "那个瞬间",
+  momentPlaceholder: "发生了什么？",
+  reasonLabel: "此时感悟",
+  reasonPlaceholder: "为什么觉得美好？",
+  publish: "保存到小美好",
+  publishing: "发送中...",
+  createPerson: "新建人员",
+  createPlaceholder: "比如：自己、爸爸、小猫",
+  createConfirm: "创建",
+  duplicatePerson: "这个名字已经存在，换一个吧。",
+  deletePerson: "删除",
+  deleteConfirmTitle: "确认删除人员",
+  deleteConfirmBodyPrefix: "当前该人员已有 ",
+  deleteConfirmBodySuffix: " 条记录，是否要删除该人员及记录？",
+  keepPerson: "先不删",
+  confirmDelete: "删除人员及记录",
 };
 
 export function QuickEntry({
@@ -146,7 +137,10 @@ export function QuickEntry({
     [people, selectedPersonId],
   );
   const hasComposerContent = Boolean(
-    content.trim() || reason.trim() || imagePreviewUrl || selectedImageName,
+    content.trim() ||
+      reason.trim() ||
+      imagePreviewUrl ||
+      selectedImageName,
   );
   const hasImage = Boolean(imagePreviewUrl || selectedImageName);
   const submitAction = getSubmitActionState({
@@ -291,27 +285,33 @@ export function QuickEntry({
             </div>
 
             <div className="flex flex-1 flex-col gap-3 px-0.5 pb-0.5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="relative">
+              <div
+                data-ui="quick-entry-toolbar"
+                className="flex items-center justify-start gap-2"
+              >
+                <div className="relative min-w-0">
                   <button
                     type="button"
+                    data-ui="quick-entry-person-trigger"
                     onClick={() => setIsPersonMenuOpen((current) => !current)}
-                    className="joy-control-pill bg-[var(--surface-soft)] px-3 text-[var(--muted)] shadow-[0_12px_22px_-22px_rgba(29,29,3,0.18)]"
+                    className="joy-control-pill min-h-9 w-[9.6rem] justify-between rounded-[0.9rem] bg-[var(--surface-soft)] px-3 text-[0.75rem] text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
                   >
-                    <span>
-                      {copy.recordFor}
+                    <span className="truncate">
                       {selectedPerson?.name ?? copy.recordForEmpty}
                     </span>
-                    <ChevronDown className="size-4" />
+                    <ChevronDown className="size-3.5 shrink-0" />
                   </button>
 
                   {isPersonMenuOpen ? (
-                    <div className="absolute left-0 top-full z-20 mt-2.5 w-72 rounded-[1rem] border border-[rgba(155,69,0,0.08)] bg-white/95 p-3 shadow-[0_20px_30px_-26px_rgba(29,29,3,0.32)] backdrop-blur">
-                      <div className="space-y-2">
+                    <div
+                      data-ui="quick-entry-person-menu"
+                      className="absolute left-0 top-full z-20 mt-2 w-[min(15rem,calc(100vw-3rem))] rounded-[0.95rem] border border-[rgba(155,69,0,0.08)] bg-white/95 p-2.5 shadow-[0_16px_28px_-22px_rgba(29,29,3,0.28)] backdrop-blur"
+                    >
+                      <div className="space-y-1.5">
                         {people.map((person) => (
                           <div
                             key={person.id}
-                            className={`flex items-center gap-2 rounded-[1rem] px-3 py-2.5 transition-colors ${
+                            className={`flex items-center gap-1.5 rounded-[0.95rem] px-2.5 py-2 transition-colors ${
                               person.id === selectedPersonId
                                 ? "bg-[var(--primary-wash)] text-[var(--primary)]"
                                 : "bg-[var(--surface-soft)] text-[var(--muted)]"
@@ -323,11 +323,11 @@ export function QuickEntry({
                                 onPersonChange(person.id);
                                 setIsPersonMenuOpen(false);
                               }}
-                              className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left text-[0.9rem] font-semibold"
+                              className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left text-[0.82rem] font-semibold"
                             >
                               <span className="truncate">{person.name}</span>
                               {person.is_default ? (
-                                <span className="text-[9px] uppercase tracking-[0.18em]">
+                                <span className="text-[8px] uppercase tracking-[0.16em]">
                                   Default
                                 </span>
                               ) : null}
@@ -337,13 +337,13 @@ export function QuickEntry({
                                 type="button"
                                 onClick={() => handleDeletePerson(person.id)}
                                 disabled={deletingPersonId === person.id}
-                                className="flex size-8.5 items-center justify-center rounded-full bg-white/80 text-[var(--primary)] transition-colors hover:bg-white disabled:opacity-60"
+                                className="flex size-7 items-center justify-center rounded-full bg-white/80 text-[var(--primary)] transition-colors hover:bg-white disabled:opacity-60"
                                 aria-label={`${copy.deletePerson}${person.name}`}
                               >
                                 {deletingPersonId === person.id ? (
-                                  <LoaderCircle className="size-4 animate-spin" />
+                                  <LoaderCircle className="size-3.5 animate-spin" />
                                 ) : (
-                                  <Trash2 className="size-4" />
+                                  <Trash2 className="size-3.5" />
                                 )}
                               </button>
                             ) : null}
@@ -351,11 +351,11 @@ export function QuickEntry({
                         ))}
                       </div>
 
-                      <div className="mt-3 rounded-[1rem] bg-[var(--surface-soft)] p-3">
-                        <p className="mb-2 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--muted)]">
+                      <div className="mt-2.5 rounded-[0.95rem] bg-[var(--surface-soft)] p-2.5">
+                        <p className="mb-1.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
                           {copy.createPerson}
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5">
                           <input
                             value={newPersonName}
                             onChange={(event) => {
@@ -363,30 +363,43 @@ export function QuickEntry({
                               setPersonFormMessage("");
                             }}
                             placeholder={copy.createPlaceholder}
-                            className="min-w-0 flex-1 rounded-full bg-white px-4 py-2.5 text-[0.9rem] text-[var(--foreground)] outline-none"
+                            className="min-w-0 flex-1 rounded-full bg-white px-3 py-2 text-[0.8rem] text-[var(--foreground)] outline-none"
                           />
                           <button
                             type="button"
                             onClick={handleCreatePerson}
                             disabled={creatingPerson}
-                            className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-soft)] px-4 py-2.5 text-[0.9rem] font-bold text-white disabled:opacity-70"
+                            className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-soft)] px-3 py-2 text-[0.78rem] font-bold text-white disabled:opacity-70"
                           >
                             {creatingPerson ? (
-                              <LoaderCircle className="size-4 animate-spin" />
+                              <LoaderCircle className="size-3.5 animate-spin" />
                             ) : (
-                              <Plus className="size-4" />
+                              <Plus className="size-3.5" />
                             )}
                             {copy.createConfirm}
                           </button>
                         </div>
                         {personFormMessage ? (
-                          <p className="mt-2 text-[0.78rem] font-semibold text-[#d1603d]">
+                          <p className="mt-1.5 text-[0.72rem] font-semibold text-[#d1603d]">
                             {personFormMessage}
                           </p>
                         ) : null}
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+              <div data-ui="quick-entry-date" className="min-h-9 w-[10.2rem]">
+                  <AppDatePicker
+                    value={displayDate}
+                    onChange={onDateChange}
+                    placement="bottom"
+                    centerPanelOnViewport
+                    align="center"
+                    compact
+                    className="min-h-9"
+                    buttonClassName="min-h-9 rounded-[0.9rem] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
+                  />
                 </div>
               </div>
 
@@ -420,34 +433,20 @@ export function QuickEntry({
 
         <div
           data-ui="quick-entry-footer"
-          className="joy-blur-panel relative z-10 grid min-h-[3.45rem] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 border-y border-[rgba(29,29,3,0.04)] px-3 py-1.5 sm:px-5"
+          className="joy-blur-panel relative z-10 flex min-h-[3rem] items-center justify-end border-y border-[rgba(29,29,3,0.04)] px-3 py-1 sm:px-5"
         >
-          <span className="joy-control-pill bg-white/60 px-3 text-[var(--muted)]">
-              <CalendarDays className="size-4" />
-              {copy.dateLabel}
-          </span>
-          <AppDatePicker
-            value={displayDate}
-            onChange={onDateChange}
-            align="center"
-            buttonLabel=""
-            buttonClassName="px-3 py-2 text-[0.76rem] font-medium shadow-none"
-          />
-
-          <div className="flex min-w-0 items-center justify-end">
-            <button
-              type="submit"
-              disabled={submitAction.disabled}
-              className="joy-topbar-button joy-topbar-button--primary shrink-0"
-            >
-              {submitAction.disabled ? (
-                <LoaderCircle className="size-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="size-4" />
-              )}
-              {submitAction.label}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={submitAction.disabled}
+            className="joy-topbar-button joy-topbar-button--primary min-h-9 shrink-0 px-3.5 py-2 text-[0.78rem]"
+          >
+            {submitAction.disabled ? (
+              <LoaderCircle className="size-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="size-4" />
+            )}
+            {submitAction.label}
+          </button>
         </div>
 
         <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />

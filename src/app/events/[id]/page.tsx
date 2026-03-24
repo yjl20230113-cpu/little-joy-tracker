@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
@@ -12,13 +12,20 @@ import { EventDetailPanel } from "@/components/EventDetailPanel";
 import { TimelineView } from "@/components/TimelineView";
 import {
   buildEventPayload,
+  hasEventInsightUnseenJoy,
+  normalizeEventInsightResult,
+  type EventInsightReport,
+  type EventInsightStatus,
   type PersonOption,
   type TimelineEntry,
 } from "@/lib/app-logic";
 import { uploadImageToStorage } from "@/lib/image-upload";
 import { generateMemoryTitles } from "@/lib/memory-title-client";
-import { fallbackMemoryTitle } from "@/lib/memory-title";
 import { supabase } from "@/lib/supabase";
+
+type SupabaseErrorLike = {
+  message?: string;
+};
 
 type DetailEventRow = {
   id: string;
@@ -29,6 +36,8 @@ type DetailEventRow = {
   display_date: string;
   created_at: string;
   person_id: string;
+  ai_insight_status: EventInsightStatus | null;
+  ai_insight_payload: unknown;
   persons:
     | {
         id: string;
@@ -44,18 +53,32 @@ type DetailEventRow = {
 const copy = {
   loading: "正在打开这件小美好...",
   notFound: "没有找到这条记录，也许它已经被移走了。",
-  backHome: "返回时间线",
   unknownError: "操作失败，请稍后再试。",
   imageUploading: "正在把照片收进小美好...",
-  imageReady: "照片已更新好，可以继续整理这段回忆了。",
+  imageReady: "照片已经更新好，可以继续整理这段回忆了。",
   uploadFailed: "图片上传失败，请检查 Storage bucket 是否已建好。",
   uploadPending: "图片还在路上，稍等一下再保存哦。",
-  deleteSuccess: "这件小美好已经轻轻告别。",
   saveSuccess: "这件小美好已经更新好了。",
+  insightFailed: "AI 暂时没有整理好这条记录，稍后再试一次。",
 };
 
 const imageBucket =
   process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || "joy-images";
+
+function toHumanErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as SupabaseErrorLike).message;
+    if (typeof message === "string" && message.trim()) {
+      return message.trim();
+    }
+  }
+
+  return fallback;
+}
 
 function parseImageUrls(value: string | null) {
   if (!value) {
@@ -67,6 +90,27 @@ function parseImageUrls(value: string | null) {
     return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
   } catch {
     return [];
+  }
+}
+
+function parseEventInsightPayload(value: unknown) {
+  if (!value) {
+    return {
+      report: null,
+      needsRefresh: false,
+    };
+  }
+
+  try {
+    return {
+      report: normalizeEventInsightResult(value),
+      needsRefresh: !hasEventInsightUnseenJoy(value),
+    };
+  } catch {
+    return {
+      report: null,
+      needsRefresh: true,
+    };
   }
 }
 
@@ -90,9 +134,11 @@ function getPersonName(
 }
 
 function mapDetailEvent(event: DetailEventRow): TimelineEntry {
+  const { report, needsRefresh } = parseEventInsightPayload(event.ai_insight_payload);
+
   return {
     id: event.id,
-    title: event.title?.trim() || fallbackMemoryTitle(event.content),
+    title: event.title,
     content: event.content,
     reason: event.reason,
     imageUrl: parseImageUrls(event.image_urls)[0] ?? null,
@@ -100,6 +146,9 @@ function mapDetailEvent(event: DetailEventRow): TimelineEntry {
     createdAt: event.created_at,
     personId: event.person_id,
     personName: getPersonName(event.persons),
+    aiInsightStatus: event.ai_insight_status,
+    aiInsight: report,
+    aiInsightNeedsRefresh: needsRefresh,
   };
 }
 
@@ -118,6 +167,8 @@ export default function EventDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
   const [content, setContent] = useState("");
   const [reason, setReason] = useState("");
   const [displayDate, setDisplayDate] = useState("");
@@ -125,6 +176,7 @@ export default function EventDetailPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [selectedImageName, setSelectedImageName] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const insightRetryRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     async function bootstrap() {
@@ -144,7 +196,7 @@ export default function EventDetailPage() {
           supabase
             .from("events")
             .select(
-              "id, title, content, reason, image_urls, display_date, created_at, person_id, persons(id, name)",
+              "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
             )
             .eq("user_id", session.user.id)
             .eq("id", eventId)
@@ -157,13 +209,13 @@ export default function EventDetailPage() {
         ]);
 
       if (eventError) {
-        setMessage(eventError.message);
+        setMessage(toHumanErrorMessage(eventError, copy.unknownError));
         setBooting(false);
         return;
       }
 
       if (peopleError) {
-        setMessage(peopleError.message);
+        setMessage(toHumanErrorMessage(peopleError, copy.unknownError));
         setBooting(false);
         return;
       }
@@ -171,6 +223,8 @@ export default function EventDetailPage() {
       const nextEvent = mapDetailEvent(eventData as DetailEventRow);
       setEvent(nextEvent);
       setPeople((peopleData ?? []) as PersonOption[]);
+      setTitle((nextEvent.title ?? "").trim());
+      setTitleTouched(false);
       setContent(nextEvent.content);
       setReason(nextEvent.reason ?? "");
       setDisplayDate(nextEvent.displayDate);
@@ -180,7 +234,7 @@ export default function EventDetailPage() {
       setBooting(false);
     }
 
-    bootstrap();
+    void bootstrap();
   }, [eventId]);
 
   useEffect(() => {
@@ -190,6 +244,36 @@ export default function EventDetailPage() {
       }
     };
   }, [imagePreviewUrl]);
+
+  useEffect(() => {
+    if (!userId || !event || editing) {
+      return;
+    }
+
+    if (event.aiInsightStatus === "ready" && !event.aiInsightNeedsRefresh) {
+      return;
+    }
+
+    if (insightRetryRef.current.has(event.id)) {
+      return;
+    }
+
+    insightRetryRef.current.add(event.id);
+    applyInsightToLocalState("pending", null);
+    void backfillEventInsight({
+      eventId: event.id,
+      userId,
+      content: event.content,
+      reason: event.reason ?? "",
+      displayDate: event.displayDate,
+      personName:
+        people.find((person) => person.id === event.personId)?.name ?? event.personName,
+    }).then((report) => {
+      if (!report) {
+        setMessage(copy.insightFailed);
+      }
+    });
+  }, [editing, event, people, userId]);
 
   async function handleImageChange(eventChange: ChangeEvent<HTMLInputElement>) {
     const file = eventChange.target.files?.[0] ?? null;
@@ -219,7 +303,7 @@ export default function EventDetailPage() {
       setUploadedImageUrl(publicUrl);
       setMessage(copy.imageReady);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.uploadFailed);
+      setMessage(toHumanErrorMessage(error, copy.uploadFailed));
     } finally {
       setUploading(false);
       eventChange.target.value = "";
@@ -231,6 +315,8 @@ export default function EventDetailPage() {
       return;
     }
 
+    setTitle((nextEvent.title ?? "").trim());
+    setTitleTouched(false);
     setContent(nextEvent.content);
     setReason(nextEvent.reason ?? "");
     setDisplayDate(nextEvent.displayDate);
@@ -238,6 +324,170 @@ export default function EventDetailPage() {
     setImagePreviewUrl(nextEvent.imageUrl);
     setUploadedImageUrl(nextEvent.imageUrl);
     setSelectedImageName("");
+  }
+
+  function applyTitleToLocalState(nextTitle: string) {
+    const titleValue = nextTitle.trim();
+    if (!titleValue) {
+      return;
+    }
+
+    setEvent((current) =>
+      current ? { ...current, title: titleValue } : current,
+    );
+
+    if (!editing && !titleTouched) {
+      setTitle(titleValue);
+      setTitleTouched(false);
+    }
+  }
+
+  async function backfillMemoryTitle(input: {
+    eventId: string;
+    userId: string;
+    content: string;
+    reason: string;
+    displayDate: string;
+  }) {
+    try {
+      const [generatedTitle] = await generateMemoryTitles([
+        {
+          content: input.content,
+          reason: input.reason,
+          time: input.displayDate,
+        },
+      ]);
+
+      const titleValue = (generatedTitle ?? "").trim();
+      if (!titleValue) {
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("events")
+        .update({ title: titleValue })
+        .eq("id", input.eventId)
+        .eq("user_id", input.userId)
+        .or("title.is.null,title.eq.\"\"")
+        .select("id, title")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      const updatedTitle =
+        data && typeof data === "object" && "title" in data ? String((data as any).title) : "";
+
+      if (!updatedTitle.trim()) {
+        return;
+      }
+
+      applyTitleToLocalState(updatedTitle);
+    } catch {
+      // Fire-and-forget: title backfill should never block the primary save path.
+    }
+  }
+
+  function applyInsightToLocalState(
+    status: EventInsightStatus,
+    report: EventInsightReport | null,
+  ) {
+    setEvent((current) =>
+      current
+        ? {
+            ...current,
+            aiInsightStatus: status,
+            aiInsight: report,
+            aiInsightNeedsRefresh: false,
+          }
+        : current,
+    );
+  }
+
+  async function requestEventInsightReport(input: {
+    content: string;
+    reason: string;
+    displayDate: string;
+    personName: string;
+  }) {
+    const response = await fetch("/api/event-insight", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        typeof payload?.error === "string" ? payload.error : copy.insightFailed,
+      );
+    }
+
+    return normalizeEventInsightResult(payload);
+  }
+
+  async function persistEventInsightState(input: {
+    eventId: string;
+    userId: string;
+    status: EventInsightStatus;
+    report: EventInsightReport | null;
+  }) {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        ai_insight_status: input.status,
+        ai_insight_payload: input.report,
+      })
+      .eq("id", input.eventId)
+      .eq("user_id", input.userId);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function backfillEventInsight(input: {
+    eventId: string;
+    userId: string;
+    content: string;
+    reason: string;
+    displayDate: string;
+    personName: string;
+  }) {
+    try {
+      const report = await requestEventInsightReport({
+        content: input.content,
+        reason: input.reason,
+        displayDate: input.displayDate,
+        personName: input.personName,
+      });
+
+      await persistEventInsightState({
+        eventId: input.eventId,
+        userId: input.userId,
+        status: "ready",
+        report,
+      });
+      applyInsightToLocalState("ready", report);
+      return report;
+    } catch {
+      try {
+        await persistEventInsightState({
+          eventId: input.eventId,
+          userId: input.userId,
+          status: "failed",
+          report: null,
+        });
+      } catch {
+        // Keep the detail page usable even if the failure state is not persisted.
+      }
+      applyInsightToLocalState("failed", null);
+      return null;
+    }
   }
 
   function handleRemoveImage() {
@@ -272,14 +522,6 @@ export default function EventDetailPage() {
     setMessage("");
 
     try {
-      const [generatedTitle] = await generateMemoryTitles([
-        {
-          content,
-          reason,
-          time: displayDate,
-        },
-      ]);
-
       const payload = buildEventPayload({
         userId,
         personId,
@@ -289,20 +531,37 @@ export default function EventDetailPage() {
         displayDate,
       });
 
+      const detailNeedsInsightRefresh =
+        event.content !== payload.content ||
+        (event.reason ?? "") !== (payload.reason ?? "") ||
+        event.displayDate !== payload.display_date ||
+        event.personId !== payload.person_id;
+
+      const updatePayload: Record<string, unknown> = {
+        person_id: payload.person_id,
+        content: payload.content,
+        reason: payload.reason,
+        image_urls: payload.image_urls,
+        display_date: payload.display_date,
+      };
+
+      if (detailNeedsInsightRefresh) {
+        updatePayload.ai_insight_status = "pending";
+        updatePayload.ai_insight_payload = null;
+      }
+
+      if (titleTouched) {
+        const trimmedTitle = title.trim();
+        updatePayload.title = trimmedTitle ? trimmedTitle : null;
+      }
+
       const { data, error } = await supabase
         .from("events")
-        .update({
-          person_id: payload.person_id,
-          title: generatedTitle || fallbackMemoryTitle(content),
-          content: payload.content,
-          reason: payload.reason,
-          image_urls: payload.image_urls,
-          display_date: payload.display_date,
-        })
+        .update(updatePayload)
         .eq("id", event.id)
         .eq("user_id", userId)
         .select(
-          "id, title, content, reason, image_urls, display_date, created_at, person_id, persons(id, name)",
+          "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
         )
         .single();
 
@@ -316,8 +575,32 @@ export default function EventDetailPage() {
       setEditing(false);
       setConfirmingDelete(false);
       setMessage(copy.saveSuccess);
+
+      if (detailNeedsInsightRefresh) {
+        applyInsightToLocalState("pending", null);
+        insightRetryRef.current.add(nextEvent.id);
+        void backfillEventInsight({
+          eventId: nextEvent.id,
+          userId,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+          personName:
+            people.find((person) => person.id === payload.person_id)?.name ?? event.personName,
+        });
+      }
+
+      if (!titleTouched && !(nextEvent.title ?? "").trim()) {
+        void backfillMemoryTitle({
+          eventId: nextEvent.id,
+          userId,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+        });
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.unknownError);
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setSaving(false);
       setUploading(false);
@@ -345,15 +628,50 @@ export default function EventDetailPage() {
 
       router.replace("/?tab=timeline");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.unknownError);
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleRetryInsight() {
+    if (!event || !userId) {
+      return;
+    }
+
+    setMessage("");
+    insightRetryRef.current.add(event.id);
+    applyInsightToLocalState("pending", null);
+    try {
+      await persistEventInsightState({
+        eventId: event.id,
+        userId,
+        status: "pending",
+        report: null,
+      });
+    } catch {
+      // Do not block the retry flow on a pending-state write failure.
+    }
+
+    const report = await backfillEventInsight({
+      eventId: event.id,
+      userId,
+      content,
+      reason,
+      displayDate,
+      personName:
+        people.find((person) => person.id === personId)?.name ?? event.personName,
+    });
+
+    if (!report) {
+      setMessage(copy.insightFailed);
     }
   }
 
   const draftEvent = event
     ? {
         ...event,
+        title: editing ? title : event.title,
         content,
         reason,
         displayDate,
@@ -429,12 +747,17 @@ export default function EventDetailPage() {
                   imagePreviewUrl={imagePreviewUrl}
                   onDeleteCancel={() => setConfirmingDelete(false)}
                   onDeleteConfirm={handleDelete}
+                  onTitleChange={(value) => {
+                    setTitle(value);
+                    setTitleTouched(true);
+                  }}
                   onContentChange={setContent}
                   onReasonChange={setReason}
                   onDateChange={setDisplayDate}
                   onPersonChange={setPersonId}
                   onImageChange={handleImageChange}
                   onRemoveImage={handleRemoveImage}
+                  onRetryInsight={handleRetryInsight}
                   onSave={handleSave}
                   onCancelEdit={() => {
                     restoreForm(event);
@@ -450,13 +773,13 @@ export default function EventDetailPage() {
               )
             }
             onPersonChange={() => {}}
-              onRangeChange={() => {}}
-              onCustomStartDateChange={() => {}}
-              onCustomEndDateChange={() => {}}
-              onSummaryClick={() => {}}
-              onTabChange={(tab) => router.push(`/?tab=${tab}`)}
-              onEventOpen={() => {}}
-            />
+            onRangeChange={() => {}}
+            onCustomStartDateChange={() => {}}
+            onCustomEndDateChange={() => {}}
+            onSummaryClick={() => {}}
+            onTabChange={(tab) => router.push(`/?tab=${tab}`)}
+            onEventOpen={() => {}}
+          />
         </div>
       </div>
     </main>

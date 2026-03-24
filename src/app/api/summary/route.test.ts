@@ -14,7 +14,7 @@ describe("summary route", () => {
     vi.restoreAllMocks();
   });
 
-  it("sends content, reason, and time to DeepSeek and returns the normalized report", async () => {
+  it("sends content, reason, and time to DeepSeek and returns the normalized report with a score", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -25,13 +25,13 @@ describe("summary route", () => {
                 mood_weather: {
                   title: "暖阳",
                   icon: "Sun",
-                  description:
-                    "本阶段 82% 的时间里，你处在温柔舒展的状态里，成长的关键字是安定。",
+                  score: 82,
+                  description: "这段时间你大多处在温柔舒展的状态里，成长的关键词是安定。",
                 },
                 keywords: ["散步", "晚风", "灯光", "拥抱", "热饮"],
                 personality: {
                   title: "微光收藏家",
-                  description: "你总能在细节里捡起温柔，再轻轻收进心里。",
+                  description: "你总能在细节里捧起温柔，再轻轻收进心里。",
                 },
                 suggestions: [
                   {
@@ -75,6 +75,7 @@ describe("summary route", () => {
     const [, requestInit] = fetchMock.mock.calls[0];
     expect(String(requestInit?.body)).toContain("time: 2026-03-22 21:10:45");
     expect(payload.mood_weather.title).toBe("暖阳");
+    expect(payload.mood_weather.score).toBe(82);
     expect(payload.suggestions).toHaveLength(2);
   });
 });

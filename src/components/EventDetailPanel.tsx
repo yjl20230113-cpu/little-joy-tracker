@@ -13,6 +13,7 @@ import {
 import { AppDatePicker } from "./AppDatePicker";
 import { AppToast } from "./AppToast";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
+import type { EventInsightReport, EventInsightStatus } from "../lib/app-logic";
 import { formatDetailTimestamp } from "../lib/app-logic";
 import { getSubmitActionState } from "../lib/image-upload";
 import { fallbackMemoryTitle } from "../lib/memory-title";
@@ -33,6 +34,8 @@ type DetailEvent = {
   createdAt: string;
   personName: string;
   personId: string;
+  aiInsightStatus?: EventInsightStatus | null;
+  aiInsight?: EventInsightReport | null;
 };
 
 type EventDetailPanelProps = {
@@ -49,12 +52,14 @@ type EventDetailPanelProps = {
   imagePreviewUrl: string | null;
   onDeleteCancel: () => void;
   onDeleteConfirm: () => void | Promise<void>;
+  onTitleChange: (value: string) => void;
   onContentChange: (value: string) => void;
   onReasonChange: (value: string) => void;
   onDateChange: (value: string) => void;
   onPersonChange: (value: string) => void;
   onImageChange: ChangeEventHandler<HTMLInputElement>;
   onRemoveImage: () => void;
+  onRetryInsight: () => void;
   onSave: FormEventHandler<HTMLFormElement>;
   onCancelEdit: () => void;
 };
@@ -70,6 +75,8 @@ const copy = {
   pick: "从手机相册选择",
   remove: "移除当前照片",
   dismissSheet: "取消",
+  titleLabel: "这个瞬间的标题",
+  titlePlaceholder: "比如：春日晚风",
   momentLabel: "那个瞬间",
   reasonLabel: "此时感悟",
   momentPlaceholder: "发生了什么？",
@@ -85,6 +92,15 @@ const copy = {
   emptyImage: "暂时没有图片，但这个瞬间一样很亮。",
   replaceImage: "重新上传图片",
   replaceHint: "点击卡片即可替换现有图片",
+  aiPanelTitle: "这条记录里的微光",
+  aiPending: "请稍等，AI 正在整理这条记录里的微光...",
+  aiRetry: "重新整理亮点",
+  aiUnseenJoy: "你没意识到的小幸福",
+  aiHighlight: "亮点",
+  aiSignals: "线索标签",
+  aiEmotion: "情绪线索",
+  aiRelationship: "关系线索",
+  aiValue: "价值观线索",
 };
 
 export function EventDetailPanel({
@@ -101,12 +117,14 @@ export function EventDetailPanel({
   imagePreviewUrl,
   onDeleteCancel,
   onDeleteConfirm,
+  onTitleChange,
   onContentChange,
   onReasonChange,
   onDateChange,
   onPersonChange,
   onImageChange,
   onRemoveImage,
+  onRetryInsight,
   onSave,
   onCancelEdit,
 }: EventDetailPanelProps) {
@@ -281,6 +299,19 @@ export function EventDetailPanel({
 
             <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
               <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
+                {copy.titleLabel}
+              </span>
+              <input
+                data-testid="detail-editor-title"
+                value={event.title ?? ""}
+                onChange={(nextEvent) => onTitleChange(nextEvent.target.value)}
+                placeholder={copy.titlePlaceholder}
+                className="w-full border-none bg-transparent p-0 text-[1.02rem] font-black leading-[1.3] tracking-[-0.04em] text-[var(--primary)] outline-none placeholder:text-[var(--muted)]/28"
+              />
+            </label>
+
+            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+              <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                 {copy.momentLabel}
               </span>
               <AutoGrowTextarea
@@ -362,6 +393,93 @@ export function EventDetailPanel({
                 {event.reason || copy.emptyReason}
               </p>
             </section>
+
+            {event.aiInsightStatus === "ready" && event.aiInsight ? (
+              <section
+                data-testid="detail-ai-panel"
+                className="space-y-3.5 rounded-[1rem] border border-[rgba(255,140,66,0.12)] bg-[rgba(255,250,234,0.9)] px-3.5 py-3.5"
+              >
+                <p className="text-[0.86rem] font-black tracking-[-0.03em] text-[var(--primary)]">
+                  {copy.aiPanelTitle}
+                </p>
+
+                <div className="rounded-[1rem] bg-white/72 px-3.5 py-3">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--secondary)]/70">
+                    {copy.aiUnseenJoy}
+                  </p>
+                  <p className="mt-1 text-[0.96rem] font-black tracking-[-0.03em] text-[var(--primary)]">
+                    {event.aiInsight.unseen_joy.title}
+                  </p>
+                  <p className="mt-1.5 text-[0.82rem] leading-6 text-[var(--foreground)]">
+                    {event.aiInsight.unseen_joy.content}
+                  </p>
+                </div>
+
+                <div className="rounded-[1rem] bg-white/82 px-3.5 py-3">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--primary)]/58">
+                    {copy.aiHighlight}
+                  </p>
+                  <p className="mt-1 text-[0.96rem] font-black tracking-[-0.03em] text-[var(--primary)]">
+                    {event.aiInsight.highlight.title}
+                  </p>
+                  <p className="mt-1.5 text-[0.82rem] leading-6 text-[var(--foreground)]">
+                    {event.aiInsight.highlight.content}
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 rounded-[1rem] bg-white/66 px-3.5 py-3">
+                  <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--outline-strong)]">
+                    {copy.aiSignals}
+                  </p>
+                  {[
+                    [copy.aiEmotion, event.aiInsight.emotion_signal],
+                    [copy.aiRelationship, event.aiInsight.relationship_signal],
+                    [copy.aiValue, event.aiInsight.value_signal],
+                  ].map(([label, card]) => (
+                    <div
+                      key={label}
+                      className="rounded-[0.95rem] border border-[rgba(155,69,0,0.06)] bg-white/72 px-3 py-2.5"
+                    >
+                      <p className="inline-flex rounded-full bg-[var(--primary-wash)] px-2 py-1 text-[0.64rem] font-extrabold uppercase tracking-[0.14em] text-[var(--primary)]">
+                        {label}
+                      </p>
+                      <p className="mt-2 text-[0.84rem] font-bold text-[var(--foreground)]">
+                        {card.title}
+                      </p>
+                      <p className="mt-1 text-[0.78rem] leading-6 text-[var(--muted)]">
+                        {card.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {event.aiInsightStatus === "pending" ? (
+              <div
+                data-testid="detail-ai-pending"
+                className="rounded-[1rem] bg-[rgba(255,248,194,0.68)] px-3.5 py-3 text-[0.8rem] font-medium text-[var(--muted)]"
+              >
+                {copy.aiPending}
+              </div>
+            ) : null}
+
+            {event.aiInsightStatus === "failed" ? (
+              <div className="rounded-[1rem] bg-[rgba(255,239,232,0.9)] px-3.5 py-3">
+                <p className="text-[0.8rem] leading-6 text-[#b75b39]">
+                  {copy.aiPending}
+                </p>
+                <button
+                  type="button"
+                  data-testid="detail-ai-retry"
+                  onClick={onRetryInsight}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[0.76rem] font-bold text-[var(--primary)]"
+                >
+                  <LoaderCircle className="size-3.5" />
+                  {copy.aiRetry}
+                </button>
+              </div>
+            ) : null}
 
             <div className="flex items-center gap-3 rounded-[1rem] bg-white/64 px-3 py-3">
               <div className="flex size-11 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)]">

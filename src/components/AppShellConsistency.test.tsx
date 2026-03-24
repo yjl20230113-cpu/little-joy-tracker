@@ -1,13 +1,12 @@
 import { render } from "@testing-library/react";
+import { InsightView } from "./InsightView";
 import { QuickEntry } from "./QuickEntry";
 import { TimelineView } from "./TimelineView";
-import { InsightView } from "./InsightView";
 
 describe("app shell consistency", () => {
   it("keeps the three main tabs on the same full-width shell", () => {
     const quickEntry = render(
       <QuickEntry
-        email="joy@example.com"
         people={[{ id: "person-1", name: "自己", is_default: true }]}
         selectedPersonId="person-1"
         content=""
@@ -27,9 +26,9 @@ describe("app shell consistency", () => {
         onReasonChange={() => {}}
         onDateChange={() => {}}
         onImageChange={() => {}}
+        onRemoveImage={() => {}}
         onSave={(event) => event.preventDefault()}
         onCancel={() => {}}
-        onLogout={() => {}}
       />,
     );
 

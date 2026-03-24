@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
@@ -23,11 +24,15 @@ import { InsightView } from "@/components/InsightView";
 import { TimelineView } from "@/components/TimelineView";
 import {
   buildEventPayload,
+  hasEventInsightUnseenJoy,
+  normalizeEventInsightResult,
   buildSummaryRequestEvents,
   filterTimelineItems,
   groupTimelineItemsByDate,
   getRetryAfterSeconds,
   isRateLimitError,
+  type EventInsightReport,
+  type EventInsightStatus,
   normalizePersonName,
   normalizeAuthErrorMessage,
   pickInitialPerson,
@@ -38,9 +43,55 @@ import {
   validateCredentials,
 } from "@/lib/app-logic";
 import { generateMemoryTitles } from "@/lib/memory-title-client";
-import { fallbackMemoryTitle } from "@/lib/memory-title";
 import { uploadImageToStorage } from "@/lib/image-upload";
+import { clearUpdateAvailableBuildId } from "@/lib/pwa-update-client";
 import { supabase } from "@/lib/supabase";
+
+type SupabaseErrorLike = {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+};
+
+function toHumanErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as SupabaseErrorLike).message;
+    if (typeof message === "string" && message.trim()) {
+      const normalized = message.trim();
+
+      if (
+        /column/i.test(normalized) &&
+        /title/i.test(normalized) &&
+        /does not exist|unknown field/i.test(normalized)
+      ) {
+        return "数据库缺少 events.title 字段，请在 Supabase SQL Editor 执行 supabase-sql.md 里的迁移脚本。";
+      }
+
+      if (
+        false &&
+        /ai_insight_(status|payload)/i.test(normalized) &&
+        (/schema cache/i.test(normalized) ||
+          (/column/i.test(normalized) &&
+            /does not exist|unknown field/i.test(normalized)))
+      ) {
+        return "数据库缺少 events.ai_insight_status / events.ai_insight_payload 字段（或 API schema cache 未刷新）。请在 Supabase SQL Editor 执行 supabase-sql.md 里“add single-record AI insight persistence for memory records”那段迁移，然后到 Settings -> API 点击 Reload schema cache 后重试。";
+      }
+
+      if (/row-level security|rls/i.test(normalized)) {
+        return "保存被数据库策略拦截（RLS），请检查 events 表的 RLS policy 是否允许当前用户写入。";
+      }
+
+      return normalized;
+    }
+  }
+
+  return fallback;
+}
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -83,12 +134,19 @@ const copy = {
   imageUploading: "\u6b63\u5728\u628a\u7167\u7247\u6536\u8fdb\u5c0f\u7f8e\u597d...",
   uploadPending: "\u7167\u7247\u8fd8\u5728\u8def\u4e0a\uff0c\u7a0d\u7b49\u4e00\u4e0b\u518d\u4fdd\u5b58\u54e6\u3002",
   saveSuccess: "\u8fd9\u4ef6\u5c0f\u7f8e\u597d\u5df2\u88ab\u73cd\u85cf \u2728",
+  insightHint: "\u5148\u5199\u4e0b\u4e00\u70b9\u8bb0\u5f55\uff0cAI \u624d\u80fd\u5e2e\u4f60\u53d1\u73b0\u4eae\u70b9\u3002",
+  insightFailed: "AI \u6682\u65f6\u6ca1\u6709\u6574\u7406\u597d\u8fd9\u6761\u8bb0\u5f55\uff0c\u7a0d\u540e\u518d\u8bd5\u4e00\u6b21\u3002",
+  profileNameRequired: "\u8bf7\u5148\u586b\u5199\u4f60\u7684\u540d\u79f0\u3002",
+  profileSaveSuccess: "\u4e2a\u4eba\u8d44\u6599\u5df2\u66f4\u65b0\u3002",
+  profileAvatarReady: "\u65b0\u5934\u50cf\u5df2\u9009\u597d\uff0c\u4fdd\u5b58\u540e\u751f\u6548\u3002",
+  profileAvatarRemoved: "\u5df2\u79fb\u9664\u5f53\u524d\u5934\u50cf\uff0c\u4fdd\u5b58\u540e\u751f\u6548\u3002",
   insightEmpty: "\u5148\u53bb\u8bb0\u5f55\u4e00\u4e9b\u5c0f\u7f8e\u597d\u518d\u6765\u5427",
   insightShare: "\u529f\u80fd\u6b63\u5728\u5f00\u53d1\u4e2d\uff0c\u5148\u622a\u56fe\u5206\u4eab\u7ed9\u5fc3\u7231\u7684\u4eba\u5427~",
 };
 
 const imageBucket =
   process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || "joy-images";
+const profileImagePathPrefix = "profiles";
 const todayString = new Date().toISOString().slice(0, 10);
 const bootTimeoutMs = 2500;
 
@@ -100,6 +158,8 @@ type EventRow = {
   image_urls: string | null;
   display_date: string;
   created_at: string;
+  ai_insight_status: EventInsightStatus | null;
+  ai_insight_payload: unknown;
   persons:
     | {
         id: string;
@@ -121,6 +181,8 @@ type DetailEventRow = {
   display_date: string;
   created_at: string;
   person_id: string;
+  ai_insight_status: EventInsightStatus | null;
+  ai_insight_payload: unknown;
   persons:
     | {
         id: string;
@@ -133,6 +195,12 @@ type DetailEventRow = {
     | null;
 };
 
+type ProfileRow = {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};
+
 function parseImageUrls(value: string | null) {
   if (!value) {
     return [];
@@ -143,6 +211,27 @@ function parseImageUrls(value: string | null) {
     return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
   } catch {
     return [];
+  }
+}
+
+function parseEventInsightPayload(value: unknown) {
+  if (!value) {
+    return {
+      report: null,
+      needsRefresh: false,
+    };
+  }
+
+  try {
+    return {
+      report: normalizeEventInsightResult(value),
+      needsRefresh: !hasEventInsightUnseenJoy(value),
+    };
+  } catch {
+    return {
+      report: null,
+      needsRefresh: true,
+    };
   }
 }
 
@@ -184,11 +273,49 @@ function getPersonId(
   return person?.id ?? "";
 }
 
+function mapEventRowToTimelineEntry(event: EventRow): TimelineEntry {
+  const { report, needsRefresh } = parseEventInsightPayload(event.ai_insight_payload);
+
+  return {
+    id: event.id,
+    title: event.title,
+    content: event.content,
+    reason: event.reason,
+    imageUrl: parseImageUrls(event.image_urls)[0] ?? null,
+    displayDate: event.display_date,
+    personName: getPersonName(event.persons),
+    createdAt: event.created_at,
+    personId: getPersonId(event.persons),
+    aiInsightStatus: event.ai_insight_status,
+    aiInsight: report,
+    aiInsightNeedsRefresh: needsRefresh,
+  };
+}
+
+function mapDetailRowToTimelineEntry(event: DetailEventRow): TimelineEntry {
+  const { report, needsRefresh } = parseEventInsightPayload(event.ai_insight_payload);
+
+  return {
+    id: event.id,
+    title: event.title,
+    content: event.content,
+    reason: event.reason,
+    imageUrl: parseImageUrls(event.image_urls)[0] ?? null,
+    displayDate: event.display_date,
+    createdAt: event.created_at,
+    personId: event.person_id,
+    personName: getPersonName(event.persons),
+    aiInsightStatus: event.ai_insight_status,
+    aiInsight: report,
+    aiInsightNeedsRefresh: needsRefresh,
+  };
+}
+
 async function fetchTimelineItems(userId: string) {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, title, content, reason, image_urls, display_date, created_at, persons(id, name)",
+      "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, persons(id, name)",
     )
     .eq("user_id", userId)
     .order("display_date", { ascending: false })
@@ -198,24 +325,14 @@ async function fetchTimelineItems(userId: string) {
     throw error;
   }
 
-  return ((data ?? []) as EventRow[]).map((event) => ({
-    id: event.id,
-    title: event.title?.trim() || fallbackMemoryTitle(event.content),
-    content: event.content,
-    reason: event.reason,
-    imageUrl: parseImageUrls(event.image_urls)[0] ?? null,
-    displayDate: event.display_date,
-    personName: getPersonName(event.persons),
-    createdAt: event.created_at,
-    personId: getPersonId(event.persons),
-  }));
+  return ((data ?? []) as EventRow[]).map((event) => mapEventRowToTimelineEntry(event));
 }
 
 async function fetchTimelineItemDetail(userId: string, eventId: string) {
   const { data, error } = await supabase
     .from("events")
     .select(
-      "id, title, content, reason, image_urls, display_date, created_at, person_id, persons(id, name)",
+      "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
     )
     .eq("user_id", userId)
     .eq("id", eventId)
@@ -227,17 +344,21 @@ async function fetchTimelineItemDetail(userId: string, eventId: string) {
 
   const event = data as DetailEventRow;
 
-  return {
-    id: event.id,
-    title: event.title?.trim() || fallbackMemoryTitle(event.content),
-    content: event.content,
-    reason: event.reason,
-    imageUrl: parseImageUrls(event.image_urls)[0] ?? null,
-    displayDate: event.display_date,
-    createdAt: event.created_at,
-    personId: event.person_id,
-    personName: getPersonName(event.persons),
-  };
+  return mapDetailRowToTimelineEntry(event);
+}
+
+async function fetchProfile(userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, display_name, avatar_url")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as ProfileRow | null) ?? null;
 }
 
 export default function HomePage() {
@@ -255,6 +376,17 @@ export default function HomePage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [profileExists, setProfileExists] = useState(false);
+  const [profileDisplayName, setProfileDisplayName] = useState("");
+  const [profileSavedDisplayName, setProfileSavedDisplayName] = useState("");
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileUploading, setProfileUploading] = useState(false);
+  const [profileSelectedImageName, setProfileSelectedImageName] = useState("");
+  const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState<string | null>(null);
+  const [profilePendingAvatarFile, setProfilePendingAvatarFile] = useState<File | null>(null);
+  const [profileAvatarRemoved, setProfileAvatarRemoved] = useState(false);
   const [people, setPeople] = useState<QuickEntryPerson[]>([]);
   const [selectedPersonId, setSelectedPersonId] = useState("");
   const [content, setContent] = useState("");
@@ -277,8 +409,11 @@ export default function HomePage() {
   const [detailSaving, setDetailSaving] = useState(false);
   const [detailDeleting, setDetailDeleting] = useState(false);
   const [detailUploading, setDetailUploading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [detailConfirmingDelete, setDetailConfirmingDelete] = useState(false);
   const [detailMessage, setDetailMessage] = useState("");
+  const [detailTitle, setDetailTitle] = useState("");
+  const [detailTitleTouched, setDetailTitleTouched] = useState(false);
   const [detailContent, setDetailContent] = useState("");
   const [detailReason, setDetailReason] = useState("");
   const [detailDisplayDate, setDetailDisplayDate] = useState(todayString);
@@ -286,6 +421,7 @@ export default function HomePage() {
   const [detailImagePreviewUrl, setDetailImagePreviewUrl] = useState<string | null>(null);
   const [detailSelectedImageName, setDetailSelectedImageName] = useState("");
   const [detailUploadedImageUrl, setDetailUploadedImageUrl] = useState<string | null>(null);
+  const detailInsightRetryRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -397,6 +533,8 @@ export default function HomePage() {
   useEffect(() => {
     async function syncPeople() {
       if (!session?.user.id) {
+        setPeople([]);
+        setSelectedPersonId("");
         return;
       }
 
@@ -423,6 +561,54 @@ export default function HomePage() {
   }, [session?.user.id]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function syncProfile() {
+      if (!session?.user.id) {
+        resetProfileState();
+        return;
+      }
+
+      try {
+        const nextProfile = await fetchProfile(session.user.id);
+
+        if (cancelled) {
+          return;
+        }
+
+        const fallbackName = pickInitialPerson(people)?.name ?? "";
+        const nextDisplayName = nextProfile?.display_name?.trim() || fallbackName;
+
+        clearProfilePendingAvatar();
+        setProfileExists(Boolean(nextProfile));
+        setProfileSavedDisplayName(nextProfile?.display_name?.trim() ?? "");
+        setProfileDisplayName(nextDisplayName);
+        setProfileAvatarUrl(nextProfile?.avatar_url ?? null);
+        setProfileAvatarRemoved(false);
+        setProfileEditing(false);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setProfileExists(false);
+        setProfileSavedDisplayName("");
+        setProfileDisplayName(pickInitialPerson(people)?.name ?? "");
+        setProfileAvatarUrl(null);
+        setProfileAvatarRemoved(false);
+        setProfileEditing(false);
+        setMessage(toHumanErrorMessage(error, copy.unknownError));
+      }
+    }
+
+    syncProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [people, session?.user.id]);
+
+  useEffect(() => {
     async function syncEvents() {
       if (!session?.user.id) {
         setTimelineItems([]);
@@ -432,7 +618,7 @@ export default function HomePage() {
       try {
         setTimelineItems(await fetchTimelineItems(session.user.id));
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : copy.unknownError);
+        setMessage(toHumanErrorMessage(error, copy.unknownError));
       }
     }
 
@@ -440,30 +626,72 @@ export default function HomePage() {
   }, [session?.user.id]);
 
   useEffect(() => {
+    if (!selectedTimelineEventId) {
+      return;
+    }
+
+    const cachedDetail = timelineItems.find(
+      (item) => item.id === selectedTimelineEventId,
+    );
+
+    if (!cachedDetail) {
+      return;
+    }
+
+    setTimelineDetail((current) => {
+      if (current?.id === cachedDetail.id) {
+        return current;
+      }
+
+      return cachedDetail;
+    });
+    restoreDetailForm(cachedDetail);
+  }, [selectedTimelineEventId, timelineItems]);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function syncTimelineDetail() {
       if (!session?.user.id || !selectedTimelineEventId) {
         setTimelineDetail(null);
         setDetailEditing(false);
         setDetailMessage("");
+        setDetailLoading(false);
         return;
       }
 
+      setDetailLoading(true);
       try {
         const nextDetail = await fetchTimelineItemDetail(
           session.user.id,
           selectedTimelineEventId,
         );
 
+        if (cancelled) {
+          return;
+        }
+
         setTimelineDetail(nextDetail);
         restoreDetailForm(nextDetail);
         setDetailMessage("");
+        setDetailLoading(false);
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         setTimelineDetail(null);
-        setDetailMessage(error instanceof Error ? error.message : copy.unknownError);
+        setDetailMessage(toHumanErrorMessage(error, copy.unknownError));
+        setDetailLoading(false);
       }
     }
 
     syncTimelineDetail();
+
+    return () => {
+      cancelled = true;
+      setDetailLoading(false);
+    };
   }, [selectedTimelineEventId, session?.user.id]);
 
   useEffect(() => {
@@ -483,6 +711,14 @@ export default function HomePage() {
   }, [detailImagePreviewUrl]);
 
   useEffect(() => {
+    return () => {
+      if (profileImagePreviewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(profileImagePreviewUrl);
+      }
+    };
+  }, [profileImagePreviewUrl]);
+
+  useEffect(() => {
     if (retryAfterSeconds <= 0) {
       return;
     }
@@ -498,6 +734,250 @@ export default function HomePage() {
     setSummaryReport(null);
     setInsightMessage("");
   }, [timelinePersonId, timelineRange, customStartDate, customEndDate]);
+
+  // Title is generated after a successful save, not while typing.
+
+  function getSelectedPersonName(personId: string) {
+    return people.find((person) => person.id === personId)?.name ?? "自己";
+  }
+
+  function applyInsightToLocalState(
+    eventId: string,
+    status: EventInsightStatus,
+    report: EventInsightReport | null,
+  ) {
+    setTimelineItems((items) =>
+      items.map((item) =>
+        item.id === eventId
+          ? {
+              ...item,
+              aiInsightStatus: status,
+              aiInsight: report,
+              aiInsightNeedsRefresh: false,
+            }
+          : item,
+      ),
+    );
+    setTimelineDetail((current) =>
+      current?.id === eventId
+        ? {
+            ...current,
+            aiInsightStatus: status,
+            aiInsight: report,
+            aiInsightNeedsRefresh: false,
+          }
+        : current,
+    );
+  }
+
+  function applyTitleToLocalState(eventId: string, nextTitle: string) {
+    const titleValue = nextTitle.trim();
+    if (!titleValue) {
+      return;
+    }
+
+    setTimelineItems((items) =>
+      items.map((item) => (item.id === eventId ? { ...item, title: titleValue } : item)),
+    );
+    setTimelineDetail((current) =>
+      current?.id === eventId ? { ...current, title: titleValue } : current,
+    );
+
+    // Keep the next edit session in sync if the detail view is already open.
+    if (
+      selectedTimelineEventId === eventId &&
+      !detailEditing &&
+      !detailTitleTouched
+    ) {
+      setDetailTitle(titleValue);
+      setDetailTitleTouched(false);
+    }
+  }
+
+  async function backfillMemoryTitle(params: {
+    eventId: string;
+    userId: string;
+    content: string;
+    reason: string;
+    displayDate: string;
+  }) {
+    try {
+      const [generatedTitle] = await generateMemoryTitles([
+        {
+          content: params.content,
+          reason: params.reason,
+          time: params.displayDate,
+        },
+      ]);
+
+      const titleValue = (generatedTitle ?? "").trim();
+      if (!titleValue) {
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("events")
+        .update({ title: titleValue })
+        .eq("id", params.eventId)
+        .eq("user_id", params.userId)
+        .or("title.is.null,title.eq.\"\"")
+        .select("id, title")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      const updatedTitle =
+        data && typeof data === "object" && "title" in data ? String((data as any).title) : "";
+
+      if (!updatedTitle.trim()) {
+        return;
+      }
+
+      applyTitleToLocalState(params.eventId, updatedTitle);
+    } catch {
+      // Fire-and-forget: title backfill should never block the primary save path.
+    }
+  }
+
+  async function requestEventInsightReport(input: {
+    content: string;
+    reason: string;
+    displayDate: string;
+    personName: string;
+  }) {
+    const response = await fetch("/api/event-insight", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        typeof payload?.error === "string" ? payload.error : copy.insightFailed,
+      );
+    }
+
+    return normalizeEventInsightResult(payload);
+  }
+
+  async function persistEventInsightState(params: {
+    eventId: string;
+    userId: string;
+    status: EventInsightStatus;
+    report: EventInsightReport | null;
+  }) {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        ai_insight_status: params.status,
+        ai_insight_payload: params.report,
+      })
+      .eq("id", params.eventId)
+      .eq("user_id", params.userId);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function backfillEventInsight(params: {
+    eventId: string;
+    userId: string;
+    content: string;
+    reason: string;
+    displayDate: string;
+    personName: string;
+  }) {
+    try {
+      const report = await requestEventInsightReport({
+        content: params.content,
+        reason: params.reason,
+        displayDate: params.displayDate,
+        personName: params.personName,
+      });
+
+      await persistEventInsightState({
+        eventId: params.eventId,
+        userId: params.userId,
+        status: "ready",
+        report,
+      });
+      applyInsightToLocalState(params.eventId, "ready", report);
+      return report;
+    } catch {
+      try {
+        await persistEventInsightState({
+          eventId: params.eventId,
+          userId: params.userId,
+          status: "failed",
+          report: null,
+        });
+      } catch {
+        // Keep the page responsive even if persisting the failure state does not succeed.
+      }
+      applyInsightToLocalState(params.eventId, "failed", null);
+      return null;
+    }
+  }
+
+  async function handleRetryInsight() {
+    if (!session?.user.id || !timelineDetail) {
+      return;
+    }
+
+    setDetailMessage("");
+    applyInsightToLocalState(timelineDetail.id, "pending", null);
+    detailInsightRetryRef.current.add(timelineDetail.id);
+    try {
+      await persistEventInsightState({
+        eventId: timelineDetail.id,
+        userId: session.user.id,
+        status: "pending",
+        report: null,
+      });
+    } catch {
+      // Showing local pending state is better than blocking the retry path.
+    }
+
+    const report = await backfillEventInsight({
+      eventId: timelineDetail.id,
+      userId: session.user.id,
+      content: detailContent.trim() || timelineDetail.content,
+      reason: detailReason.trim() || timelineDetail.reason || "",
+      displayDate: detailDisplayDate || timelineDetail.displayDate,
+      personName: getSelectedPersonName(detailPersonId || timelineDetail.personId),
+    });
+
+    if (!report) {
+      setDetailMessage(copy.insightFailed);
+    }
+  }
+
+  useEffect(() => {
+    if (!session?.user.id || !timelineDetail || detailEditing) {
+      return;
+    }
+
+    if (
+      timelineDetail.aiInsightStatus === "ready" &&
+      !timelineDetail.aiInsightNeedsRefresh
+    ) {
+      return;
+    }
+
+    if (detailInsightRetryRef.current.has(timelineDetail.id)) {
+      return;
+    }
+
+    detailInsightRetryRef.current.add(timelineDetail.id);
+    void handleRetryInsight();
+  }, [detailEditing, session?.user.id, timelineDetail]);
 
   function syncHomeLocation(tab: HomeTab, eventId = "", replace = false) {
     if (typeof window === "undefined") {
@@ -521,11 +1001,53 @@ export default function HomePage() {
     window.history.pushState({}, "", nextUrl);
   }
 
+  function clearProfilePendingAvatar() {
+    if (profileImagePreviewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(profileImagePreviewUrl);
+    }
+
+    setProfileImagePreviewUrl(null);
+    setProfilePendingAvatarFile(null);
+    setProfileSelectedImageName("");
+  }
+
+  function resetProfileState() {
+    clearProfilePendingAvatar();
+    setProfileExists(false);
+    setProfileDisplayName("");
+    setProfileSavedDisplayName("");
+    setProfileAvatarUrl(null);
+    setProfileAvatarRemoved(false);
+    setProfileEditing(false);
+    setProfileSaving(false);
+    setProfileUploading(false);
+  }
+
+  function syncDefaultPersonNameLocally(defaultPersonId: string, nextName: string) {
+    setPeople((current) =>
+      current.map((person) =>
+        person.id === defaultPersonId ? { ...person, name: nextName } : person,
+      ),
+    );
+    setTimelineItems((current) =>
+      current.map((item) =>
+        item.personId === defaultPersonId ? { ...item, personName: nextName } : item,
+      ),
+    );
+    setTimelineDetail((current) =>
+      current && current.personId === defaultPersonId
+        ? { ...current, personName: nextName }
+        : current,
+    );
+  }
+
   function restoreDetailForm(nextDetail: TimelineEntry | null) {
     if (!nextDetail) {
       return;
     }
 
+    setDetailTitle((nextDetail.title ?? "").trim());
+    setDetailTitleTouched(false);
     setDetailContent(nextDetail.content);
     setDetailReason(nextDetail.reason ?? "");
     setDetailDisplayDate(nextDetail.displayDate);
@@ -669,7 +1191,7 @@ export default function HomePage() {
       setUploadedImageUrl(publicUrl);
       setMessage(copy.imageReady);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.uploadFailed);
+      setMessage(toHumanErrorMessage(error, copy.uploadFailed));
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -709,7 +1231,7 @@ export default function HomePage() {
       setDetailUploadedImageUrl(publicUrl);
       setDetailMessage(copy.imageReady);
     } catch (error) {
-      setDetailMessage(error instanceof Error ? error.message : copy.uploadFailed);
+      setDetailMessage(toHumanErrorMessage(error, copy.uploadFailed));
     } finally {
       setDetailUploading(false);
       event.target.value = "";
@@ -725,6 +1247,128 @@ export default function HomePage() {
     setDetailUploadedImageUrl(null);
     setDetailSelectedImageName("");
     setDetailMessage("");
+  }
+
+  function handleProfileDisplayNameChange(value: string) {
+    setProfileDisplayName(value);
+  }
+
+  function handleProfileAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    clearProfilePendingAvatar();
+    setProfilePendingAvatarFile(file);
+    setProfileSelectedImageName(file.name);
+    setProfileImagePreviewUrl(URL.createObjectURL(file));
+    setProfileAvatarRemoved(false);
+    setMessage(copy.profileAvatarReady);
+    event.target.value = "";
+  }
+
+  function handleProfileRemoveAvatar() {
+    clearProfilePendingAvatar();
+    setProfileAvatarRemoved(true);
+    setMessage(copy.profileAvatarRemoved);
+  }
+
+  async function handleSaveProfile() {
+    if (!session?.user.id) {
+      setMessage(copy.unknownError);
+      return;
+    }
+
+    const nextDisplayName = profileDisplayName.trim();
+
+    if (!nextDisplayName) {
+      setMessage(copy.profileNameRequired);
+      return;
+    }
+
+    const defaultPerson = pickInitialPerson(people);
+
+    if (!defaultPerson) {
+      setMessage(copy.emptyPeople);
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileUploading(Boolean(profilePendingAvatarFile));
+    setMessage("");
+
+    const previousProfile = {
+      exists: profileExists,
+      displayName: profileSavedDisplayName,
+      avatarUrl: profileAvatarUrl,
+    };
+
+    let nextAvatarUrl = profileAvatarRemoved ? null : profileAvatarUrl;
+
+    try {
+      if (profilePendingAvatarFile) {
+        const { publicUrl } = await uploadImageToStorage({
+          storage: supabase.storage,
+          bucket: imageBucket,
+          userId: session.user.id,
+          file: profilePendingAvatarFile,
+          pathPrefix: profileImagePathPrefix,
+        });
+        nextAvatarUrl = publicUrl;
+      }
+
+      const { error: profileError } = await supabase.from("profiles").upsert(
+        {
+          user_id: session.user.id,
+          display_name: nextDisplayName,
+          avatar_url: nextAvatarUrl,
+        },
+        { onConflict: "user_id" },
+      );
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      const { error: personError } = await supabase
+        .from("persons")
+        .update({ name: nextDisplayName })
+        .match({ id: defaultPerson.id, user_id: session.user.id });
+
+      if (personError) {
+        if (previousProfile.exists) {
+          await supabase.from("profiles").upsert(
+            {
+              user_id: session.user.id,
+              display_name: previousProfile.displayName,
+              avatar_url: previousProfile.avatarUrl,
+            },
+            { onConflict: "user_id" },
+          );
+        } else {
+          await supabase.from("profiles").delete().match({ user_id: session.user.id });
+        }
+
+        throw personError;
+      }
+
+      setProfileExists(true);
+      setProfileSavedDisplayName(nextDisplayName);
+      setProfileDisplayName(nextDisplayName);
+      setProfileAvatarUrl(nextAvatarUrl);
+      setProfileAvatarRemoved(false);
+      setProfileEditing(false);
+      clearProfilePendingAvatar();
+      syncDefaultPersonNameLocally(defaultPerson.id, nextDisplayName);
+      setMessage(copy.profileSaveSuccess);
+    } catch (error) {
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
+    } finally {
+      setProfileSaving(false);
+      setProfileUploading(false);
+    }
   }
 
   async function handleCreatePerson(name: string) {
@@ -827,7 +1471,7 @@ export default function HomePage() {
     try {
       setTimelineItems(await fetchTimelineItems(session.user.id));
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.unknownError);
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
     }
     setMessage(
       `${
@@ -859,14 +1503,6 @@ export default function HomePage() {
     setMessage("");
 
     try {
-      const [generatedTitle] = await generateMemoryTitles([
-        {
-          content,
-          reason,
-          time: displayDate,
-        },
-      ]);
-
       const payload = buildEventPayload({
         userId: session.user.id,
         personId: selectedPersonId,
@@ -876,22 +1512,70 @@ export default function HomePage() {
         displayDate,
       });
 
-      const { error } = await supabase
+      const selectedPersonName = getSelectedPersonName(selectedPersonId);
+      const { data, error } = await supabase
         .from("events")
-        .insert({ ...payload, title: generatedTitle || fallbackMemoryTitle(content) });
+        .insert({
+          ...payload,
+          ai_insight_status: "pending",
+          ai_insight_payload: null,
+        })
+        .select("id")
+        .single();
 
       if (error) {
         throw error;
       }
+
+      const insertedEventId = (data as { id?: string } | null)?.id ?? "";
 
       handleCancel();
       setMessage(copy.saveSuccess);
       setActiveTab("timeline");
       syncHomeLocation("timeline", "", true);
 
-      setTimelineItems(await fetchTimelineItems(session.user.id));
+      if (insertedEventId) {
+        const optimisticEntry: TimelineEntry = {
+          id: insertedEventId,
+          title: null,
+          content: payload.content,
+          reason: payload.reason,
+          imageUrl: uploadedImageUrl,
+          displayDate: payload.display_date,
+          createdAt: new Date().toISOString(),
+          personId: payload.person_id,
+          personName: selectedPersonName,
+          aiInsightStatus: "pending",
+          aiInsight: null,
+          aiInsightNeedsRefresh: false,
+        };
+
+        setTimelineItems((current) => [optimisticEntry, ...current]);
+        void fetchTimelineItems(session.user.id)
+          .then((items) => setTimelineItems(items))
+          .catch((nextError) => setMessage(toHumanErrorMessage(nextError, copy.unknownError)));
+
+        void backfillMemoryTitle({
+          eventId: insertedEventId,
+          userId: session.user.id,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+        });
+
+        applyInsightToLocalState(insertedEventId, "pending", null);
+        detailInsightRetryRef.current.add(insertedEventId);
+        void backfillEventInsight({
+          eventId: insertedEventId,
+          userId: session.user.id,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+          personName: selectedPersonName,
+        });
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : copy.unknownError);
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setSaving(false);
       setUploading(false);
@@ -920,14 +1604,6 @@ export default function HomePage() {
     setDetailMessage("");
 
     try {
-      const [generatedTitle] = await generateMemoryTitles([
-        {
-          content: detailContent,
-          reason: detailReason,
-          time: detailDisplayDate,
-        },
-      ]);
-
       const payload = buildEventPayload({
         userId: session.user.id,
         personId: detailPersonId,
@@ -936,21 +1612,37 @@ export default function HomePage() {
         imageUrls: detailUploadedImageUrl ? [detailUploadedImageUrl] : [],
         displayDate: detailDisplayDate,
       });
+      const detailNeedsInsightRefresh =
+        timelineDetail.content !== payload.content ||
+        (timelineDetail.reason ?? "") !== (payload.reason ?? "") ||
+        timelineDetail.displayDate !== payload.display_date ||
+        timelineDetail.personId !== payload.person_id;
+
+      const updatePayload: Record<string, unknown> = {
+        person_id: payload.person_id,
+        content: payload.content,
+        reason: payload.reason,
+        image_urls: payload.image_urls ?? serializeImageUrls([]),
+        display_date: payload.display_date,
+      };
+
+      if (detailNeedsInsightRefresh) {
+        updatePayload.ai_insight_status = "pending";
+        updatePayload.ai_insight_payload = null;
+      }
+
+      if (detailTitleTouched) {
+        const trimmedTitle = detailTitle.trim();
+        updatePayload.title = trimmedTitle ? trimmedTitle : null;
+      }
 
       const { data, error } = await supabase
         .from("events")
-        .update({
-          person_id: payload.person_id,
-          title: generatedTitle || fallbackMemoryTitle(detailContent),
-          content: payload.content,
-          reason: payload.reason,
-          image_urls: payload.image_urls ?? serializeImageUrls([]),
-          display_date: payload.display_date,
-        })
+        .update(updatePayload)
         .eq("id", timelineDetail.id)
         .eq("user_id", session.user.id)
         .select(
-          "id, title, content, reason, image_urls, display_date, created_at, person_id, persons(id, name)",
+          "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
         )
         .single();
 
@@ -959,26 +1651,54 @@ export default function HomePage() {
       }
 
       const nextDetailRow = data as DetailEventRow;
-      const nextDetail = {
-        id: nextDetailRow.id,
-        title: nextDetailRow.title?.trim() || fallbackMemoryTitle(nextDetailRow.content),
-        content: nextDetailRow.content,
-        reason: nextDetailRow.reason,
-        imageUrl: parseImageUrls(nextDetailRow.image_urls)[0] ?? null,
-        displayDate: nextDetailRow.display_date,
-        createdAt: nextDetailRow.created_at,
-        personId: nextDetailRow.person_id,
-        personName: getPersonName(nextDetailRow.persons),
-      };
+      const nextDetail = mapDetailRowToTimelineEntry(nextDetailRow);
 
       setTimelineDetail(nextDetail);
       restoreDetailForm(nextDetail);
-      setTimelineItems(await fetchTimelineItems(session.user.id));
+      setTimelineItems((current) =>
+        current.map((item) =>
+          item.id === nextDetail.id
+            ? {
+                ...item,
+                title: nextDetail.title,
+                content: nextDetail.content,
+                reason: nextDetail.reason,
+                imageUrl: nextDetail.imageUrl,
+                displayDate: nextDetail.displayDate,
+                personId: nextDetail.personId,
+                personName: nextDetail.personName,
+              }
+            : item,
+        ),
+      );
       setDetailEditing(false);
       setDetailConfirmingDelete(false);
       setDetailMessage(copy.saveSuccess);
+
+      if (detailNeedsInsightRefresh) {
+        applyInsightToLocalState(nextDetail.id, "pending", null);
+        detailInsightRetryRef.current.add(nextDetail.id);
+        void backfillEventInsight({
+          eventId: nextDetail.id,
+          userId: session.user.id,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+          personName: getSelectedPersonName(payload.person_id),
+        });
+      }
+
+      if (!detailTitleTouched && !(nextDetail.title ?? "").trim()) {
+        void backfillMemoryTitle({
+          eventId: nextDetail.id,
+          userId: session.user.id,
+          content: payload.content,
+          reason: payload.reason ?? "",
+          displayDate: payload.display_date,
+        });
+      }
     } catch (error) {
-      setDetailMessage(error instanceof Error ? error.message : copy.unknownError);
+      setDetailMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setDetailSaving(false);
       setDetailUploading(false);
@@ -1008,7 +1728,7 @@ export default function HomePage() {
       setMessage("这件小美好已从时间线中轻轻放下。");
       handleCloseTimelineDetail();
     } catch (error) {
-      setDetailMessage(error instanceof Error ? error.message : copy.unknownError);
+      setDetailMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setDetailDeleting(false);
     }
@@ -1018,7 +1738,42 @@ export default function HomePage() {
     await supabase.auth.signOut();
     setPeople([]);
     setSelectedPersonId("");
+    resetProfileState();
     handleCancel();
+  }
+
+  async function handleRefreshApp() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setMessage("当前离线，刷新更新需要网络连接。");
+      return;
+    }
+
+    setMessage("正在刷新更新...");
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map((registration) => registration.unregister()),
+        );
+      }
+
+      if (typeof caches !== "undefined") {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+      }
+    } catch {
+      // Ignore cleanup failures and still attempt a hard reload.
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("__refresh", String(Date.now()));
+    clearUpdateAvailableBuildId();
+    window.location.replace(url.toString());
   }
 
   function handleCancel() {
@@ -1042,6 +1797,7 @@ export default function HomePage() {
       setTimelineDetail(null);
       setDetailEditing(false);
       setDetailMessage("");
+      setDetailLoading(false);
       setDetailImagePreviewUrl(null);
       setDetailConfirmingDelete(false);
       syncHomeLocation(nextTab, "", true);
@@ -1052,8 +1808,13 @@ export default function HomePage() {
   }
 
   function handleOpenTimelineDetail(eventId: string) {
+    const cachedDetail = timelineItems.find((item) => item.id === eventId) ?? null;
+
     setActiveTab("timeline");
     setSelectedTimelineEventId(eventId);
+    setDetailLoading(true);
+    setTimelineDetail(cachedDetail);
+    restoreDetailForm(cachedDetail);
     setDetailEditing(false);
     setDetailMessage("");
     syncHomeLocation("timeline", eventId);
@@ -1064,6 +1825,7 @@ export default function HomePage() {
     setTimelineDetail(null);
     setDetailEditing(false);
     setDetailMessage("");
+    setDetailLoading(false);
     setDetailImagePreviewUrl(null);
     setDetailSelectedImageName("");
     setDetailUploadedImageUrl(null);
@@ -1131,7 +1893,7 @@ export default function HomePage() {
 
       setSummaryReport(data as SummaryReport);
     } catch (error) {
-      setInsightMessage(error instanceof Error ? error.message : copy.unknownError);
+      setInsightMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setInsightLoading(false);
     }
@@ -1154,15 +1916,12 @@ export default function HomePage() {
     ...people.map((person) => ({ id: person.id, label: person.name })),
   ];
   const timelineDetailDraft = timelineDetail
-    ? {
-        ...timelineDetail,
-        title:
-          timelineItems.find((item) => item.id === timelineDetail.id)?.title ??
-          timelineDetail.title ??
-          fallbackMemoryTitle(timelineDetail.content),
-        content: detailContent,
-        reason: detailReason,
-        displayDate: detailDisplayDate,
+      ? {
+          ...timelineDetail,
+          title: detailEditing ? detailTitle : timelineDetail.title,
+          content: detailContent,
+          reason: detailReason,
+          displayDate: detailDisplayDate,
         personId: detailPersonId || timelineDetail.personId,
         personName:
           people.find((person) => person.id === detailPersonId)?.name ??
@@ -1271,9 +2030,9 @@ export default function HomePage() {
               customEndDate={customEndDate}
               message={message}
               onMessageClear={() => setMessage("")}
-              topBarTitle={timelineDetailDraft ? "" : undefined}
+              topBarTitle={selectedTimelineEventId ? "" : undefined}
               topBarLeftSlot={
-                timelineDetailDraft ? (
+                selectedTimelineEventId ? (
                   <DetailTopBarBackButton onBack={handleCloseTimelineDetail} />
                 ) : undefined
               }
@@ -1304,15 +2063,25 @@ export default function HomePage() {
                     imagePreviewUrl={detailImagePreviewUrl}
                     onDeleteCancel={() => setDetailConfirmingDelete(false)}
                     onDeleteConfirm={handleDetailDelete}
+                    onTitleChange={(value) => {
+                      setDetailTitle(value);
+                      setDetailTitleTouched(true);
+                    }}
                     onContentChange={setDetailContent}
                     onReasonChange={setDetailReason}
                     onDateChange={setDetailDisplayDate}
                     onPersonChange={setDetailPersonId}
                     onImageChange={handleDetailImageChange}
                     onRemoveImage={handleDetailRemoveImage}
+                    onRetryInsight={handleRetryInsight}
                     onSave={handleDetailSave}
                     onCancelEdit={handleDetailCancelEdit}
                   />
+                ) : selectedTimelineEventId && detailLoading ? (
+                  <div className="joy-card flex items-center gap-3 rounded-[2rem] px-6 py-5 text-sm text-[var(--muted)]">
+                    <LoaderCircle className="size-4 animate-spin text-[var(--primary)]" />
+                    {"\u6b63\u5728\u52a0\u8f7d\u4e2d"}
+                  </div>
                 ) : undefined
               }
               onPersonChange={setTimelinePersonId}
@@ -1346,14 +2115,31 @@ export default function HomePage() {
               onTabChange={handleTimelineTabChange}
             />
           ) : (
-            <ProfileView
-              email={session.user.email ?? ""}
-              activeTab={activeTab}
-              message={message}
-              onMessageClear={() => setMessage("")}
-              onLogout={handleLogout}
-              onTabChange={handleTimelineTabChange}
-            />
+	            <ProfileView
+	              email={session.user.email ?? ""}
+	              displayName={profileDisplayName}
+	              avatarUrl={
+	                profileAvatarRemoved ? null : profileImagePreviewUrl ?? profileAvatarUrl
+	              }
+	              selectedImageName={profileSelectedImageName}
+	              activeTab={activeTab}
+	              message={message}
+	              editing={profileEditing}
+	              saving={profileSaving}
+	              uploading={profileUploading}
+	              onMessageClear={() => setMessage("")}
+	              onRefreshApp={handleRefreshApp}
+	              onLogout={handleLogout}
+	              onTabChange={handleTimelineTabChange}
+	              onEditProfile={() => {
+	                setProfileEditing(true);
+	                setMessage("");
+	              }}
+	              onDisplayNameChange={handleProfileDisplayNameChange}
+	              onAvatarSelect={handleProfileAvatarChange}
+	              onAvatarRemove={handleProfileRemoveAvatar}
+	              onSaveProfile={handleSaveProfile}
+	            />
           )}
         </div>
       </div>
