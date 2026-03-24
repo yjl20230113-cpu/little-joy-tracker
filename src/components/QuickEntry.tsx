@@ -19,6 +19,7 @@ import { AppBottomNav } from "./AppBottomNav";
 import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 import { normalizePersonName } from "../lib/app-logic";
+import { getSubmitActionState } from "../lib/image-upload";
 
 export type QuickEntryPerson = {
   id: string;
@@ -148,6 +149,13 @@ export function QuickEntry({
     content.trim() || reason.trim() || imagePreviewUrl || selectedImageName,
   );
   const hasImage = Boolean(imagePreviewUrl || selectedImageName);
+  const submitAction = getSubmitActionState({
+    saving,
+    uploading,
+    idleLabel: copy.publish,
+    savingLabel: copy.publishing,
+    uploadingLabel: copy.uploading,
+  });
 
   async function handleCreatePerson() {
     const trimmedName = newPersonName.trim();
@@ -423,21 +431,21 @@ export function QuickEntry({
             onChange={onDateChange}
             align="center"
             buttonLabel=""
-            buttonClassName="px-3 py-2 text-[0.82rem] font-medium shadow-none"
+            buttonClassName="px-3 py-2 text-[0.76rem] font-medium shadow-none"
           />
 
           <div className="flex min-w-0 items-center justify-end">
             <button
               type="submit"
-              disabled={saving || uploading}
+              disabled={submitAction.disabled}
               className="joy-topbar-button joy-topbar-button--primary shrink-0"
             >
-              {saving || uploading ? (
+              {submitAction.disabled ? (
                 <LoaderCircle className="size-4 animate-spin" />
               ) : (
                 <CheckCircle2 className="size-4" />
               )}
-              {saving || uploading ? copy.publishing : copy.publish}
+              {submitAction.label}
             </button>
           </div>
         </div>

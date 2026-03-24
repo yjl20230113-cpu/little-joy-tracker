@@ -14,6 +14,7 @@ import { AppDatePicker } from "./AppDatePicker";
 import { AppToast } from "./AppToast";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
 import { formatDetailTimestamp } from "../lib/app-logic";
+import { getSubmitActionState } from "../lib/image-upload";
 import { fallbackMemoryTitle } from "../lib/memory-title";
 
 type DetailPerson = {
@@ -121,6 +122,13 @@ export function EventDetailPanel({
   const headline = event.title?.trim() || fallbackMemoryTitle(event.content);
   const currentImageUrl = imagePreviewUrl ?? event.imageUrl;
   const hasImage = Boolean(currentImageUrl);
+  const submitAction = getSubmitActionState({
+    saving,
+    uploading,
+    idleLabel: copy.save,
+    savingLabel: copy.saving,
+    uploadingLabel: copy.uploading,
+  });
 
   async function handleDeleteConfirm() {
     await onDeleteConfirm();
@@ -267,7 +275,7 @@ export function EventDetailPanel({
                 onChange={onDateChange}
                 align="center"
                 buttonLabel=""
-                buttonClassName="px-3 py-2 text-[0.82rem] font-medium shadow-none"
+                buttonClassName="px-3 py-2 text-[0.76rem] font-medium shadow-none"
               />
             </div>
 
@@ -308,15 +316,15 @@ export function EventDetailPanel({
               <button
                 type="submit"
                 data-testid="detail-editor-save"
-                disabled={saving || uploading}
+                disabled={submitAction.disabled}
                 className="joy-topbar-button joy-topbar-button--primary"
               >
-                {saving || uploading ? (
+                {submitAction.disabled ? (
                   <LoaderCircle className="size-4 animate-spin" />
                 ) : (
                   <CheckCircle2 className="size-4" />
                 )}
-                {saving || uploading ? copy.saving : copy.save}
+                {submitAction.label}
               </button>
             </div>
           </form>

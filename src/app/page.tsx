@@ -39,6 +39,7 @@ import {
 } from "@/lib/app-logic";
 import { generateMemoryTitles } from "@/lib/memory-title-client";
 import { fallbackMemoryTitle } from "@/lib/memory-title";
+import { uploadImageToStorage } from "@/lib/image-upload";
 import { supabase } from "@/lib/supabase";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -656,16 +657,21 @@ export default function HomePage() {
     setUploadedImageUrl(null);
     setImagePreviewUrl(localPreviewUrl);
     setMessage(copy.imageUploading);
+    setUploading(true);
 
     try {
-      const publicUrl = await uploadImage(session.user.id, file, setUploading);
-      URL.revokeObjectURL(localPreviewUrl);
+      const { publicUrl } = await uploadImageToStorage({
+        storage: supabase.storage,
+        bucket: imageBucket,
+        userId: session.user.id,
+        file,
+      });
       setUploadedImageUrl(publicUrl);
-      setImagePreviewUrl(publicUrl);
       setMessage(copy.imageReady);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : copy.uploadFailed);
     } finally {
+      setUploading(false);
       event.target.value = "";
     }
   }
@@ -691,16 +697,21 @@ export default function HomePage() {
     setDetailUploadedImageUrl(null);
     setDetailImagePreviewUrl(localPreviewUrl);
     setDetailMessage(copy.imageUploading);
+    setDetailUploading(true);
 
     try {
-      const publicUrl = await uploadImage(session.user.id, file, setDetailUploading);
-      URL.revokeObjectURL(localPreviewUrl);
+      const { publicUrl } = await uploadImageToStorage({
+        storage: supabase.storage,
+        bucket: imageBucket,
+        userId: session.user.id,
+        file,
+      });
       setDetailUploadedImageUrl(publicUrl);
-      setDetailImagePreviewUrl(publicUrl);
       setDetailMessage(copy.imageReady);
     } catch (error) {
       setDetailMessage(error instanceof Error ? error.message : copy.uploadFailed);
     } finally {
+      setDetailUploading(false);
       event.target.value = "";
     }
   }
@@ -714,31 +725,6 @@ export default function HomePage() {
     setDetailUploadedImageUrl(null);
     setDetailSelectedImageName("");
     setDetailMessage("");
-  }
-
-  async function uploadImage(
-    userId: string,
-    file: File,
-    setLoading: (value: boolean) => void,
-  ) {
-    setLoading(true);
-
-    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "-");
-    const filePath = `${userId}/${Date.now()}-${safeName}.${extension}`;
-
-    const { error } = await supabase.storage
-      .from(imageBucket)
-      .upload(filePath, file, { upsert: false });
-
-    if (error) {
-      setLoading(false);
-      throw new Error(copy.uploadFailed);
-    }
-
-    const { data } = supabase.storage.from(imageBucket).getPublicUrl(filePath);
-    setLoading(false);
-    return data.publicUrl;
   }
 
   async function handleCreatePerson(name: string) {
@@ -859,7 +845,12 @@ export default function HomePage() {
       return;
     }
 
-    if (uploading) {
+    if (
+      uploading ||
+      (Boolean(selectedImageName) &&
+        imagePreviewUrl?.startsWith("blob:") &&
+        !uploadedImageUrl)
+    ) {
       setMessage(copy.uploadPending);
       return;
     }
@@ -915,7 +906,12 @@ export default function HomePage() {
       return;
     }
 
-    if (detailUploading) {
+    if (
+      detailUploading ||
+      (Boolean(detailSelectedImageName) &&
+        detailImagePreviewUrl?.startsWith("blob:") &&
+        !detailUploadedImageUrl)
+    ) {
       setDetailMessage(copy.uploadPending);
       return;
     }

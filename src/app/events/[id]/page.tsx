@@ -15,6 +15,7 @@ import {
   type PersonOption,
   type TimelineEntry,
 } from "@/lib/app-logic";
+import { uploadImageToStorage } from "@/lib/image-upload";
 import { generateMemoryTitles } from "@/lib/memory-title-client";
 import { fallbackMemoryTitle } from "@/lib/memory-title";
 import { supabase } from "@/lib/supabase";
@@ -190,27 +191,6 @@ export default function EventDetailPage() {
     };
   }, [imagePreviewUrl]);
 
-  async function uploadImage(file: File) {
-    setUploading(true);
-
-    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeName = file.name.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "-");
-    const filePath = `${userId}/${Date.now()}-${safeName}.${extension}`;
-
-    const { error } = await supabase.storage
-      .from(imageBucket)
-      .upload(filePath, file, { upsert: false });
-
-    if (error) {
-      setUploading(false);
-      throw new Error(copy.uploadFailed);
-    }
-
-    const { data } = supabase.storage.from(imageBucket).getPublicUrl(filePath);
-    setUploading(false);
-    return data.publicUrl;
-  }
-
   async function handleImageChange(eventChange: ChangeEvent<HTMLInputElement>) {
     const file = eventChange.target.files?.[0] ?? null;
 
@@ -227,16 +207,21 @@ export default function EventDetailPage() {
     setUploadedImageUrl(null);
     setImagePreviewUrl(localPreviewUrl);
     setMessage(copy.imageUploading);
+    setUploading(true);
 
     try {
-      const publicUrl = await uploadImage(file);
-      URL.revokeObjectURL(localPreviewUrl);
+      const { publicUrl } = await uploadImageToStorage({
+        storage: supabase.storage,
+        bucket: imageBucket,
+        userId,
+        file,
+      });
       setUploadedImageUrl(publicUrl);
-      setImagePreviewUrl(publicUrl);
       setMessage(copy.imageReady);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : copy.uploadFailed);
     } finally {
+      setUploading(false);
       eventChange.target.value = "";
     }
   }
@@ -273,7 +258,12 @@ export default function EventDetailPage() {
       return;
     }
 
-    if (uploading) {
+    if (
+      uploading ||
+      (Boolean(selectedImageName) &&
+        imagePreviewUrl?.startsWith("blob:") &&
+        !uploadedImageUrl)
+    ) {
       setMessage(copy.uploadPending);
       return;
     }

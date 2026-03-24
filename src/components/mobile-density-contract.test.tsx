@@ -78,9 +78,9 @@ describe("mobile density contract", () => {
     );
 
     expect(container.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass("px-2");
-    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("h-[3.85rem]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("h-[3.72rem]");
     expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("w-[90%]");
-    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("text-[0.66rem]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("text-[0.62rem]");
     expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("font-medium");
     expect(screen.getByRole("button", { name: "Daily Joy" })).toHaveClass("font-normal");
 

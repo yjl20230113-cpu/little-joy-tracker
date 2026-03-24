@@ -144,7 +144,7 @@ export function AppDatePicker({
           });
           setIsOpen((current) => !current);
         }}
-        className={`inline-flex w-full items-center justify-between gap-2 rounded-full bg-white px-3 py-2 text-[0.86rem] font-medium text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.22)] ${buttonClassName}`}
+        className={`inline-flex w-full items-center justify-between gap-2 rounded-full bg-white px-3 py-2 text-[0.78rem] font-medium text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.22)] ${buttonClassName}`}
       >
         <span className="inline-flex items-center gap-2">
           <CalendarDays className="size-[0.95rem]" />

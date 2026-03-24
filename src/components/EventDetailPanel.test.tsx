@@ -71,6 +71,19 @@ describe("EventDetailPanel", () => {
     expect(screen.getByTestId("detail-editor-cancel")).toBeInTheDocument();
   });
 
+  it("shows an upload-specific action label while a detail image is uploading", () => {
+    render(
+      <EventDetailPanel
+        {...baseProps}
+        editing
+        uploading
+      />,
+    );
+
+    expect(screen.getByTestId("detail-editor-save")).toHaveTextContent("正在处理图片...");
+    expect(screen.getByTestId("detail-editor-save")).toBeDisabled();
+  });
+
   it("hides the media block in read mode when there is no image", () => {
     const { container } = render(
       <EventDetailPanel

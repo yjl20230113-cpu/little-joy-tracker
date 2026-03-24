@@ -3,215 +3,120 @@ import { vi } from "vitest";
 import { QuickEntry } from "./QuickEntry";
 
 describe("QuickEntry", () => {
+  const baseProps = {
+    people: [{ id: "person-1", name: "Self", is_default: true }],
+    selectedPersonId: "person-1",
+    content: "",
+    reason: "",
+    displayDate: "2026-03-23",
+    saving: false,
+    uploading: false,
+    message: "",
+    selectedImageName: "",
+    imagePreviewUrl: null as string | null,
+    activeTab: "quick-entry" as const,
+    onPersonChange: () => {},
+    onTabChange: () => {},
+    onCreatePerson: async () => true,
+    onDeletePerson: async () => ({ ok: true }),
+    onContentChange: () => {},
+    onReasonChange: () => {},
+    onDateChange: () => {},
+    onImageChange: () => {},
+    onRemoveImage: () => {},
+    onSave: (event: React.FormEvent<HTMLFormElement>) => event.preventDefault(),
+    onCancel: () => {},
+  };
+
+  it("renders a compact top toolbar with person and date controls", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-23T08:00:00.000Z"));
+
+    const { container } = render(<QuickEntry {...baseProps} />);
+
+    expect(container.querySelector('[data-ui="quick-entry-toolbar"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="quick-entry-person-trigger"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="quick-entry-date"]')).toBeInTheDocument();
+    expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("今天 3-23");
+
+    vi.useRealTimers();
+  });
+
   it("opens a bottom action sheet for camera and gallery selection", () => {
     const { container } = render(
       <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
+        {...baseProps}
         content="walk together"
         reason="soft wind"
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message="已连接 Supabase"
+        message="Connected"
         selectedImageName="sunset.jpg"
         imagePreviewUrl="https://example.com/sunset.jpg"
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
       />,
     );
 
     expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("发生了什么？")).toHaveValue("walk together");
-    expect(screen.getByPlaceholderText("为什么觉得美好？")).toHaveValue("soft wind");
     expect(container.querySelector('[data-ui="app-topbar"]')).toBeInTheDocument();
     expect(container.querySelector('[data-ui="app-bottom-nav"]')).toBeInTheDocument();
     expect(container.querySelector(".joy-app-content")).toBeInTheDocument();
 
     fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
 
-    expect(screen.getByText("选择一种方式")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "从手机相册选择" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "移除当前照片" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "取消" }).at(-1)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /记录给：/ }));
-
-    expect(screen.getByText("新建人员")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "保存到小美好" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /拍照/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /相册/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /移除当前照片/i })).toBeInTheDocument();
   });
 
-  it("shows a sending state while uploading or saving", () => {
+  it("opens the lighter person menu from the top toolbar", () => {
+    const { container } = render(<QuickEntry {...baseProps} />);
+
+    fireEvent.click(container.querySelector('[data-ui="quick-entry-person-trigger"]') as Element);
+
+    expect(container.querySelector('[data-ui="quick-entry-person-menu"]')).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /创建/i })).toBeInTheDocument();
+  });
+
+  it("shows an upload-specific action label while the image is uploading", () => {
     const { container } = render(
       <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
+        {...baseProps}
         uploading
-        message=""
         selectedImageName="sunset.jpg"
         imagePreviewUrl="https://example.com/sunset.jpg"
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
       />,
     );
 
-    expect(screen.getByRole("button", { name: "发送中..." })).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: /正在处理图片/i }).at(-1),
+    ).toBeDisabled();
     expect(container.querySelector('[data-ui="quick-entry-media-trigger"]')).toBeDisabled();
   });
 
-  it("does not render the bottom status row when there is no message", () => {
-    const { container } = render(
-      <QuickEntry
-        people={[]}
-        selectedPersonId=""
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message=""
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
+  it("shows a save-specific action label while the entry is being saved", () => {
+    render(<QuickEntry {...baseProps} saving />);
 
-    expect(screen.getByRole("button", { name: /记录给：/ })).toBeInTheDocument();
-    expect(container.querySelector('[data-ui="quick-entry-message"]')).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /发送中/i })).toBeDisabled();
+  });
+
+  it("keeps the footer focused on the submit action only", () => {
+    const { container } = render(<QuickEntry {...baseProps} />);
+    const footer = container.querySelector('[data-ui="quick-entry-footer"]');
+
+    expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
+    expect(footer?.querySelector('[data-testid="app-date-picker-trigger"]')).not.toBeInTheDocument();
   });
 
   it("lets the bottom navigation switch to the profile tab", () => {
     const onTabChange = vi.fn();
 
-    render(
-      <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message=""
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={onTabChange}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
+    render(<QuickEntry {...baseProps} onTabChange={onTabChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "个人中心" }));
 
     expect(onTabChange).toHaveBeenCalledWith("profile");
   });
 
-  it("does not render a composer cancel button in the footer actions", () => {
-    const { container } = render(
-      <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message=""
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
-
-    const footer = container.querySelector("form > .joy-blur-panel");
-
-    expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
-    expect(footer?.textContent).not.toContain("取消");
-  });
-
   it("closes the action sheet when cancel is tapped", () => {
-    const { container } = render(
-      <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message=""
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
+    const { container } = render(<QuickEntry {...baseProps} />);
 
     fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
     expect(screen.getByText("选择一种方式")).toBeInTheDocument();
@@ -225,28 +130,10 @@ describe("QuickEntry", () => {
     const onRemoveImage = vi.fn();
     const { container } = render(
       <QuickEntry
-        people={[{ id: "person-1", name: "自己", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-22"
-        saving={false}
-        uploading={false}
-        message=""
+        {...baseProps}
         selectedImageName="memory.jpg"
         imagePreviewUrl="https://example.com/memory.jpg"
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
         onRemoveImage={onRemoveImage}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
       />,
     );
 
@@ -256,35 +143,10 @@ describe("QuickEntry", () => {
     expect(onRemoveImage).toHaveBeenCalledTimes(1);
   });
 
-  it("centers the calendar panel on the date trigger", () => {
-    render(
-      <QuickEntry
-        people={[{ id: "person-1", name: "Self", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-23"
-        saving={false}
-        uploading={false}
-        message=""
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
+  it("centers the compact calendar panel on the top-row date trigger", () => {
+    render(<QuickEntry {...baseProps} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /2026\/03\/23/ }));
+    fireEvent.click(screen.getByTestId("app-date-picker-trigger"));
 
     expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
       "left-1/2",
@@ -295,32 +157,7 @@ describe("QuickEntry", () => {
   it("shows message as a centered toast and auto-hides it after three seconds", () => {
     vi.useFakeTimers();
 
-    render(
-      <QuickEntry
-        people={[{ id: "person-1", name: "Self", is_default: true }]}
-        selectedPersonId="person-1"
-        content=""
-        reason=""
-        displayDate="2026-03-23"
-        saving={false}
-        uploading={false}
-        message="这件小美好已被珍藏 ✨"
-        selectedImageName=""
-        imagePreviewUrl={null}
-        activeTab="quick-entry"
-        onPersonChange={() => {}}
-        onTabChange={() => {}}
-        onCreatePerson={async () => true}
-        onDeletePerson={async () => ({ ok: true })}
-        onContentChange={() => {}}
-        onReasonChange={() => {}}
-        onDateChange={() => {}}
-        onImageChange={() => {}}
-        onRemoveImage={() => {}}
-        onSave={(event) => event.preventDefault()}
-        onCancel={() => {}}
-      />,
-    );
+    render(<QuickEntry {...baseProps} message="这件小美好已被珍藏 ✨" />);
 
     expect(screen.getByTestId("app-toast")).toHaveTextContent("这件小美好已被珍藏 ✨");
 

@@ -46,13 +46,13 @@ export function AppBottomNav({
               type="button"
               data-active={active}
               onClick={() => onTabChange(tab)}
-              className={`mx-auto flex h-[3.85rem] w-[90%] flex-col items-center justify-center gap-[0.18rem] rounded-[1.35rem] px-1 text-[0.66rem] leading-[1.05] tracking-[0.005em] transition-all duration-200 ${
+              className={`mx-auto flex h-[3.72rem] w-[90%] flex-col items-center justify-center gap-[0.18rem] rounded-[1.3rem] px-1 text-[0.62rem] leading-[1.05] tracking-[0.005em] transition-all duration-200 ${
                 active
                   ? "bg-[rgba(255,219,201,0.82)] font-medium text-[var(--primary)] shadow-[0_8px_14px_-16px_rgba(155,69,0,0.16)]"
                   : "font-normal text-[var(--muted)]"
               }`}
             >
-              <Icon className={active ? "size-[1.18rem]" : "size-[1.12rem]"} />
+              <Icon className={active ? "size-[1.12rem]" : "size-[1.06rem]"} />
               <span className="max-w-[4.2rem] whitespace-normal text-center break-keep">
                 {labels[labelKey]}
               </span>

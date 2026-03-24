@@ -121,7 +121,7 @@ select {
   padding: 0.52rem 0.82rem;
   background: rgba(255, 255, 255, 0.94);
   color: var(--primary);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
   box-shadow: 0 10px 18px -18px rgba(29, 29, 3, 0.22);
   transition:
@@ -159,7 +159,7 @@ select {
   gap: 0.35rem;
   border-radius: var(--radius-pill);
   padding: 0.45rem 0.82rem;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--muted);
 }
