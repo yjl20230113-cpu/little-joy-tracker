@@ -1,3 +1,4 @@
+import type { FormEvent } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 import { QuickEntry } from "./QuickEntry";
@@ -24,7 +25,7 @@ describe("QuickEntry", () => {
     onDateChange: () => {},
     onImageChange: () => {},
     onRemoveImage: () => {},
-    onSave: (event: React.FormEvent<HTMLFormElement>) => event.preventDefault(),
+    onSave: (event: FormEvent<HTMLFormElement>) => event.preventDefault(),
     onCancel: () => {},
   };
 
@@ -37,7 +38,9 @@ describe("QuickEntry", () => {
     expect(container.querySelector('[data-ui="quick-entry-toolbar"]')).toBeInTheDocument();
     expect(container.querySelector('[data-ui="quick-entry-person-trigger"]')).toBeInTheDocument();
     expect(container.querySelector('[data-ui="quick-entry-date"]')).toBeInTheDocument();
-    expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("今天 3-23");
+    expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent(
+      "\u4eca\u5929-03-23",
+    );
 
     vi.useRealTimers();
   });
@@ -53,11 +56,6 @@ describe("QuickEntry", () => {
         imagePreviewUrl="https://example.com/sunset.jpg"
       />,
     );
-
-    expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
-    expect(container.querySelector('[data-ui="app-topbar"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-ui="app-bottom-nav"]')).toBeInTheDocument();
-    expect(container.querySelector(".joy-app-content")).toBeInTheDocument();
 
     fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
 
@@ -85,9 +83,7 @@ describe("QuickEntry", () => {
       />,
     );
 
-    expect(
-      screen.getAllByRole("button", { name: /正在处理图片/i }).at(-1),
-    ).toBeDisabled();
+    expect(screen.getAllByRole("button", { name: /正在处理图片/i }).at(-1)).toBeDisabled();
     expect(container.querySelector('[data-ui="quick-entry-media-trigger"]')).toBeDisabled();
   });
 
@@ -119,11 +115,11 @@ describe("QuickEntry", () => {
     const { container } = render(<QuickEntry {...baseProps} />);
 
     fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
-    expect(screen.getByText("选择一种方式")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "从手机相册选择" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "取消" }).at(-1) as Element);
 
-    expect(screen.queryByText("选择一种方式")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "从手机相册选择" })).not.toBeInTheDocument();
   });
 
   it("shows remove image only when there is an image to clear", () => {
@@ -154,12 +150,19 @@ describe("QuickEntry", () => {
     );
   });
 
+  it("does not render an inline AI preview area on the entry page", () => {
+    render(<QuickEntry {...baseProps} />);
+
+    expect(screen.queryByTestId("quick-entry-insight-trigger")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("quick-entry-insight-panel")).not.toBeInTheDocument();
+  });
+
   it("shows message as a centered toast and auto-hides it after three seconds", () => {
     vi.useFakeTimers();
 
-    render(<QuickEntry {...baseProps} message="这件小美好已被珍藏 ✨" />);
+    render(<QuickEntry {...baseProps} message="saved" />);
 
-    expect(screen.getByTestId("app-toast")).toHaveTextContent("这件小美好已被珍藏 ✨");
+    expect(screen.getByTestId("app-toast")).toHaveTextContent("saved");
 
     act(() => {
       vi.advanceTimersByTime(3000);

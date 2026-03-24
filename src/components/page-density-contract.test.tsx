@@ -37,12 +37,19 @@ describe("page density contract", () => {
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-media"]')).toHaveClass(
       "h-[10rem]",
     );
+    expect(quickEntry.container.querySelector('[data-ui="quick-entry-toolbar"]')).toHaveClass(
+      "justify-start",
+    );
+    expect(quickEntry.container.querySelector('[data-ui="quick-entry-person-trigger"]')).toHaveClass(
+      "min-h-9",
+    );
+    expect(quickEntry.container.querySelector('[data-ui="quick-entry-date"]')).toHaveClass(
+      "min-h-9",
+    );
     expect(screen.getByPlaceholderText("发生了什么？")).toHaveClass("text-[1.18rem]");
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-footer"]')).toHaveClass(
-      "grid-cols-[auto_auto_minmax(0,1fr)]",
-    );
-    expect(quickEntry.container.querySelector('[data-ui="quick-entry-footer"]')).toHaveClass(
-      "gap-2",
+      "min-h-[3rem]",
+      "py-1",
     );
     quickEntry.unmount();
 
@@ -118,6 +125,7 @@ describe("page density contract", () => {
         imagePreviewUrl={null}
         onDeleteCancel={() => {}}
         onDeleteConfirm={() => {}}
+        onTitleChange={() => {}}
         onContentChange={() => {}}
         onReasonChange={() => {}}
         onDateChange={() => {}}
@@ -154,6 +162,7 @@ describe("page density contract", () => {
           mood_weather: {
             title: "Warm Sun",
             icon: "Sun",
+            score: 85,
             description: "This week, 85% of the time felt bright and steady.",
           },
           keywords: ["walk", "coffee", "breeze", "smile", "sunlight"],
@@ -182,13 +191,31 @@ describe("page density contract", () => {
     render(
       <ProfileView
         email="joy@example.com"
+        displayName="Joy"
+        avatarUrl={null}
+        selectedImageName=""
         activeTab="profile"
         message=""
+        editing={false}
+        saving={false}
+        uploading={false}
+        onRefreshApp={() => {}}
         onLogout={() => {}}
         onTabChange={() => {}}
+        onEditProfile={() => {}}
+        onDisplayNameChange={() => {}}
+        onAvatarSelect={() => {}}
+        onAvatarRemove={() => {}}
+        onSaveProfile={() => {}}
       />,
     );
 
-    expect(screen.getByText("joy@example.com").closest("div")).toHaveClass("rounded-[0.82rem]");
+    expect(screen.getByTestId("profile-email-chip")).toHaveClass("w-full");
+    expect(screen.getByTestId("profile-display-name")).toHaveClass("text-[1rem]");
+    expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-[18vh]");
+    expect(screen.getByTestId("profile-logout-action")).toHaveClass(
+      "bg-[var(--primary-soft)]",
+      "text-white",
+    );
   });
 });

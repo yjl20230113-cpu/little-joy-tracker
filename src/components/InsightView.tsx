@@ -63,11 +63,6 @@ const keywordColors = [
   "bg-sky-100 text-sky-600",
 ];
 
-function extractMoodPercent(description: string) {
-  const match = description.match(/(\d+)%/);
-  return match ? Number(match[1]) : 0;
-}
-
 export function InsightView({
   activeTab,
   peopleFilters,
@@ -90,7 +85,7 @@ export function InsightView({
   onTabChange,
 }: InsightViewProps) {
   const moodPercentTarget = useMemo(
-    () => (report ? extractMoodPercent(report.mood_weather.description) : 0),
+    () => (report ? report.mood_weather.score : 0),
     [report],
   );
 

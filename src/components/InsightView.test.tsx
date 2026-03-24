@@ -1,7 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { InsightView } from "./InsightView";
 
 describe("InsightView", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const baseProps = {
     activeTab: "insight" as const,
     peopleFilters: [
@@ -37,7 +41,8 @@ describe("InsightView", () => {
     expect(document.querySelector("button[disabled]")).toBeDisabled();
   });
 
-  it("renders the new healing report cards and share button", async () => {
+  it("renders the report score from mood_weather.score instead of parsing the description", async () => {
+    vi.useFakeTimers();
     const onShare = vi.fn();
 
     render(
@@ -49,8 +54,8 @@ describe("InsightView", () => {
           mood_weather: {
             title: "灿烂",
             icon: "Sun",
-            description:
-              "本阶段 85% 的时间，你处于被暖光轻轻托住的状态。你的成长表现为韧性。",
+            score: 85,
+            description: "本阶段你处于被暖光轻轻托住的状态。你的成长表现为韧性。",
           },
           keywords: ["晚风", "散步", "晚霞", "热可可", "拥抱"],
           personality: {
@@ -60,7 +65,7 @@ describe("InsightView", () => {
           suggestions: [
             {
               title: "傍晚散步",
-              content: "当晚风出现时，你的心也跟着慢慢松弛下来。",
+              content: "当晚风出现时，你的心也跟着慢慢松下来。",
               icon: "TreePine",
             },
             {
@@ -74,9 +79,11 @@ describe("InsightView", () => {
     );
 
     expect(screen.getByText("灿烂")).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByText((content) => /^\d+%$/.test(content))).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1200);
     });
+
+    expect(screen.getByText("85%")).toBeInTheDocument();
     expect(screen.getByText("细节捕捉大师")).toBeInTheDocument();
     expect(screen.getByText("晚风")).toBeInTheDocument();
     expect(screen.getByText("傍晚散步")).toBeInTheDocument();

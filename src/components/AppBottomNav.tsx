@@ -1,5 +1,6 @@
 import { BookOpen, Heart, SunMedium, UserRound } from "lucide-react";
 import type { HomeTab } from "./QuickEntry";
+import { useUpdateAvailableBuildId } from "../lib/pwa-update-client";
 
 type AppBottomNavProps = {
   activeTab: HomeTab;
@@ -31,6 +32,9 @@ export function AppBottomNav({
   onTabChange,
   labels = defaultLabels,
 }: AppBottomNavProps) {
+  const updateAvailableBuildId = useUpdateAvailableBuildId();
+  const showProfileUpdateBadge = Boolean(updateAvailableBuildId);
+
   return (
     <nav
       data-ui="app-bottom-nav"
@@ -39,6 +43,7 @@ export function AppBottomNav({
       <div className="grid w-full grid-cols-4 gap-0.5">
         {navItems.map(({ tab, icon: Icon, labelKey }) => {
           const active = activeTab === tab;
+          const showBadge = tab === "profile" && showProfileUpdateBadge;
 
           return (
             <button
@@ -52,7 +57,15 @@ export function AppBottomNav({
                   : "font-normal text-[var(--muted)]"
               }`}
             >
-              <Icon className={active ? "size-[1.12rem]" : "size-[1.06rem]"} />
+              <span className="relative">
+                <Icon className={active ? "size-[1.12rem]" : "size-[1.06rem]"} />
+                {showBadge ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-1 -top-0.5 inline-flex size-2 rounded-full bg-[#ff3b30] ring-2 ring-white/90"
+                  />
+                ) : null}
+              </span>
               <span className="max-w-[4.2rem] whitespace-normal text-center break-keep">
                 {labels[labelKey]}
               </span>

@@ -88,6 +88,33 @@ describe("image upload helpers", () => {
     expect(result.publicUrl).toBe("https://example.com/photo.jpg");
   });
 
+  it("supports a custom path prefix for profile avatars", async () => {
+    const upload = vi.fn().mockResolvedValue({ error: null });
+
+    await uploadImageToStorage({
+      storage: {
+        from: vi.fn(() => ({
+          upload,
+          getPublicUrl: vi.fn().mockReturnValue({
+            data: { publicUrl: "https://example.com/profile.jpg" },
+          }),
+        })),
+      },
+      bucket: "joy-images",
+      userId: "user-1",
+      file: new File(["raw"], "profile.jpg", { type: "image/jpeg" }),
+      prepareFile: vi.fn(async (file: File) => file),
+      now: () => 123456,
+      pathPrefix: "profiles",
+    });
+
+    expect(upload).toHaveBeenCalledWith(
+      "profiles/user-1/123456-profile.jpg",
+      expect.any(File),
+      { upsert: false },
+    );
+  });
+
   it("returns the original file when image compression is unavailable", async () => {
     const file = new File(["raw"], "photo.jpg", { type: "image/jpeg" });
 

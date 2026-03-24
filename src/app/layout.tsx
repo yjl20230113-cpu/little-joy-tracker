@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
+import fs from "node:fs";
+import path from "node:path";
 import { PwaRegistrar } from "@/components/PwaRegistrar";
 import "./globals.css";
 
@@ -34,13 +36,28 @@ const rootFontVariables = {
   "--font-body": '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif',
 } as CSSProperties;
 
+function getBuildId() {
+  try {
+    return fs
+      .readFileSync(path.join(process.cwd(), ".next", "BUILD_ID"), "utf-8")
+      .trim();
+  } catch {
+    return "";
+  }
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const buildId = getBuildId();
+
   return (
     <html lang="zh-CN" className="h-full antialiased" style={rootFontVariables}>
+      <head>
+        {buildId ? <meta name="ljt-build-id" content={buildId} /> : null}
+      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <PwaRegistrar />

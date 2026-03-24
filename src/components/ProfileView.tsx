@@ -1,41 +1,113 @@
-import { LogOut, Mail, Sparkles, UserRound } from "lucide-react";
+import type { ChangeEventHandler } from "react";
+import { useMemo, useRef, useState } from "react";
+import {
+  Camera,
+  LoaderCircle,
+  LogOut,
+  Mail,
+  PencilLine,
+  RotateCw,
+  Sparkles,
+  UserRound,
+} from "lucide-react";
 import { AppBottomNav } from "./AppBottomNav";
 import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 import type { HomeTab } from "./QuickEntry";
+import { getSubmitActionState } from "../lib/image-upload";
+import { useUpdateAvailableBuildId } from "../lib/pwa-update-client";
 
 type ProfileViewProps = {
   email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  selectedImageName: string;
   activeTab: HomeTab;
   message: string;
+  editing: boolean;
+  saving: boolean;
+  uploading: boolean;
   onMessageClear?: () => void;
+  onRefreshApp: () => Promise<void> | void;
   onLogout: () => void;
   onTabChange: (tab: HomeTab) => void;
+  onEditProfile: () => void;
+  onDisplayNameChange: (value: string) => void;
+  onAvatarSelect: ChangeEventHandler<HTMLInputElement>;
+  onAvatarRemove: () => void;
+  onSaveProfile: () => void;
 };
 
 const copy = {
   title: "个人",
   subtitle: "把账号和给自己的照顾，都安静地放在这里。",
+  profileTitle: "你的资料",
+  unnamed: "未设置名称",
+  nameLabel: "名称",
+  namePlaceholder: "给自己一个称呼",
   emailLabel: "当前邮箱",
+  uploadAvatar: "更换头像",
   logout: "退出登录",
-  hintTitle: "小小的你",
-  hintBody:
-    "以后这里可以继续放头像、昵称、偏好设置和导出入口。现在先把最重要的账号信息安顿好。",
+  edit: "编辑",
+  save: "保存",
+  saving: "保存中...",
+  uploading: "正在上传头像...",
+  refreshApp: "更新",
+  refreshHint: "网站更新后如果你还是看到旧版本，点一下会清理缓存并重新加载最新资源。",
 };
+
+function getAvatarFallback(displayName: string, email: string) {
+  const candidate = displayName.trim() || email.trim();
+  return candidate.slice(0, 1).toUpperCase() || "J";
+}
 
 export function ProfileView({
   email,
+  displayName,
+  avatarUrl,
+  selectedImageName,
   activeTab,
   message,
+  editing,
+  saving,
+  uploading,
   onMessageClear,
+  onRefreshApp,
   onLogout,
   onTabChange,
+  onEditProfile,
+  onDisplayNameChange,
+  onAvatarSelect,
+  onAvatarRemove: _onAvatarRemove,
+  onSaveProfile,
 }: ProfileViewProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const updateAvailableBuildId = useUpdateAvailableBuildId();
+  const avatarFallback = useMemo(
+    () => getAvatarFallback(displayName, email),
+    [displayName, email],
+  );
+  const submitAction = getSubmitActionState({
+    saving,
+    uploading,
+    idleLabel: copy.save,
+    savingLabel: copy.saving,
+    uploadingLabel: copy.uploading,
+  });
+  const refreshDisabled = submitAction.disabled || refreshing;
+  const showUpdateBadge = Boolean(updateAvailableBuildId);
+  const actionLabel = editing ? submitAction.label : copy.edit;
+
   return (
     <section className="joy-app-shell w-full">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,140,66,0.18),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]" />
 
-      <AppTopBar title="Little Joy Tracker" leadingIcon={UserRound} trailingIcon={Sparkles} />
+      <AppTopBar
+        title="Little Joy Tracker"
+        leadingIcon={UserRound}
+        trailingIcon={Sparkles}
+      />
 
       <div className="joy-app-content joy-scroll-hidden px-3 pb-4.5 pt-2.5 sm:px-4.5">
         <div className="space-y-3.5 pb-6">
@@ -49,12 +121,117 @@ export function ProfileView({
           </section>
 
           <section className="joy-soft-panel rounded-[1.25rem] px-3.5 py-3.5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!editing || submitAction.disabled}
+                    className="relative flex size-[5.2rem] items-center justify-center rounded-full text-[1.35rem] font-black tracking-[-0.04em] text-[var(--primary)] transition disabled:cursor-default"
+                    aria-label={copy.uploadAvatar}
+                  >
+                    <span className="flex size-[5.2rem] items-center justify-center overflow-hidden rounded-full bg-[rgba(255,219,201,0.56)] shadow-[0_14px_26px_-22px_rgba(29,29,3,0.28)]">
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={displayName.trim() || email}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        avatarFallback
+                      )}
+                    </span>
+                    {editing ? (
+                      <span
+                        data-testid="profile-avatar-camera-badge"
+                        className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-[var(--primary-soft)] text-white shadow-[0_10px_18px_-16px_rgba(155,69,0,0.4)]"
+                      >
+                        {uploading ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : (
+                          <Camera className="size-4" />
+                        )}
+                      </span>
+                    ) : null}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    aria-label="上传头像"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onAvatarSelect}
+                  />
+                </div>
+
+                <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                  <h2 className="text-[1rem] font-black tracking-[-0.02em] text-[var(--primary)]">
+                    {copy.profileTitle}
+                  </h2>
+                  {editing ? (
+                    <div className="mt-2.5">
+                      <input
+                        data-testid="profile-name-input"
+                        aria-label={copy.nameLabel}
+                        value={displayName}
+                        onChange={(event) => onDisplayNameChange(event.target.value)}
+                        placeholder={copy.namePlaceholder}
+                        className="w-full rounded-[0.95rem] border border-[rgba(155,69,0,0.08)] bg-white/92 px-3.5 py-3 text-[0.95rem] font-semibold text-[var(--foreground)] outline-none shadow-[0_10px_18px_-18px_rgba(29,29,3,0.18)] placeholder:text-[var(--muted)]/40"
+                      />
+                    </div>
+                  ) : (
+                    <p
+                      data-testid="profile-display-name"
+                      className="mt-1.5 text-[1rem] font-semibold leading-6 text-[var(--foreground)]"
+                    >
+                      {displayName.trim() || copy.unnamed}
+                    </p>
+                  )}
+                  {editing && selectedImageName ? (
+                    <p className="mt-2 text-[0.78rem] font-semibold text-[var(--primary)]">
+                      {selectedImageName}
+                    </p>
+                  ) : null}
+                  </div>
+
+                  <div
+                    data-testid="profile-primary-action-slot"
+                    className="flex shrink-0 justify-end pt-1"
+                  >
+                    <button
+                      type="button"
+                      onClick={editing ? onSaveProfile : onEditProfile}
+                      disabled={
+                        editing
+                          ? submitAction.disabled || !displayName.trim()
+                          : submitAction.disabled
+                      }
+                      className="joy-topbar-button joy-topbar-button--primary shrink-0"
+                    >
+                      {editing && submitAction.disabled ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : editing ? (
+                        <Sparkles className="size-4" />
+                      ) : (
+                        <PencilLine className="size-4" />
+                      )}
+                      {actionLabel}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div data-testid="profile-email-field" className="min-w-0 w-full">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--muted)]">
                   {copy.emailLabel}
                 </p>
-                <div className="mt-2.5 inline-flex max-w-full items-center gap-2.5 rounded-[0.82rem] bg-white/92 px-2.5 py-2 text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.2)]">
+                <div
+                  data-ui="profile-email-chip"
+                  data-testid="profile-email-chip"
+                  className="mt-2.5 flex w-full items-center gap-2.5 rounded-[0.95rem] border border-[rgba(155,69,0,0.08)] bg-white/92 px-3.5 py-3 text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.2)]"
+                >
                   <Mail className="size-4 shrink-0" />
                   <span className="min-w-0 break-all text-[0.88rem] font-semibold">
                     {email}
@@ -62,33 +239,58 @@ export function ProfileView({
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={onLogout}
-                className="joy-topbar-button shrink-0"
-              >
-                <LogOut className="size-4" />
-                {copy.logout}
-              </button>
-            </div>
-          </section>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  data-testid="profile-refresh-action"
+                  onClick={async () => {
+                    if (refreshDisabled) {
+                      return;
+                    }
 
-          <section className="joy-card rounded-[1.25rem] px-3.5 py-3.5">
-            <div className="flex items-start gap-3">
-              <div className="flex size-10.5 shrink-0 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)]">
-                <Sparkles className="size-4" />
-              </div>
-              <div>
-                <h2 className="text-[1rem] font-black tracking-[-0.02em] text-[var(--primary)]">
-                  {copy.hintTitle}
-                </h2>
-                <p className="mt-1.5 text-[0.88rem] leading-6.5 text-[var(--muted)]">
-                  {copy.hintBody}
+                    setRefreshing(true);
+
+                    try {
+                      await onRefreshApp();
+                    } finally {
+                      setRefreshing(false);
+                    }
+                  }}
+                  disabled={refreshDisabled}
+                  className="joy-topbar-button w-full justify-center"
+                >
+                  {refreshing ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <RotateCw className="size-4" />
+                  )}
+                  {copy.refreshApp}
+                  {showUpdateBadge ? (
+                    <span
+                      aria-hidden="true"
+                      className="ml-1.5 inline-flex size-2 rounded-full bg-[#ff3b30]"
+                    />
+                  ) : null}
+                </button>
+                <p className="px-1 text-[0.78rem] leading-6 text-[var(--muted)]">
+                  {copy.refreshHint}
                 </p>
               </div>
             </div>
-
           </section>
+
+          <div data-testid="profile-logout-slot" className="mt-[18vh] pb-1">
+            <button
+              type="button"
+              data-testid="profile-logout-action"
+              onClick={onLogout}
+              disabled={submitAction.disabled}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary-soft)] px-4 py-3 text-[0.92rem] font-bold text-white shadow-[0_16px_26px_-22px_rgba(155,69,0,0.52)] transition disabled:opacity-70"
+            >
+              <LogOut className="size-4" />
+              {copy.logout}
+            </button>
+          </div>
         </div>
       </div>
 
