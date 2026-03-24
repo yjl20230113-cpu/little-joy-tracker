@@ -500,3 +500,4 @@
 ✓ Compiled in 259ms
  GET /?tab=profile&__refresh=1774349598881 200 in 266ms (next.js: 75ms, application-code: 191ms)
  GET /manifest.webmanifest 200 in 14ms (next.js: 4ms, application-code: 10ms)
+✓ Compiled in 316ms
