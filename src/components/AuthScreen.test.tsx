@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { useState } from "react";
 import { vi } from "vitest";
@@ -130,5 +130,22 @@ describe("AuthScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: "已有账号？去登录" }));
 
     expect(onToggleMode).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows auth feedback as a centered toast and auto-hides it after three seconds", () => {
+    vi.useFakeTimers();
+
+    renderAuthScreen({
+      authMessage: "登录成功，可以开始记录了。",
+    });
+
+    expect(screen.getByTestId("app-toast")).toHaveTextContent("登录成功，可以开始记录了。");
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

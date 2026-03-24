@@ -1194,6 +1194,7 @@ export default function HomePage() {
         password={password}
         errors={errors}
         authMessage={authMessage}
+        onAuthMessageClear={() => setAuthMessage("")}
         authLoading={authLoading}
         retryAfterSeconds={retryAfterSeconds}
         copy={{
@@ -1239,6 +1240,7 @@ export default function HomePage() {
               saving={saving}
               uploading={uploading}
               message={message}
+              onMessageClear={() => setMessage("")}
               selectedImageName={selectedImageName}
               imagePreviewUrl={imagePreviewUrl}
               activeTab={activeTab}
@@ -1272,6 +1274,7 @@ export default function HomePage() {
               customStartDate={customStartDate}
               customEndDate={customEndDate}
               message={message}
+              onMessageClear={() => setMessage("")}
               topBarTitle={timelineDetailDraft ? "" : undefined}
               topBarLeftSlot={
                 timelineDetailDraft ? (
@@ -1300,6 +1303,7 @@ export default function HomePage() {
                     uploading={detailUploading}
                     confirmingDelete={detailConfirmingDelete}
                     message={detailMessage}
+                    onMessageClear={() => setDetailMessage("")}
                     selectedImageName={detailSelectedImageName}
                     imagePreviewUrl={detailImagePreviewUrl}
                     onDeleteCancel={() => setDetailConfirmingDelete(false)}
@@ -1332,6 +1336,7 @@ export default function HomePage() {
               customStartDate={customStartDate}
               customEndDate={customEndDate}
               message={insightMessage}
+              onMessageClear={() => setInsightMessage("")}
               emptyHint={copy.insightEmpty}
               generateDisabled={filteredTimelineItems.length === 0}
               loading={insightLoading}
@@ -1349,6 +1354,7 @@ export default function HomePage() {
               email={session.user.email ?? ""}
               activeTab={activeTab}
               message={message}
+              onMessageClear={() => setMessage("")}
               onLogout={handleLogout}
               onTabChange={handleTimelineTabChange}
             />

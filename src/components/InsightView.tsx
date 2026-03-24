@@ -18,6 +18,7 @@ import type { SummaryReport, TimelineRange } from "../lib/app-logic";
 import type { HomeTab } from "./QuickEntry";
 import { TimelineFilters, type TimelineFilterOption } from "./TimelineFilters";
 import { AppBottomNav } from "./AppBottomNav";
+import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 
 type InsightViewProps = {
@@ -28,6 +29,7 @@ type InsightViewProps = {
   customStartDate: string;
   customEndDate: string;
   message: string;
+  onMessageClear?: () => void;
   emptyHint: string;
   generateDisabled: boolean;
   loading: boolean;
@@ -74,6 +76,7 @@ export function InsightView({
   customStartDate,
   customEndDate,
   message,
+  onMessageClear,
   emptyHint,
   generateDisabled,
   loading,
@@ -99,7 +102,7 @@ export function InsightView({
 
       <div className="joy-app-content joy-scroll-hidden relative px-3 pb-4.5 pt-2.5 sm:px-4.5">
         <div className="space-y-3.5 pb-7">
-          <section className="joy-card rounded-[1.25rem] px-3.5 py-3.5">
+          <section className="joy-card rounded-[1.15rem] px-3 py-3">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/62">
                 {copy.title}
@@ -109,7 +112,7 @@ export function InsightView({
               </p>
             </div>
 
-            <div className="mt-3.5">
+            <div className="mt-3">
               <TimelineFilters
                 peopleFilters={peopleFilters}
                 selectedPersonId={selectedPersonId}
@@ -124,7 +127,7 @@ export function InsightView({
               />
             </div>
 
-            <div className="joy-soft-panel mt-3.5 rounded-[1rem] p-2">
+            <div className="joy-soft-panel mt-3 rounded-[0.95rem] p-1.5">
               <button
                 type="button"
                 onClick={onGenerate}
@@ -138,13 +141,13 @@ export function InsightView({
 
           {report ? (
             <div className="space-y-3">
-              <article className="joy-card overflow-hidden rounded-[1.25rem] px-3.5 py-4.5 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
+              <article className="joy-card overflow-hidden rounded-[1.15rem] px-3 py-4 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.weather}
                 </p>
                 <div className="mt-2.5 flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-[1.625rem] font-black tracking-[-0.045em] text-[var(--primary)]">
+                    <h3 className="text-[1.5rem] font-black tracking-[-0.045em] text-[var(--primary)]">
                       {report.mood_weather.title}
                     </h3>
                     <p className="mt-2.5 max-w-md text-[0.9rem] leading-6.5 text-[var(--muted)]">
@@ -158,7 +161,7 @@ export function InsightView({
                 </div>
               </article>
 
-              <article className="joy-soft-panel rounded-[1.1rem] px-3.5 py-3.5">
+              <article className="joy-soft-panel rounded-[1rem] px-3 py-3">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.keywords}
                 </p>
@@ -174,7 +177,7 @@ export function InsightView({
                 </div>
               </article>
 
-              <article className="joy-card rounded-[1.25rem] px-3.5 py-4.5 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
+              <article className="joy-card rounded-[1.15rem] px-3 py-4 shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/55">
                   {copy.portrait}
                 </p>
@@ -186,7 +189,7 @@ export function InsightView({
                 </p>
               </article>
 
-              <article className="joy-soft-panel rounded-[1.1rem] px-3.5 py-3.5">
+              <article className="joy-soft-panel rounded-[1rem] px-3 py-3">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                   {copy.suggestions}
                 </p>
@@ -241,14 +244,7 @@ export function InsightView({
       </div>
 
       <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
-
-      {message ? (
-        <div className="pointer-events-none absolute inset-x-4 bottom-23 z-20 flex justify-center">
-          <div className="max-w-md rounded-full bg-[rgba(79,32,48,0.92)] px-4 py-2 text-center text-[0.78rem] font-semibold text-white shadow-[0_10px_18px_-16px_rgba(29,29,3,0.28)]">
-            {message}
-          </div>
-        </div>
-      ) : null}
+      <AppToast message={message} onClear={onMessageClear} />
     </section>
   );
 }

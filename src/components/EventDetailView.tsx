@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { AppBottomNav } from "./AppBottomNav";
+import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 import type { HomeTab } from "./QuickEntry";
 
@@ -12,6 +13,7 @@ type EventDetailViewProps = {
   saving: boolean;
   deleting: boolean;
   message: string;
+  onMessageClear?: () => void;
   createdAtText: string;
   personName: string;
   displayDate: string;
@@ -44,6 +46,7 @@ export function EventDetailView({
   saving,
   deleting,
   message,
+  onMessageClear,
   createdAtText,
   personName,
   displayDate,
@@ -125,11 +128,6 @@ export function EventDetailView({
                   </p>
                   <p className="text-[1rem] leading-8 text-[var(--muted)] italic">{reason}</p>
                 </section>
-                {message ? (
-                  <div className="rounded-[1.5rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.58),rgba(255,255,255,0.76))] px-4 py-3 text-sm font-semibold text-[var(--primary)]">
-                    {message}
-                  </div>
-                ) : null}
                 <p className="border-t border-[rgba(155,69,0,0.08)] pt-6 text-sm text-[var(--muted)]">
                   {createdAtText}
                 </p>
@@ -140,6 +138,7 @@ export function EventDetailView({
       </div>
 
       <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <AppToast message={message} onClear={onMessageClear} />
     </section>
   );
 }

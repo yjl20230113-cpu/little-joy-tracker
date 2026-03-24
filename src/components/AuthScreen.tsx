@@ -9,6 +9,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { AppToast } from "./AppToast";
 
 type AuthScreenCopy = {
   signInTitle: string;
@@ -32,6 +33,7 @@ type AuthScreenProps = {
   password: string;
   errors: Record<string, string>;
   authMessage: string;
+  onAuthMessageClear?: () => void;
   authLoading: boolean;
   retryAfterSeconds: number;
   copy: AuthScreenCopy;
@@ -47,6 +49,7 @@ export function AuthScreen({
   password,
   errors,
   authMessage,
+  onAuthMessageClear,
   authLoading,
   retryAfterSeconds,
   copy,
@@ -250,18 +253,11 @@ export function AuthScreen({
               </div>
             </form>
 
-            <div
-              className={`min-h-10 rounded-[1rem] border px-4 py-2 text-[0.84rem] leading-6 ${
-                authMessage
-                  ? "border-[rgba(255,184,120,0.34)] bg-[rgba(255,247,235,0.9)] text-[var(--primary)]"
-                  : "border-transparent bg-transparent text-[var(--muted)]"
-              }`}
-            >
-              {authMessage}
-            </div>
           </div>
         </section>
       </div>
+
+      <AppToast message={authMessage} onClear={onAuthMessageClear} />
     </main>
   );
 }

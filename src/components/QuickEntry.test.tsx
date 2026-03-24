@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { vi } from "vitest";
 import { QuickEntry } from "./QuickEntry";
 
 describe("QuickEntry", () => {
@@ -253,5 +254,81 @@ describe("QuickEntry", () => {
     fireEvent.click(screen.getByRole("button", { name: "移除当前照片" }));
 
     expect(onRemoveImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("centers the calendar panel on the date trigger", () => {
+    render(
+      <QuickEntry
+        people={[{ id: "person-1", name: "Self", is_default: true }]}
+        selectedPersonId="person-1"
+        content=""
+        reason=""
+        displayDate="2026-03-23"
+        saving={false}
+        uploading={false}
+        message=""
+        selectedImageName=""
+        imagePreviewUrl={null}
+        activeTab="quick-entry"
+        onPersonChange={() => {}}
+        onTabChange={() => {}}
+        onCreatePerson={async () => true}
+        onDeletePerson={async () => ({ ok: true })}
+        onContentChange={() => {}}
+        onReasonChange={() => {}}
+        onDateChange={() => {}}
+        onImageChange={() => {}}
+        onRemoveImage={() => {}}
+        onSave={(event) => event.preventDefault()}
+        onCancel={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /2026\/03\/23/ }));
+
+    expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
+      "left-1/2",
+      "-translate-x-1/2",
+    );
+  });
+
+  it("shows message as a centered toast and auto-hides it after three seconds", () => {
+    vi.useFakeTimers();
+
+    render(
+      <QuickEntry
+        people={[{ id: "person-1", name: "Self", is_default: true }]}
+        selectedPersonId="person-1"
+        content=""
+        reason=""
+        displayDate="2026-03-23"
+        saving={false}
+        uploading={false}
+        message="这件小美好已被珍藏 ✨"
+        selectedImageName=""
+        imagePreviewUrl={null}
+        activeTab="quick-entry"
+        onPersonChange={() => {}}
+        onTabChange={() => {}}
+        onCreatePerson={async () => true}
+        onDeletePerson={async () => ({ ok: true })}
+        onContentChange={() => {}}
+        onReasonChange={() => {}}
+        onDateChange={() => {}}
+        onImageChange={() => {}}
+        onRemoveImage={() => {}}
+        onSave={(event) => event.preventDefault()}
+        onCancel={() => {}}
+      />,
+    );
+
+    expect(screen.getByTestId("app-toast")).toHaveTextContent("这件小美好已被珍藏 ✨");
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

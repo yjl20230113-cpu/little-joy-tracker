@@ -9,7 +9,7 @@ describe("page density contract", () => {
   it("keeps record, timeline, detail, insight, and profile layouts on the tighter iPhone scale", () => {
     const quickEntry = render(
       <QuickEntry
-        people={[{ id: "self", name: "自己", is_default: true }]}
+        people={[{ id: "self", name: "Self", is_default: true }]}
         selectedPersonId="self"
         content=""
         reason=""
@@ -35,11 +35,14 @@ describe("page density contract", () => {
     );
 
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-media"]')).toHaveClass(
-      "h-[10.5rem]",
+      "h-[10rem]",
     );
-    expect(screen.getByPlaceholderText("发生了什么？")).toHaveClass("text-[1.3rem]");
-    expect(quickEntry.container.querySelector("form > .joy-blur-panel")).toHaveClass(
-      "min-h-[3.75rem]",
+    expect(screen.getByPlaceholderText("发生了什么？")).toHaveClass("text-[1.18rem]");
+    expect(quickEntry.container.querySelector('[data-ui="quick-entry-footer"]')).toHaveClass(
+      "grid-cols-[auto_auto_minmax(0,1fr)]",
+    );
+    expect(quickEntry.container.querySelector('[data-ui="quick-entry-footer"]')).toHaveClass(
+      "gap-2",
     );
     quickEntry.unmount();
 
@@ -52,17 +55,20 @@ describe("page density contract", () => {
             items: [
               {
                 id: "event-1",
-                title: "缴纳水电费",
-                content: "水电费到账了",
-                reason: "轻了一口气",
+                title: "First journal day",
+                content: "Today I started using the app.",
+                reason: "It feels light and easy.",
                 imageUrl: null,
-                personName: "自己",
+                personName: "Self",
                 createdAt: "2026-03-23T10:00:00.000Z",
               },
             ],
           },
         ]}
-        peopleFilters={[{ id: "all", label: "全部" }]}
+        peopleFilters={[
+          { id: "all", label: "All" },
+          { id: "self", label: "Self" },
+        ]}
         selectedPersonId="all"
         selectedRange="week"
         customStartDate=""
@@ -78,29 +84,30 @@ describe("page density contract", () => {
       />,
     );
 
-    expect(screen.getByText("2026年3月23日")).toHaveClass("text-[1.4rem]");
-    expect(screen.getByRole("button", { name: /缴纳水电费/ })).toHaveClass(
-      "rounded-[1.1rem]",
+    expect(screen.getByText(/2026/)).toHaveClass("text-[1.32rem]");
+    expect(screen.getByRole("button", { name: /First journal day/i })).toHaveClass(
+      "rounded-[1rem]",
     );
     expect(
-      screen.getByRole("button", { name: /缴纳水电费/ }).querySelector("div"),
-    ).toHaveClass("size-[3.75rem]");
+      screen.getByRole("button", { name: /First journal day/i }).querySelector("div"),
+    ).toHaveClass("size-[3.5rem]");
+    expect(screen.getByTestId("timeline-summary-button")).toHaveClass("w-full");
     timeline.unmount();
 
     const detail = render(
       <EventDetailPanel
         event={{
           id: "event-1",
-          title: "离职决定已定",
-          content: "今天正式把决定说出口了。",
-          reason: "终于轻松一点",
+          title: "A clear decision",
+          content: "Today I finally said the decision out loud.",
+          reason: "I can breathe more easily now.",
           imageUrl: null,
           displayDate: "2026-03-23",
           createdAt: "2026-03-23T10:00:00.000Z",
-          personName: "自己",
+          personName: "Self",
           personId: "self",
         }}
-        people={[{ id: "self", name: "自己", is_default: true }]}
+        people={[{ id: "self", name: "Self", is_default: true }]}
         editing={false}
         saving={false}
         deleting={false}
@@ -122,37 +129,41 @@ describe("page density contract", () => {
       />,
     );
 
-    expect(screen.getByText("离职决定已定")).toHaveClass("text-[1.625rem]");
-    expect(screen.getByText("今天正式把决定说出口了。")).toHaveClass("text-[1rem]");
-    expect(screen.getByText("终于轻松一点")).toHaveClass("text-[0.94rem]");
+    expect(screen.getByText("A clear decision")).toHaveClass("text-[1.5rem]");
+    expect(screen.getByText("Today I finally said the decision out loud.")).toHaveClass(
+      "text-[0.96rem]",
+    );
+    expect(screen.getByText("I can breathe more easily now.")).toHaveClass(
+      "text-[0.9rem]",
+    );
     detail.unmount();
 
     const insight = render(
       <InsightView
         activeTab="insight"
-        peopleFilters={[{ id: "all", label: "全部" }]}
+        peopleFilters={[{ id: "all", label: "All" }]}
         selectedPersonId="all"
         selectedRange="week"
         customStartDate=""
         customEndDate=""
         message=""
-        emptyHint="先去记录一些小美好再来吧"
+        emptyHint="Add some memories first."
         generateDisabled={false}
         loading={false}
         report={{
           mood_weather: {
-            title: "暖阳",
+            title: "Warm Sun",
             icon: "Sun",
-            description: "本阶段 85% 的时间，你处于明亮稳定的状态。",
+            description: "This week, 85% of the time felt bright and steady.",
           },
-          keywords: ["散步", "咖啡", "风", "晚霞", "笑声"],
+          keywords: ["walk", "coffee", "breeze", "smile", "sunlight"],
           personality: {
-            title: "细节捕捉家",
-            description: "你总能在普通的一天里发现轻盈的光。",
+            title: "Detail Collector",
+            description: "You notice small moments and keep them close.",
           },
           suggestions: [
-            { title: "傍晚散步", content: "继续保留短暂步行。", icon: "Tree" },
-            { title: "写下片刻", content: "把轻盈瞬间及时记下来。", icon: "Sparkles" },
+            { title: "Evening walk", content: "Keep a short walk after dinner.", icon: "Tree" },
+            { title: "Quick note", content: "Write down one bright moment each day.", icon: "Sparkles" },
           ],
         }}
         onPersonChange={() => {}}
@@ -165,7 +176,7 @@ describe("page density contract", () => {
       />,
     );
 
-    expect(screen.getByText("暖阳")).toHaveClass("text-[1.625rem]");
+    expect(screen.getByText("Warm Sun")).toHaveClass("text-[1.5rem]");
     insight.unmount();
 
     render(
@@ -178,6 +189,6 @@ describe("page density contract", () => {
       />,
     );
 
-    expect(screen.getByText("joy@example.com").closest("div")).toHaveClass("rounded-[0.9rem]");
+    expect(screen.getByText("joy@example.com").closest("div")).toHaveClass("rounded-[0.82rem]");
   });
 });

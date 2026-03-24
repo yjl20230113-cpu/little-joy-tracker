@@ -16,6 +16,7 @@ import {
 import { AppDatePicker } from "./AppDatePicker";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
 import { AppBottomNav } from "./AppBottomNav";
+import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 import { normalizePersonName } from "../lib/app-logic";
 
@@ -36,6 +37,7 @@ type QuickEntryProps = {
   saving: boolean;
   uploading: boolean;
   message: string;
+  onMessageClear?: () => void;
   selectedImageName: string;
   imagePreviewUrl: string | null;
   activeTab: HomeTab;
@@ -109,6 +111,7 @@ export function QuickEntry({
   saving,
   uploading,
   message,
+  onMessageClear,
   selectedImageName,
   imagePreviewUrl,
   activeTab,
@@ -214,10 +217,10 @@ export function QuickEntry({
             hasComposerContent ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
         >
-          <div className="joy-card flex min-h-full flex-col gap-3.5 overflow-hidden rounded-[1.25rem] border-[rgba(221,193,179,0.45)] p-3 sm:p-3.5">
+          <div className="joy-card flex min-h-full flex-col gap-3 overflow-hidden rounded-[1.15rem] border-[rgba(221,193,179,0.45)] p-2.5 sm:p-3">
             <div
               data-ui="quick-entry-media"
-              className="relative flex h-[10.5rem] flex-col justify-end overflow-hidden rounded-[1rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.75rem]"
+              className="relative flex h-[10rem] flex-col justify-end overflow-hidden rounded-[0.95rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.25rem]"
             >
               {imagePreviewUrl ? (
                 <Image
@@ -237,22 +240,22 @@ export function QuickEntry({
               >
                 {!hasImage ? (
                   <>
-                    <span className="flex size-[3.3rem] items-center justify-center rounded-full bg-white/92 text-[var(--primary)] shadow-[0_10px_20px_-18px_rgba(29,29,3,0.2)]">
+                    <span className="flex size-[3rem] items-center justify-center rounded-full bg-white/92 text-[var(--primary)] shadow-[0_10px_20px_-18px_rgba(29,29,3,0.2)]">
                       {uploading ? (
                         <LoaderCircle className="size-6 animate-spin" />
                       ) : (
                         <Camera className="size-6" />
                       )}
                     </span>
-                    <span className="mt-2.5 text-[0.9rem] font-semibold text-[var(--muted)]/90">
+                    <span className="mt-2 text-[0.84rem] font-semibold text-[var(--muted)]/90">
                       {uploading ? copy.uploading : copy.upload}
                     </span>
-                    <p className="mt-1.5 max-w-xs text-[0.8rem] leading-5.5 text-[var(--muted)]/72">
+                    <p className="mt-1 max-w-xs text-[0.74rem] leading-5 text-[var(--muted)]/72">
                       {copy.mediaHint}
                     </p>
                   </>
                 ) : (
-                  <span className="rounded-full bg-white/88 px-3 py-1.5 text-[0.74rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
+                  <span className="rounded-full bg-white/88 px-2.5 py-1 text-[0.68rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
                     {uploading ? copy.uploading : copy.upload}
                   </span>
                 )}
@@ -273,19 +276,19 @@ export function QuickEntry({
                 onChange={onImageChange}
               />
               {selectedImageName ? (
-                <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/88 px-2.5 py-1 text-[0.7rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
+                <span className="pointer-events-none absolute left-2.5 top-2.5 z-10 rounded-full bg-white/88 px-2 py-1 text-[0.66rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
                   {selectedImageName}
                 </span>
               ) : null}
             </div>
 
-            <div className="flex flex-1 flex-col gap-3.5 px-0.5 pb-0.5">
+            <div className="flex flex-1 flex-col gap-3 px-0.5 pb-0.5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setIsPersonMenuOpen((current) => !current)}
-                    className="joy-control-pill bg-[var(--surface-soft)] px-3.5 text-[var(--muted)] shadow-[0_12px_22px_-22px_rgba(29,29,3,0.18)]"
+                    className="joy-control-pill bg-[var(--surface-soft)] px-3 text-[var(--muted)] shadow-[0_12px_22px_-22px_rgba(29,29,3,0.18)]"
                   >
                     <span>
                       {copy.recordFor}
@@ -379,7 +382,7 @@ export function QuickEntry({
                 </div>
               </div>
 
-              <label className="joy-soft-panel block rounded-[1.1rem] px-3.5 py-3.5">
+              <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
                 <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                   {copy.momentLabel}
                 </span>
@@ -387,11 +390,11 @@ export function QuickEntry({
                   value={content}
                   onChange={(event) => onContentChange(event.target.value)}
                   placeholder={copy.momentPlaceholder}
-                  className="min-h-22 w-full resize-none border-none bg-transparent p-0 text-[1.3rem] font-black leading-[1.38] tracking-[-0.04em] text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/28"
+                  className="min-h-20 w-full resize-none border-none bg-transparent p-0 text-[1.18rem] font-black leading-[1.36] tracking-[-0.04em] text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/28"
                 />
               </label>
 
-              <label className="joy-soft-panel block rounded-[1.1rem] px-3.5 py-3.5">
+              <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
                 <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                   <Lightbulb className="size-3.5" />
                   {copy.reasonLabel}
@@ -400,32 +403,34 @@ export function QuickEntry({
                   value={reason}
                   onChange={(event) => onReasonChange(event.target.value)}
                   placeholder={copy.reasonPlaceholder}
-                  className="min-h-24 w-full resize-none border-none bg-transparent p-0 text-[0.92rem] leading-6.5 text-[var(--muted)] outline-none placeholder:text-[var(--muted)]/24"
+                  className="min-h-22 w-full resize-none border-none bg-transparent p-0 text-[0.84rem] leading-6 text-[var(--muted)] outline-none placeholder:text-[var(--muted)]/24"
                 />
               </label>
             </div>
           </div>
         </div>
 
-        <div className="joy-blur-panel relative z-10 flex min-h-[3.75rem] flex-wrap items-center justify-between gap-2.5 border-y border-[rgba(29,29,3,0.04)] px-3.5 py-2 sm:px-5">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="joy-control-pill bg-white/60 px-4 text-[var(--muted)]">
+        <div
+          data-ui="quick-entry-footer"
+          className="joy-blur-panel relative z-10 grid min-h-[3.45rem] grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-2 border-y border-[rgba(29,29,3,0.04)] px-3 py-1.5 sm:px-5"
+        >
+          <span className="joy-control-pill bg-white/60 px-3 text-[var(--muted)]">
               <CalendarDays className="size-4" />
               {copy.dateLabel}
-            </span>
-            <AppDatePicker
-              value={displayDate}
-              onChange={onDateChange}
-              buttonLabel=""
-              buttonClassName="px-3.5 py-2.5 text-[0.92rem] font-semibold shadow-none"
-            />
-          </div>
+          </span>
+          <AppDatePicker
+            value={displayDate}
+            onChange={onDateChange}
+            align="center"
+            buttonLabel=""
+            buttonClassName="px-3 py-2 text-[0.82rem] font-medium shadow-none"
+          />
 
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center justify-end">
             <button
               type="submit"
               disabled={saving || uploading}
-              className="joy-topbar-button joy-topbar-button--primary"
+              className="joy-topbar-button joy-topbar-button--primary shrink-0"
             >
               {saving || uploading ? (
                 <LoaderCircle className="size-4 animate-spin" />
@@ -437,17 +442,10 @@ export function QuickEntry({
           </div>
         </div>
 
-        {message ? (
-          <div
-            data-ui="quick-entry-message"
-            className="px-4 py-2.5 text-[0.88rem] text-[var(--muted)] sm:px-6"
-          >
-            {message}
-          </div>
-        ) : null}
-
         <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
       </form>
+
+      <AppToast message={message} onClear={onMessageClear} />
 
       {pendingDelete ? (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(29,29,3,0.24)] px-6">

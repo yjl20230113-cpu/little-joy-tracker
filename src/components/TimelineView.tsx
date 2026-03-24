@@ -14,6 +14,7 @@ import {
   type TimelineFilterOption,
 } from "./TimelineFilters";
 import { AppBottomNav } from "./AppBottomNav";
+import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 
 type TimelineViewProps = {
@@ -25,6 +26,7 @@ type TimelineViewProps = {
   customStartDate: string;
   customEndDate: string;
   message: string;
+  onMessageClear?: () => void;
   detailContent?: ReactNode;
   topBarTitle?: string;
   topBarLeftSlot?: ReactNode;
@@ -57,6 +59,7 @@ export function TimelineView({
   customStartDate,
   customEndDate,
   message,
+  onMessageClear,
   detailContent,
   topBarTitle,
   topBarLeftSlot,
@@ -80,7 +83,7 @@ export function TimelineView({
         rightSlot={topBarRightSlot}
       />
 
-      <div className="joy-app-content joy-scroll-hidden px-3 pb-5 pt-2.5 sm:px-4.5">
+      <div className="joy-app-content joy-scroll-hidden px-3 pb-5 pt-2 sm:px-4.5">
         {detailContent ? (
           detailContent
         ) : (
@@ -98,13 +101,7 @@ export function TimelineView({
               onSummaryClick={onSummaryClick}
             />
 
-            {message ? (
-              <div className="rounded-[0.95rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.72),rgba(255,255,255,0.82))] px-3 py-2 text-[0.84rem] font-semibold text-[var(--primary)]">
-                {message}
-              </div>
-            ) : null}
-
-            <div className="space-y-5 pb-7">
+            <div className="space-y-4.5 pb-7">
               {groups.length === 0 ? (
                 <div className="joy-card flex flex-col items-center justify-center gap-3.5 rounded-[1.25rem] px-4.5 py-10 text-center">
                   <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(120,111,66,0.18)] text-[rgba(120,111,66,0.7)]">
@@ -115,23 +112,23 @@ export function TimelineView({
                 </div>
               ) : (
                 groups.map((group) => (
-                  <section key={group.date} className="space-y-3.5">
-                    <div className="flex items-center gap-2.5 pt-0.5">
-                      <h3 className="shrink-0 text-[1.4rem] font-black tracking-[-0.04em] text-[var(--foreground)]">
+                  <section key={group.date} className="space-y-3">
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <h3 className="shrink-0 text-[1.32rem] font-black tracking-[-0.04em] text-[var(--foreground)]">
                         {formatTimelineHeading(group.date)}
                       </h3>
                       <div className="h-px flex-1 bg-[rgba(225,205,110,0.55)]" />
                     </div>
 
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {group.items.map((item) => (
                         <button
                           key={item.id}
                           type="button"
                           onClick={() => onEventOpen(item.id)}
-                          className="flex w-full items-center gap-2.5 rounded-[1.1rem] bg-white/94 px-3 py-3 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3.5"
+                          className="flex w-full items-start gap-2.5 rounded-[1rem] bg-white/94 px-2.5 py-2.5 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3"
                         >
-                          <div className="relative size-[3.75rem] shrink-0 overflow-hidden rounded-[0.9rem] bg-[var(--surface-soft)] sm:size-16">
+                          <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.82rem] bg-[var(--surface-soft)] sm:size-[3.75rem]">
                             {item.imageUrl ? (
                               <Image
                                 src={item.imageUrl}
@@ -147,26 +144,26 @@ export function TimelineView({
                             )}
                           </div>
 
-                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1.5">
-                            <div className="space-y-1">
-                              <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2.5 py-1 text-[0.68rem] font-bold tracking-[0.05em] text-[var(--primary)]">
+                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
+                            <div className="space-y-0.5">
+                              <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[0.64rem] font-bold tracking-[0.05em] text-[var(--primary)]">
                                 {item.personName}
                               </span>
-                              <p className="line-clamp-2 text-[0.94rem] font-black leading-5.5 tracking-[-0.03em] text-[var(--foreground)]">
+                              <p className="line-clamp-2 text-[0.88rem] font-black leading-5 tracking-[-0.03em] text-[var(--foreground)]">
                                 {item.title?.trim() ||
                                   fallbackMemoryTitle(item.content)}
                               </p>
-                              <p className="line-clamp-2 text-[0.84rem] leading-5.5 text-[var(--muted)]">
+                              <p className="line-clamp-2 text-[0.78rem] leading-5 text-[var(--muted)]">
                                 {item.content}
                               </p>
                               {item.reason ? (
-                                <p className="line-clamp-1 text-[0.76rem] italic leading-5 text-[var(--outline-strong)]">
+                                <p className="line-clamp-1 text-[0.72rem] italic leading-4.5 text-[var(--outline-strong)]">
                                   {item.reason}
                                 </p>
                               ) : null}
                             </div>
 
-                            <span className="text-right text-[0.74rem] font-semibold text-[var(--outline-strong)]">
+                            <span className="text-right text-[0.7rem] font-medium text-[var(--outline-strong)]">
                               {formatTimelineTime(item.createdAt)}
                             </span>
                           </div>
@@ -182,6 +179,7 @@ export function TimelineView({
       </div>
 
       <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <AppToast message={message} onClear={onMessageClear} />
     </section>
   );
 }

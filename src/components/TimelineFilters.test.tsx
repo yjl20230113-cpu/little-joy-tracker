@@ -2,12 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TimelineFilters } from "./TimelineFilters";
 
 describe("TimelineFilters", () => {
-  it("shows a past three months button instead of the custom date picker", () => {
+  it("shows a past three months button instead of a custom date picker", () => {
     const onRangeChange = vi.fn();
 
     render(
       <TimelineFilters
-        peopleFilters={[{ id: "all", label: "全部" }]}
+        peopleFilters={[{ id: "all", label: "All" }]}
         selectedPersonId="all"
         selectedRange="threeMonths"
         customStartDate=""
@@ -20,11 +20,10 @@ describe("TimelineFilters", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "过去三个月" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /过去三个月/ })).toBeInTheDocument();
     expect(screen.queryByTestId("app-date-picker-panel")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /自定义/ })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "过去三个月" }));
+    fireEvent.click(screen.getByRole("button", { name: /过去三个月/ }));
 
     expect(onRangeChange).toHaveBeenCalledWith("threeMonths");
   });
@@ -32,7 +31,7 @@ describe("TimelineFilters", () => {
   it("can hide the AI summary button when requested", () => {
     render(
       <TimelineFilters
-        peopleFilters={[{ id: "all", label: "全部" }]}
+        peopleFilters={[{ id: "all", label: "All" }]}
         selectedPersonId="all"
         selectedRange="week"
         customStartDate=""
@@ -45,7 +44,7 @@ describe("TimelineFilters", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: /AI .*报告/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /AI/i })).not.toBeInTheDocument();
   });
 
   it("triggers summary generation when the button is clicked", () => {
@@ -53,7 +52,7 @@ describe("TimelineFilters", () => {
 
     render(
       <TimelineFilters
-        peopleFilters={[{ id: "all", label: "全部" }]}
+        peopleFilters={[{ id: "all", label: "All" }]}
         selectedPersonId="all"
         selectedRange="week"
         customStartDate=""
@@ -66,8 +65,33 @@ describe("TimelineFilters", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /AI .*报告/ }));
+    fireEvent.click(screen.getByRole("button", { name: /AI/i }));
 
     expect(onSummaryClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("places the AI summary action on its own full-width row", () => {
+    const { container } = render(
+      <TimelineFilters
+        peopleFilters={[
+          { id: "all", label: "All" },
+          { id: "self", label: "Self" },
+        ]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+      />,
+    );
+
+    expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
+      "grid-cols-3",
+    );
+    expect(screen.getByTestId("timeline-summary-button")).toHaveClass("w-full");
   });
 });

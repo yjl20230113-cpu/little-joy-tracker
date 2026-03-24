@@ -434,6 +434,7 @@ export default function EventDetailPage() {
                   uploading={uploading}
                   confirmingDelete={confirmingDelete}
                   message={message}
+                  onMessageClear={() => setMessage("")}
                   selectedImageName={selectedImageName}
                   imagePreviewUrl={imagePreviewUrl}
                   onDeleteCancel={() => setConfirmingDelete(false)}

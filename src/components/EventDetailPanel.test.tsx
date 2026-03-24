@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { EventDetailPanel } from "./EventDetailPanel";
 
 vi.mock("next/image", () => ({
@@ -127,5 +127,20 @@ describe("EventDetailPanel", () => {
     expect(trigger).toBeInTheDocument();
     expect(trigger?.querySelector("div")).not.toBeInTheDocument();
     expect(trigger?.querySelector("span")).toBeInTheDocument();
+  });
+
+  it("centers the calendar panel on the detail date trigger", () => {
+    render(<EventDetailPanel {...baseProps} editing />);
+
+    fireEvent.click(
+      within(screen.getByTestId("detail-editor-date")).getByRole("button", {
+        name: /2026\/03\/22/,
+      }),
+    );
+
+    expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
+      "left-1/2",
+      "-translate-x-1/2",
+    );
   });
 });

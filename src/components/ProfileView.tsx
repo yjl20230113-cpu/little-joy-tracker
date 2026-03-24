@@ -1,5 +1,6 @@
 import { LogOut, Mail, Sparkles, UserRound } from "lucide-react";
 import { AppBottomNav } from "./AppBottomNav";
+import { AppToast } from "./AppToast";
 import { AppTopBar } from "./AppTopBar";
 import type { HomeTab } from "./QuickEntry";
 
@@ -7,6 +8,7 @@ type ProfileViewProps = {
   email: string;
   activeTab: HomeTab;
   message: string;
+  onMessageClear?: () => void;
   onLogout: () => void;
   onTabChange: (tab: HomeTab) => void;
 };
@@ -25,6 +27,7 @@ export function ProfileView({
   email,
   activeTab,
   message,
+  onMessageClear,
   onLogout,
   onTabChange,
 }: ProfileViewProps) {
@@ -51,7 +54,7 @@ export function ProfileView({
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--muted)]">
                   {copy.emailLabel}
                 </p>
-                <div className="mt-2.5 inline-flex max-w-full items-center gap-3 rounded-[0.9rem] bg-white/92 px-3 py-2.5 text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.2)]">
+                <div className="mt-2.5 inline-flex max-w-full items-center gap-2.5 rounded-[0.82rem] bg-white/92 px-2.5 py-2 text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.2)]">
                   <Mail className="size-4 shrink-0" />
                   <span className="min-w-0 break-all text-[0.88rem] font-semibold">
                     {email}
@@ -85,16 +88,12 @@ export function ProfileView({
               </div>
             </div>
 
-            {message ? (
-              <div className="mt-3.5 rounded-[0.9rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.58),rgba(255,255,255,0.76))] px-3 py-2 text-[0.82rem] font-semibold text-[var(--primary)]">
-                {message}
-              </div>
-            ) : null}
           </section>
         </div>
       </div>
 
       <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <AppToast message={message} onClear={onMessageClear} />
     </section>
   );
 }

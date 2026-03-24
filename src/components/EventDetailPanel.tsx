@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { AppDatePicker } from "./AppDatePicker";
+import { AppToast } from "./AppToast";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
 import { formatDetailTimestamp } from "../lib/app-logic";
 import { fallbackMemoryTitle } from "../lib/memory-title";
@@ -42,6 +43,7 @@ type EventDetailPanelProps = {
   uploading: boolean;
   confirmingDelete: boolean;
   message: string;
+  onMessageClear?: () => void;
   selectedImageName: string;
   imagePreviewUrl: string | null;
   onDeleteCancel: () => void;
@@ -93,6 +95,7 @@ export function EventDetailPanel({
   uploading,
   confirmingDelete,
   message,
+  onMessageClear,
   selectedImageName,
   imagePreviewUrl,
   onDeleteCancel,
@@ -149,7 +152,7 @@ export function EventDetailPanel({
           >
             <div
               data-testid="detail-editor-media"
-              className="relative flex h-[10.5rem] w-full flex-col justify-end overflow-hidden rounded-[1rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.75rem]"
+            className="relative flex h-[10rem] w-full flex-col justify-end overflow-hidden rounded-[0.95rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.25rem]"
             >
               {currentImageUrl ? (
                 <>
@@ -219,7 +222,7 @@ export function EventDetailPanel({
                 type="button"
                 data-testid="detail-editor-person-trigger"
                 onClick={() => setIsPersonMenuOpen((current) => !current)}
-                className="joy-control-pill bg-[var(--surface-soft)] px-4 text-[var(--muted)] shadow-[0_10px_22px_-18px_rgba(29,29,3,0.16)]"
+                className="joy-control-pill bg-[var(--surface-soft)] px-3 text-[var(--muted)] shadow-[0_10px_22px_-18px_rgba(29,29,3,0.16)]"
               >
                 <span>
                   {copy.recordFor}
@@ -262,12 +265,13 @@ export function EventDetailPanel({
               <AppDatePicker
                 value={event.displayDate}
                 onChange={onDateChange}
+                align="center"
                 buttonLabel=""
-                buttonClassName="px-3.5 py-2.5 text-[0.92rem] font-semibold shadow-none"
+                buttonClassName="px-3 py-2 text-[0.82rem] font-medium shadow-none"
               />
             </div>
 
-            <label className="joy-soft-panel block rounded-[1.1rem] px-3.5 py-3.5">
+            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
               <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                 {copy.momentLabel}
               </span>
@@ -275,11 +279,11 @@ export function EventDetailPanel({
                 value={event.content}
                 onChange={(nextEvent) => onContentChange(nextEvent.target.value)}
                 placeholder={copy.momentPlaceholder}
-                className="min-h-22 w-full resize-none border-none bg-transparent p-0 text-[1.3rem] font-black leading-[1.38] tracking-[-0.04em] text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/28"
+                className="min-h-20 w-full resize-none border-none bg-transparent p-0 text-[1.18rem] font-black leading-[1.36] tracking-[-0.04em] text-[var(--foreground)] outline-none placeholder:text-[var(--muted)]/28"
               />
             </label>
 
-            <label className="joy-soft-panel block rounded-[1.1rem] px-3.5 py-3.5">
+            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
               <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                 <Lightbulb className="size-3.5" />
                 {copy.reasonLabel}
@@ -288,7 +292,7 @@ export function EventDetailPanel({
                 value={event.reason ?? ""}
                 onChange={(nextEvent) => onReasonChange(nextEvent.target.value)}
                 placeholder={copy.reasonPlaceholder}
-                className="min-h-24 w-full resize-none border-none bg-transparent p-0 text-[0.92rem] leading-6.5 text-[var(--muted)] outline-none placeholder:text-[var(--muted)]/24"
+                className="min-h-22 w-full resize-none border-none bg-transparent p-0 text-[0.84rem] leading-6 text-[var(--muted)] outline-none placeholder:text-[var(--muted)]/24"
               />
             </label>
 
@@ -297,7 +301,7 @@ export function EventDetailPanel({
                 type="button"
                 data-testid="detail-editor-cancel"
                 onClick={onCancelEdit}
-                className="joy-control-pill bg-transparent px-4 text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
+                className="joy-control-pill bg-transparent px-3 text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
               >
                 {copy.cancel}
               </button>
@@ -328,7 +332,7 @@ export function EventDetailPanel({
             </div>
 
             {headline ? (
-              <h3 className="text-[1.625rem] font-black leading-[1.08] tracking-[-0.05em] text-[var(--primary)]">
+              <h3 className="text-[1.5rem] font-black leading-[1.08] tracking-[-0.05em] text-[var(--primary)]">
                 {headline}
               </h3>
             ) : null}
@@ -337,7 +341,7 @@ export function EventDetailPanel({
               <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/42">
                 {copy.momentLabel}
               </p>
-              <p className="text-[1rem] leading-[1.85] tracking-[-0.02em] text-[var(--foreground)]">
+              <p className="text-[0.96rem] leading-[1.8] tracking-[-0.02em] text-[var(--foreground)]">
                 {event.content}
               </p>
             </section>
@@ -346,7 +350,7 @@ export function EventDetailPanel({
               <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/56">
                 {copy.reasonLabel}
               </p>
-              <p className="text-[0.94rem] italic leading-[1.85] text-[var(--muted)]">
+              <p className="text-[0.9rem] italic leading-[1.8] text-[var(--muted)]">
                 {event.reason || copy.emptyReason}
               </p>
             </section>
@@ -367,12 +371,9 @@ export function EventDetailPanel({
           </div>
         )}
 
-        {message ? (
-          <div className="mt-4 rounded-[1rem] bg-[linear-gradient(180deg,rgba(255,219,201,0.58),rgba(255,255,255,0.76))] px-3.5 py-2.5 text-[0.88rem] font-semibold text-[var(--primary)]">
-            {message}
-          </div>
-        ) : null}
       </section>
+
+      <AppToast message={message} onClear={onMessageClear} />
 
       {confirmingDelete ? (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(29,29,3,0.24)] px-6">

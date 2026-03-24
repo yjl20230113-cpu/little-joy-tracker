@@ -74,16 +74,22 @@ describe("mobile density contract", () => {
       "min-h-[4rem]",
     );
     expect(container.querySelector('[data-ui="app-topbar-title"]')).toHaveClass(
-      "text-[1.0625rem]",
+      "text-[1rem]",
     );
 
     expect(container.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass("px-2");
-    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("h-[4.05rem]");
-    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("w-[92%]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("h-[3.85rem]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("w-[90%]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("text-[0.66rem]");
+    expect(screen.getByRole("button", { name: "Mood Log" })).toHaveClass("font-medium");
+    expect(screen.getByRole("button", { name: "Daily Joy" })).toHaveClass("font-normal");
 
     const filterPanel = container.querySelector('[data-ui="timeline-filters"]');
-    expect(filterPanel).toHaveClass("rounded-[1.15rem]");
-    expect(filterPanel?.querySelector("button")).toHaveClass("px-3.5", "py-2");
+    expect(filterPanel).toHaveClass("rounded-[1rem]");
+    expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
+      "grid-cols-3",
+    );
+    expect(filterPanel?.querySelector("button")).toHaveClass("px-3", "py-1.5");
 
     expect(container.querySelector('[data-ui="auth-panel"]')).toHaveClass("px-4");
     expect(screen.getByRole("heading", { name: "Welcome back" })).toHaveClass(
