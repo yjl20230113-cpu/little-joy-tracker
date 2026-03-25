@@ -158,8 +158,6 @@ export function AppDatePicker({
 
   useLayoutEffect(() => {
     if (!isOpen || !centerPanelOnViewport) {
-      setViewportTop(null);
-      setViewportBottom(null);
       return;
     }
 
