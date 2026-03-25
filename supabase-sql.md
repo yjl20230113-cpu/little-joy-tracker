@@ -28,6 +28,23 @@ COMMENT ON COLUMN public.events.ai_insight_payload IS 'Persisted single-record A
 
 COMMIT;
 
+-- Migration: add async auto-image persistence for memory records.
+-- Run this in Supabase SQL editor.
+
+BEGIN;
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS auto_image_status TEXT
+  CHECK (auto_image_status IN ('pending', 'ready', 'failed'));
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS auto_image_payload JSONB;
+
+COMMENT ON COLUMN public.events.auto_image_status IS 'Async auto-image generation state for no-photo records';
+COMMENT ON COLUMN public.events.auto_image_payload IS 'Persisted Unsplash auto-image metadata or failure payload';
+
+COMMIT;
+
 -- Migration: add user profiles for display name and avatar.
 -- Run this in Supabase SQL editor.
 

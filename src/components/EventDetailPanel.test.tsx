@@ -253,4 +253,62 @@ describe("EventDetailPanel", () => {
 
     expect(onRetryInsight).toHaveBeenCalledTimes(1);
   });
+
+  it("shows the local placeholder image in read mode while auto-image is pending without a real photo", () => {
+    render(
+      <EventDetailPanel
+        {...baseProps}
+        imagePreviewUrl={null}
+        event={{
+          ...baseProps.event,
+          imageUrl: null,
+          aiInsightStatus: "pending",
+          aiInsight: null,
+          autoImageStatus: "pending",
+          autoImageAttribution: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByAltText(/Autumn's first tiny sprout/i)).toHaveAttribute(
+      "src",
+      "/auto-image-placeholder.svg",
+    );
+  });
+
+  it("keeps read mode image-free after a user-deleted photo cleared auto-image state", () => {
+    const { container } = render(
+      <EventDetailPanel
+        {...baseProps}
+        imagePreviewUrl={null}
+        event={{
+          ...baseProps.event,
+          imageUrl: null,
+          autoImageStatus: null,
+          autoImageAttribution: null,
+        }}
+      />,
+    );
+
+    expect(container.querySelector("img")).not.toBeInTheDocument();
+  });
+  it("shows the local placeholder in read mode when the image url is an empty string", () => {
+    render(
+      <EventDetailPanel
+        {...baseProps}
+        imagePreviewUrl={null}
+        event={{
+          ...baseProps.event,
+          imageUrl: "",
+          autoImageStatus: "pending",
+          autoImageAttribution: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByAltText(/Autumn's first tiny sprout/i)).toHaveAttribute(
+      "src",
+      "/auto-image-placeholder.svg",
+    );
+  });
 });

@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { BookOpen, CalendarDays, Sparkles } from "lucide-react";
+import { BookOpen, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import {
+  autoImagePlaceholderSrc,
   formatTimelineHeading,
   formatTimelineTime,
   type TimelineGroup,
@@ -121,54 +122,60 @@ export function TimelineView({
                     </div>
 
                     <div className="space-y-2">
-                      {group.items.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => onEventOpen(item.id)}
-                          className="flex w-full items-start gap-2.5 rounded-[1rem] bg-white/94 px-2.5 py-2.5 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3"
-                        >
-                          <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.82rem] bg-[var(--surface-soft)] sm:size-[3.75rem]">
-                            {item.imageUrl ? (
+                      {group.items.map((item) => {
+                        const hasRealImage = Boolean(item.imageUrl?.trim());
+                        const imageSrc = hasRealImage
+                          ? item.imageUrl!
+                          : autoImagePlaceholderSrc;
+
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => onEventOpen(item.id)}
+                            className="flex w-full items-start gap-2.5 rounded-[1rem] bg-white/94 px-2.5 py-2.5 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3"
+                          >
+                            <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.82rem] bg-[var(--surface-soft)] sm:size-[3.75rem]">
                               <Image
-                                src={item.imageUrl}
+                                src={imageSrc}
                                 alt={item.content}
                                 fill
                                 className="object-cover"
                                 unoptimized
                               />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-[var(--primary)]/50">
-                                <CalendarDays className="size-6 sm:size-6.5" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
-                            <div className="space-y-0.5">
-                              <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[0.64rem] font-bold tracking-[0.05em] text-[var(--primary)]">
-                                {item.personName}
-                              </span>
-                              <p className="line-clamp-2 text-[0.88rem] font-black leading-5 tracking-[-0.03em] text-[var(--foreground)]">
-                                {item.title?.trim() ||
-                                  fallbackMemoryTitle(item.content)}
-                              </p>
-                              <p className="line-clamp-2 text-[0.78rem] leading-5 text-[var(--muted)]">
-                                {item.content}
-                              </p>
-                              {item.reason ? (
-                                <p className="line-clamp-1 text-[0.72rem] italic leading-4.5 text-[var(--outline-strong)]">
-                                  {item.reason}
-                                </p>
-                              ) : null}
                             </div>
 
-                            <span className="text-right text-[0.7rem] font-medium text-[var(--outline-strong)]">
-                              {formatTimelineTime(item.createdAt)}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
+                            <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
+                              <div className="space-y-0.5">
+                                <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[0.64rem] font-bold tracking-[0.05em] text-[var(--primary)]">
+                                  {item.personName}
+                                </span>
+                                {hasRealImage && item.autoImageAttribution ? (
+                                  <span className="ml-1 inline-flex rounded-full bg-[rgba(14,14,4,0.06)] px-2 py-0.5 text-[0.58rem] font-semibold tracking-[0.08em] text-[var(--outline-strong)]">
+                                    Unsplash
+                                  </span>
+                                ) : null}
+                                <p className="line-clamp-2 text-[0.88rem] font-black leading-5 tracking-[-0.03em] text-[var(--foreground)]">
+                                  {item.title?.trim() ||
+                                    fallbackMemoryTitle(item.content)}
+                                </p>
+                                <p className="line-clamp-2 text-[0.78rem] leading-5 text-[var(--muted)]">
+                                  {item.content}
+                                </p>
+                                {item.reason ? (
+                                  <p className="line-clamp-1 text-[0.72rem] italic leading-4.5 text-[var(--outline-strong)]">
+                                    {item.reason}
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <span className="text-right text-[0.7rem] font-medium text-[var(--outline-strong)]">
+                                {formatTimelineTime(item.createdAt)}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </section>
                 ))

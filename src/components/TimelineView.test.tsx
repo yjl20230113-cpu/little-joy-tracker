@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TimelineView } from "./TimelineView";
 
+vi.mock("next/image", () => ({
+  // eslint-disable-next-line @next/next/no-img-element
+  default: (props: Record<string, unknown>) => <img alt="" {...props} />,
+}));
+
 describe("TimelineView", () => {
   it("shows grouped events and lets the user open a detail view", () => {
     const onEventOpen = vi.fn();
@@ -141,5 +146,96 @@ describe("TimelineView", () => {
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /All/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /A quiet walk home together/i })).not.toBeInTheDocument();
+  });
+
+  it("renders the local placeholder image when a record has no real photo", () => {
+    render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[
+          {
+            date: "2026-03-22",
+            items: [
+              {
+                id: "event-1",
+                title: "镜面湖光",
+                content: "今天的风像水面一样轻",
+                reason: null,
+                imageUrl: null,
+                displayDate: "2026-03-22",
+                createdAt: "2026-03-22T14:30:25+08:00",
+                personName: "Self",
+                personId: "person-self",
+                autoImageStatus: null,
+                autoImageAttribution: null,
+              },
+            ],
+          },
+        ]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+      />,
+    );
+
+    expect(screen.getByAltText("今天的风像水面一样轻")).toHaveAttribute(
+      "src",
+      "/auto-image-placeholder.svg",
+    );
+  });
+  it("still renders the local placeholder when the image url is an empty string", () => {
+    render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[
+          {
+            date: "2026-03-22",
+            items: [
+              {
+                id: "event-1",
+                title: "闈欐按鏅氶湼",
+                content: "鏌斿拰鐨勬按闈㈡妸澶╃┖鎷夊緱寰堥暱",
+                reason: null,
+                imageUrl: "",
+                displayDate: "2026-03-22",
+                createdAt: "2026-03-22T14:30:25+08:00",
+                personName: "Self",
+                personId: "person-self",
+                autoImageStatus: null,
+                autoImageAttribution: null,
+              },
+            ],
+          },
+        ]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+      />,
+    );
+
+    expect(screen.getByAltText("鏌斿拰鐨勬按闈㈡妸澶╃┖鎷夊緱寰堥暱")).toHaveAttribute(
+      "src",
+      "/auto-image-placeholder.svg",
+    );
   });
 });

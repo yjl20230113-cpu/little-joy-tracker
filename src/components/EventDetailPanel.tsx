@@ -13,8 +13,16 @@ import {
 import { AppDatePicker } from "./AppDatePicker";
 import { AppToast } from "./AppToast";
 import { AutoGrowTextarea } from "./AutoGrowTextarea";
-import type { EventInsightReport, EventInsightStatus } from "../lib/app-logic";
-import { formatDetailTimestamp } from "../lib/app-logic";
+import type {
+  AutoImageAttribution,
+  EventInsightReport,
+  EventInsightStatus,
+} from "../lib/app-logic";
+import {
+  autoImagePlaceholderSrc,
+  formatDetailTimestamp,
+  withUnsplashAttributionParams,
+} from "../lib/app-logic";
 import { getSubmitActionState } from "../lib/image-upload";
 import { fallbackMemoryTitle } from "../lib/memory-title";
 
@@ -36,6 +44,8 @@ type DetailEvent = {
   personId: string;
   aiInsightStatus?: EventInsightStatus | null;
   aiInsight?: EventInsightReport | null;
+  autoImageStatus?: "pending" | "ready" | "failed" | null;
+  autoImageAttribution?: AutoImageAttribution | null;
 };
 
 type EventDetailPanelProps = {
@@ -101,6 +111,8 @@ const copy = {
   aiEmotion: "情绪线索",
   aiRelationship: "关系线索",
   aiValue: "价值观线索",
+  imageBy: "图片来自",
+  onUnsplash: "· Unsplash",
 };
 
 export function EventDetailPanel({
@@ -139,7 +151,18 @@ export function EventDetailPanel({
   );
   const headline = event.title?.trim() || fallbackMemoryTitle(event.content);
   const currentImageUrl = imagePreviewUrl ?? event.imageUrl;
-  const hasImage = Boolean(currentImageUrl);
+  const normalizedCurrentImageUrl = currentImageUrl?.trim()
+    ? currentImageUrl
+    : null;
+  const hasImage = Boolean(normalizedCurrentImageUrl);
+  const shouldShowAutoPlaceholder =
+    !editing &&
+    !normalizedCurrentImageUrl &&
+    (event.autoImageStatus === "pending" || event.autoImageStatus === "failed");
+  const imageSrc =
+    normalizedCurrentImageUrl ??
+    (shouldShowAutoPlaceholder ? autoImagePlaceholderSrc : null);
+  const imageAlt = shouldShowAutoPlaceholder ? event.content : headline || event.content;
   const submitAction = getSubmitActionState({
     saving,
     uploading,
@@ -155,12 +178,12 @@ export function EventDetailPanel({
   return (
     <div className="relative space-y-3.5 pb-7">
       <section className="joy-card overflow-hidden rounded-[1.25rem] p-3 sm:p-3.5">
-        {!editing && currentImageUrl ? (
+        {!editing && imageSrc ? (
           <div className="relative overflow-hidden rounded-[1rem] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))]">
             <div className="relative h-[10.75rem] overflow-hidden sm:h-[12rem]">
               <Image
-                src={currentImageUrl}
-                alt={headline || event.content}
+                src={imageSrc}
+                alt={imageAlt}
                 fill
                 className="object-cover"
                 unoptimized
@@ -180,10 +203,10 @@ export function EventDetailPanel({
               data-testid="detail-editor-media"
             className="relative flex h-[10rem] w-full flex-col justify-end overflow-hidden rounded-[0.95rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.25rem]"
             >
-              {currentImageUrl ? (
+              {normalizedCurrentImageUrl ? (
                 <>
                   <Image
-                    src={currentImageUrl}
+                    src={normalizedCurrentImageUrl}
                     alt="Selected memory preview"
                     fill
                     className="object-cover"
@@ -215,7 +238,7 @@ export function EventDetailPanel({
                 disabled={uploading}
                 className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center disabled:cursor-not-allowed"
               >
-                {currentImageUrl ? (
+                {normalizedCurrentImageUrl ? (
                   <span className="rounded-full bg-white/88 px-3 py-1.5 text-[0.74rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
                     {uploading ? copy.uploading : copy.replaceImage}
                   </span>
@@ -393,6 +416,32 @@ export function EventDetailPanel({
                 {event.reason || copy.emptyReason}
               </p>
             </section>
+
+            {event.imageUrl && event.autoImageAttribution ? (
+              <p className="text-[0.74rem] leading-6 text-[var(--outline-strong)]">
+                {copy.imageBy}{" "}
+                <a
+                  href={withUnsplashAttributionParams(
+                    event.autoImageAttribution.photographerProfileUrl,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-[var(--primary)]"
+                >
+                  {event.autoImageAttribution.photographerName}
+                </a>{" "}
+                <a
+                  href={withUnsplashAttributionParams(
+                    event.autoImageAttribution.photoPageUrl,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-[var(--primary)]"
+                >
+                  {copy.onUnsplash}
+                </a>
+              </p>
+            ) : null}
 
             {event.aiInsightStatus === "ready" && event.aiInsight ? (
               <section

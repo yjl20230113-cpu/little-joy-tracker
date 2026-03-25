@@ -8,6 +8,7 @@ const onAuthStateChangeMock = vi.fn();
 const unsubscribeMock = vi.fn();
 const fromMock = vi.fn();
 const generateMemoryTitlesMock = vi.fn();
+const uploadImageToStorageMock = vi.fn();
 const insertMock = vi.fn();
 const updateMock = vi.fn();
 const orMock = vi.fn();
@@ -68,6 +69,10 @@ type DetailQueryResult = {
 
 let detailQueryResult: Promise<DetailQueryResult>;
 let titleBackfillShouldAffectRow = true;
+let insertSingleResults: Array<{
+  data: { id: string } | null;
+  error: { message: string } | null;
+}> = [];
 
 function createQueryBuilder(table: string) {
   const filters: Array<{ field: string; value: unknown }> = [];
@@ -116,10 +121,14 @@ function createQueryBuilder(table: string) {
       insertMock(payload);
       return {
         select: vi.fn(() => ({
-          single: vi.fn(async () => ({
-            data: { id: "event-created" },
-            error: null,
-          })),
+          single: vi.fn(async () => {
+            const nextResult = insertSingleResults.shift() ?? {
+              data: { id: "event-created" },
+              error: null,
+            };
+
+            return nextResult;
+          }),
         })),
       };
     }),
@@ -182,6 +191,10 @@ vi.mock("@/lib/memory-title-client", () => ({
   generateMemoryTitles: (...args: unknown[]) => generateMemoryTitlesMock(...args),
 }));
 
+vi.mock("@/lib/image-upload", () => ({
+  uploadImageToStorage: (...args: unknown[]) => uploadImageToStorageMock(...args),
+}));
+
 vi.mock("@/components/AuthScreen", () => ({
   AuthScreen: () => <div data-testid="auth-screen">auth screen</div>,
 }));
@@ -190,10 +203,17 @@ vi.mock("@/components/QuickEntry", () => ({
   QuickEntry: ({
     selectedPersonId,
     onContentChange,
+    onImageChange,
     onSave,
   }: {
     selectedPersonId: string;
     onContentChange: (value: string) => void;
+    onImageChange: (event: {
+      target: {
+        files?: File[];
+        value: string;
+      };
+    }) => void;
     onSave: (event: React.FormEvent<HTMLFormElement>) => void;
   }) => (
     <form data-testid="quick-entry" onSubmit={onSave}>
@@ -203,6 +223,19 @@ vi.mock("@/components/QuickEntry", () => ({
         onClick={() => onContentChange("A quiet walk home together")}
       >
         set-content
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          onImageChange({
+            target: {
+              files: [new File(["image"], "cover.jpg", { type: "image/jpeg" })],
+              value: "",
+            },
+          })
+        }
+      >
+        set-image
       </button>
       <button type="submit">save-entry</button>
     </form>
@@ -277,9 +310,11 @@ describe("HomePage bootstrapping", () => {
     insertMock.mockReset();
     updateMock.mockReset();
     orMock.mockReset();
+    uploadImageToStorageMock.mockReset();
     fetchMock.mockReset();
     global.fetch = fetchMock as typeof fetch;
     titleBackfillShouldAffectRow = true;
+    insertSingleResults = [];
     eventRows[0].ai_insight_status = null;
     eventRows[0].ai_insight_payload = null;
 
@@ -305,6 +340,9 @@ describe("HomePage bootstrapping", () => {
 
     fromMock.mockImplementation((table: string) => createQueryBuilder(table));
     generateMemoryTitlesMock.mockResolvedValue(["春日晚风"]);
+    uploadImageToStorageMock.mockResolvedValue({
+      publicUrl: "https://cdn.example.com/cover.jpg",
+    });
 
     onAuthStateChangeMock.mockReturnValue({
       data: {
@@ -385,6 +423,17 @@ describe("HomePage bootstrapping", () => {
       },
     });
     generateMemoryTitlesMock.mockResolvedValueOnce(["春日晚风"]);
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      if (String(input).includes("/api/generate-auto-image")) {
+        return new Promise(() => undefined);
+      }
+
+      if (String(input).includes("/api/event-insight")) {
+        return new Promise(() => undefined);
+      }
+
+      throw new Error(`Unexpected fetch: ${String(input)}`);
+    });
 
     render(<HomePage />);
 
@@ -405,9 +454,17 @@ describe("HomePage bootstrapping", () => {
     expect("title" in inserted).toBe(false);
     expect(inserted.ai_insight_status).toBe("pending");
     expect(inserted.ai_insight_payload).toBeNull();
+    expect(inserted.auto_image_status).toBe("pending");
+    expect(inserted.auto_image_payload).toBeNull();
 
     await waitFor(() => {
       expect(generateMemoryTitlesMock).toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/generate-auto-image",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "春日晚风",
@@ -430,6 +487,7 @@ describe("HomePage bootstrapping", () => {
       },
     });
     generateMemoryTitlesMock.mockImplementationOnce(() => new Promise(() => {}));
+    fetchMock.mockImplementation(() => new Promise(() => {}));
 
     render(<HomePage />);
 
@@ -443,5 +501,103 @@ describe("HomePage bootstrapping", () => {
     await waitFor(() => {
       expect(insertMock).toHaveBeenCalled();
     });
+  });
+
+  it("falls back to a plain save when the auto image schema is unavailable", async () => {
+    window.history.replaceState({}, "", "/?tab=quick-entry");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    insertSingleResults = [
+      {
+        data: null,
+        error: {
+          message:
+            "Could not find the 'auto_image_payload' column of 'events' in the schema cache",
+        },
+      },
+      {
+        data: { id: "event-created" },
+        error: null,
+      },
+    ];
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      if (String(input).includes("/api/event-insight")) {
+        return new Promise(() => undefined);
+      }
+
+      throw new Error(`Unexpected fetch: ${String(input)}`);
+    });
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-person")).toHaveTextContent("person-self");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "set-content" }));
+    fireEvent.click(screen.getByRole("button", { name: "save-entry" }));
+
+    await waitFor(() => {
+      expect(insertMock).toHaveBeenCalledTimes(2);
+    });
+
+    const firstInserted = insertMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    const secondInserted = insertMock.mock.calls[1]?.[0] as Record<string, unknown>;
+
+    expect(firstInserted.auto_image_status).toBe("pending");
+    expect(firstInserted.auto_image_payload).toBeNull();
+    expect(secondInserted.auto_image_status).toBeUndefined();
+    expect(secondInserted.auto_image_payload).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/generate-auto-image",
+      expect.anything(),
+    );
+  });
+
+  it("skips auto-image generation when the user uploaded a photo before saving", async () => {
+    window.history.replaceState({}, "", "/?tab=quick-entry");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      if (String(input).includes("/api/event-insight")) {
+        return new Promise(() => undefined);
+      }
+
+      throw new Error(`Unexpected fetch: ${String(input)}`);
+    });
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-person")).toHaveTextContent("person-self");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "set-content" }));
+    fireEvent.click(screen.getByRole("button", { name: "set-image" }));
+
+    await waitFor(() => {
+      expect(uploadImageToStorageMock).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "save-entry" }));
+
+    await waitFor(() => {
+      expect(insertMock).toHaveBeenCalled();
+    });
+
+    const inserted = insertMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(inserted.image_urls).toBe("[\"https://cdn.example.com/cover.jpg\"]");
+    expect(inserted.auto_image_status).toBeUndefined();
+    expect(inserted.auto_image_payload).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/generate-auto-image",
+      expect.anything(),
+    );
   });
 });

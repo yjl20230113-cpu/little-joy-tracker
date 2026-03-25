@@ -23,6 +23,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { InsightView } from "@/components/InsightView";
 import { TimelineView } from "@/components/TimelineView";
 import {
+  normalizeAutoImageAttribution,
   buildEventPayload,
   hasEventInsightUnseenJoy,
   normalizeEventInsightResult,
@@ -31,6 +32,8 @@ import {
   groupTimelineItemsByDate,
   getRetryAfterSeconds,
   isRateLimitError,
+  type AutoImageAttribution,
+  type AutoImageStatus,
   type EventInsightReport,
   type EventInsightStatus,
   normalizePersonName,
@@ -54,6 +57,40 @@ type SupabaseErrorLike = {
   code?: string;
 };
 
+function isMissingSchemaColumnMessage(message: string, columnPattern: RegExp) {
+  return (
+    columnPattern.test(message) &&
+    (/schema cache/i.test(message) ||
+      (/column/i.test(message) && /does not exist|unknown field/i.test(message)))
+  );
+}
+
+function isMissingAiInsightSchemaError(error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as SupabaseErrorLike).message ?? "").trim()
+      : error instanceof Error
+        ? error.message.trim()
+        : "";
+
+  return message
+    ? isMissingSchemaColumnMessage(message, /ai_insight_(status|payload)/i)
+    : false;
+}
+
+function isMissingAutoImageSchemaError(error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as SupabaseErrorLike).message ?? "").trim()
+      : error instanceof Error
+        ? error.message.trim()
+        : "";
+
+  return message
+    ? isMissingSchemaColumnMessage(message, /auto_image_(status|payload)/i)
+    : false;
+}
+
 function toHumanErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     return error.message || fallback;
@@ -72,14 +109,12 @@ function toHumanErrorMessage(error: unknown, fallback: string) {
         return "数据库缺少 events.title 字段，请在 Supabase SQL Editor 执行 supabase-sql.md 里的迁移脚本。";
       }
 
-      if (
-        false &&
-        /ai_insight_(status|payload)/i.test(normalized) &&
-        (/schema cache/i.test(normalized) ||
-          (/column/i.test(normalized) &&
-            /does not exist|unknown field/i.test(normalized)))
-      ) {
+      if (isMissingAiInsightSchemaError({ message: normalized })) {
         return "数据库缺少 events.ai_insight_status / events.ai_insight_payload 字段（或 API schema cache 未刷新）。请在 Supabase SQL Editor 执行 supabase-sql.md 里“add single-record AI insight persistence for memory records”那段迁移，然后到 Settings -> API 点击 Reload schema cache 后重试。";
+      }
+
+      if (isMissingAutoImageSchemaError({ message: normalized })) {
+        return "数据库还没有识别 events.auto_image_status / events.auto_image_payload 字段（或 API schema cache 未刷新）。当前会先按普通记录保存；如需 AI 配图，请在 Supabase SQL Editor 执行 supabase-sql.md 里的 auto image 迁移，并在 Settings -> API 点击 Reload schema cache。";
       }
 
       if (/row-level security|rls/i.test(normalized)) {
@@ -160,6 +195,8 @@ type EventRow = {
   created_at: string;
   ai_insight_status: EventInsightStatus | null;
   ai_insight_payload: unknown;
+  auto_image_status: AutoImageStatus | null;
+  auto_image_payload: unknown;
   persons:
     | {
         id: string;
@@ -183,6 +220,8 @@ type DetailEventRow = {
   person_id: string;
   ai_insight_status: EventInsightStatus | null;
   ai_insight_payload: unknown;
+  auto_image_status: AutoImageStatus | null;
+  auto_image_payload: unknown;
   persons:
     | {
         id: string;
@@ -201,6 +240,19 @@ type ProfileRow = {
   avatar_url: string | null;
 };
 
+type EventTitleRow = {
+  title?: string | null;
+};
+
+const timelineEventSelect =
+  "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
+const timelineEventLegacySelect =
+  "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, persons(id, name)";
+const detailEventSelect =
+  "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
+const detailEventLegacySelect =
+  "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)";
+
 function parseImageUrls(value: string | null) {
   if (!value) {
     return [];
@@ -208,7 +260,12 @@ function parseImageUrls(value: string | null) {
 
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
   } catch {
     return [];
   }
@@ -233,6 +290,10 @@ function parseEventInsightPayload(value: unknown) {
       needsRefresh: true,
     };
   }
+}
+
+function parseAutoImageAttribution(value: unknown) {
+  return normalizeAutoImageAttribution(value);
 }
 
 function getPersonName(
@@ -289,6 +350,8 @@ function mapEventRowToTimelineEntry(event: EventRow): TimelineEntry {
     aiInsightStatus: event.ai_insight_status,
     aiInsight: report,
     aiInsightNeedsRefresh: needsRefresh,
+    autoImageStatus: event.auto_image_status,
+    autoImageAttribution: parseAutoImageAttribution(event.auto_image_payload),
   };
 }
 
@@ -308,18 +371,27 @@ function mapDetailRowToTimelineEntry(event: DetailEventRow): TimelineEntry {
     aiInsightStatus: event.ai_insight_status,
     aiInsight: report,
     aiInsightNeedsRefresh: needsRefresh,
+    autoImageStatus: event.auto_image_status,
+    autoImageAttribution: parseAutoImageAttribution(event.auto_image_payload),
   };
 }
 
 async function fetchTimelineItems(userId: string) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("events")
-    .select(
-      "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, persons(id, name)",
-    )
+    .select(timelineEventSelect)
     .eq("user_id", userId)
     .order("display_date", { ascending: false })
     .order("created_at", { ascending: false });
+
+  if (error && isMissingAutoImageSchemaError(error)) {
+    ({ data, error } = await supabase
+      .from("events")
+      .select(timelineEventLegacySelect)
+      .eq("user_id", userId)
+      .order("display_date", { ascending: false })
+      .order("created_at", { ascending: false }));
+  }
 
   if (error) {
     throw error;
@@ -329,14 +401,21 @@ async function fetchTimelineItems(userId: string) {
 }
 
 async function fetchTimelineItemDetail(userId: string, eventId: string) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("events")
-    .select(
-      "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
-    )
+    .select(detailEventSelect)
     .eq("user_id", userId)
     .eq("id", eventId)
     .single();
+
+  if (error && isMissingAutoImageSchemaError(error)) {
+    ({ data, error } = await supabase
+      .from("events")
+      .select(detailEventLegacySelect)
+      .eq("user_id", userId)
+      .eq("id", eventId)
+      .single());
+  }
 
   if (error) {
     throw error;
@@ -794,6 +873,36 @@ export default function HomePage() {
     }
   }
 
+  function applyAutoImageToLocalState(params: {
+    eventId: string;
+    status: AutoImageStatus | null;
+    imageUrl: string | null;
+    attribution: AutoImageAttribution | null;
+  }) {
+    setTimelineItems((items) =>
+      items.map((item) =>
+        item.id === params.eventId
+          ? {
+              ...item,
+              imageUrl: params.imageUrl,
+              autoImageStatus: params.status,
+              autoImageAttribution: params.attribution,
+            }
+          : item,
+      ),
+    );
+    setTimelineDetail((current) =>
+      current?.id === params.eventId
+        ? {
+            ...current,
+            imageUrl: params.imageUrl,
+            autoImageStatus: params.status,
+            autoImageAttribution: params.attribution,
+          }
+        : current,
+    );
+  }
+
   async function backfillMemoryTitle(params: {
     eventId: string;
     userId: string;
@@ -829,7 +938,9 @@ export default function HomePage() {
       }
 
       const updatedTitle =
-        data && typeof data === "object" && "title" in data ? String((data as any).title) : "";
+        data && typeof data === "object" && "title" in data
+          ? String((data as EventTitleRow).title ?? "")
+          : "";
 
       if (!updatedTitle.trim()) {
         return;
@@ -839,6 +950,148 @@ export default function HomePage() {
     } catch {
       // Fire-and-forget: title backfill should never block the primary save path.
     }
+  }
+
+  async function requestAutoImage(input: {
+    content: string;
+    reason: string;
+  }) {
+    const response = await fetch("/api/generate-auto-image", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        typeof payload?.error === "string" ? payload.error : copy.unknownError,
+      );
+    }
+
+    const attribution = normalizeAutoImageAttribution({
+      source: "unsplash",
+      query:
+        typeof payload?.query === "string" ? payload.query : "",
+      keywords: Array.isArray(payload?.keywords) ? payload.keywords : [],
+      photoId:
+        typeof payload?.photoId === "string" ? payload.photoId : "",
+      photoPageUrl:
+        typeof payload?.photoPageUrl === "string" ? payload.photoPageUrl : "",
+      photographerName:
+        typeof payload?.photographerName === "string"
+          ? payload.photographerName
+          : "",
+      photographerProfileUrl:
+        typeof payload?.photographerProfileUrl === "string"
+          ? payload.photographerProfileUrl
+          : "",
+      downloadLocation:
+        typeof payload?.downloadLocation === "string"
+          ? payload.downloadLocation
+          : "",
+    });
+
+    if (!attribution || typeof payload?.imageUrl !== "string" || !payload.imageUrl.trim()) {
+      throw new Error("Auto image payload is incomplete");
+    }
+
+    return {
+      imageUrl: payload.imageUrl.trim(),
+      attribution,
+    };
+  }
+
+  async function persistAutoImageState(params: {
+    eventId: string;
+    userId: string;
+    status: AutoImageStatus | null;
+    imageUrl: string | null;
+    attribution: AutoImageAttribution | null;
+    errorMessage?: string;
+  }) {
+    const payload =
+      params.status === "ready" && params.attribution
+        ? params.attribution
+        : params.status === "failed"
+          ? { error: params.errorMessage ?? "Auto image generation failed" }
+          : null;
+
+    const { error } = await supabase
+      .from("events")
+      .update({
+        image_urls: params.imageUrl ? serializeImageUrls([params.imageUrl]) : null,
+        auto_image_status: params.status,
+        auto_image_payload: payload,
+      })
+      .eq("id", params.eventId)
+      .eq("user_id", params.userId);
+
+    if (error) {
+      if (isMissingAutoImageSchemaError(error)) {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  async function backfillAutoImage(params: {
+    eventId: string;
+    userId: string;
+    content: string;
+    reason: string;
+  }) {
+    let lastError = "Auto image generation failed";
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const result = await requestAutoImage({
+          content: params.content,
+          reason: params.reason,
+        });
+
+        await persistAutoImageState({
+          eventId: params.eventId,
+          userId: params.userId,
+          status: "ready",
+          imageUrl: result.imageUrl,
+          attribution: result.attribution,
+        });
+        applyAutoImageToLocalState({
+          eventId: params.eventId,
+          status: "ready",
+          imageUrl: result.imageUrl,
+          attribution: result.attribution,
+        });
+        return result;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : lastError;
+      }
+    }
+
+    try {
+      await persistAutoImageState({
+        eventId: params.eventId,
+        userId: params.userId,
+        status: "failed",
+        imageUrl: null,
+        attribution: null,
+        errorMessage: lastError,
+      });
+    } catch {
+      // Keep the main save flow silent even if failure persistence does not succeed.
+    }
+
+    applyAutoImageToLocalState({
+      eventId: params.eventId,
+      status: "failed",
+      imageUrl: null,
+      attribution: null,
+    });
+    return null;
   }
 
   async function requestEventInsightReport(input: {
@@ -1511,17 +1764,39 @@ export default function HomePage() {
         imageUrls: uploadedImageUrl ? [uploadedImageUrl] : [],
         displayDate,
       });
+      const shouldGenerateAutoImage = !uploadedImageUrl;
 
       const selectedPersonName = getSelectedPersonName(selectedPersonId);
-      const { data, error } = await supabase
+      const autoImageInsertPayload = {
+        ...payload,
+        ai_insight_status: "pending",
+        ai_insight_payload: null,
+        ...(shouldGenerateAutoImage
+          ? {
+              auto_image_status: "pending",
+              auto_image_payload: null,
+            }
+          : {}),
+      };
+      let autoImageEnabled = shouldGenerateAutoImage;
+      let { data, error } = await supabase
         .from("events")
-        .insert({
-          ...payload,
-          ai_insight_status: "pending",
-          ai_insight_payload: null,
-        })
+        .insert(autoImageInsertPayload)
         .select("id")
         .single();
+
+      if (error && shouldGenerateAutoImage && isMissingAutoImageSchemaError(error)) {
+        autoImageEnabled = false;
+        ({ data, error } = await supabase
+          .from("events")
+          .insert({
+            ...payload,
+            ai_insight_status: "pending",
+            ai_insight_payload: null,
+          })
+          .select("id")
+          .single());
+      }
 
       if (error) {
         throw error;
@@ -1548,6 +1823,8 @@ export default function HomePage() {
           aiInsightStatus: "pending",
           aiInsight: null,
           aiInsightNeedsRefresh: false,
+          autoImageStatus: autoImageEnabled ? "pending" : null,
+          autoImageAttribution: null,
         };
 
         setTimelineItems((current) => [optimisticEntry, ...current]);
@@ -1573,6 +1850,21 @@ export default function HomePage() {
           displayDate: payload.display_date,
           personName: selectedPersonName,
         });
+
+        if (autoImageEnabled) {
+          applyAutoImageToLocalState({
+            eventId: insertedEventId,
+            status: "pending",
+            imageUrl: null,
+            attribution: null,
+          });
+          void backfillAutoImage({
+            eventId: insertedEventId,
+            userId: session.user.id,
+            content: payload.content,
+            reason: payload.reason ?? "",
+          });
+        }
       }
     } catch (error) {
       setMessage(toHumanErrorMessage(error, copy.unknownError));
@@ -1617,6 +1909,7 @@ export default function HomePage() {
         (timelineDetail.reason ?? "") !== (payload.reason ?? "") ||
         timelineDetail.displayDate !== payload.display_date ||
         timelineDetail.personId !== payload.person_id;
+      const detailImageChanged = detailUploadedImageUrl !== timelineDetail.imageUrl;
 
       const updatePayload: Record<string, unknown> = {
         person_id: payload.person_id,
@@ -1631,20 +1924,37 @@ export default function HomePage() {
         updatePayload.ai_insight_payload = null;
       }
 
+      if (detailImageChanged) {
+        updatePayload.auto_image_status = null;
+        updatePayload.auto_image_payload = null;
+      }
+
       if (detailTitleTouched) {
         const trimmedTitle = detailTitle.trim();
         updatePayload.title = trimmedTitle ? trimmedTitle : null;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("events")
         .update(updatePayload)
         .eq("id", timelineDetail.id)
         .eq("user_id", session.user.id)
-        .select(
-          "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
-        )
+        .select(detailEventSelect)
         .single();
+
+      if (error && isMissingAutoImageSchemaError(error)) {
+        const legacyPayload = { ...updatePayload };
+        delete legacyPayload.auto_image_status;
+        delete legacyPayload.auto_image_payload;
+
+        ({ data, error } = await supabase
+          .from("events")
+          .update(legacyPayload)
+          .eq("id", timelineDetail.id)
+          .eq("user_id", session.user.id)
+          .select(detailEventLegacySelect)
+          .single());
+      }
 
       if (error) {
         throw error;
@@ -1667,6 +1977,8 @@ export default function HomePage() {
                 displayDate: nextDetail.displayDate,
                 personId: nextDetail.personId,
                 personName: nextDetail.personName,
+                autoImageStatus: nextDetail.autoImageStatus,
+                autoImageAttribution: nextDetail.autoImageAttribution,
               }
             : item,
         ),

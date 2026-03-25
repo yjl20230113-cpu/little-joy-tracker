@@ -17,6 +17,8 @@ export type TimelineEntry = {
   aiInsightStatus?: EventInsightStatus | null;
   aiInsight?: EventInsightReport | null;
   aiInsightNeedsRefresh?: boolean;
+  autoImageStatus?: AutoImageStatus | null;
+  autoImageAttribution?: AutoImageAttribution | null;
 };
 
 export type TimelineRange = "week" | "month" | "threeMonths";
@@ -67,6 +69,19 @@ export type SummaryRequestEvent = {
 
 export type EventInsightStatus = "pending" | "ready" | "failed";
 
+export type AutoImageStatus = "pending" | "ready" | "failed";
+
+export type AutoImageAttribution = {
+  source: "unsplash";
+  query: string;
+  keywords: string[];
+  photoId: string;
+  photoPageUrl: string;
+  photographerName: string;
+  photographerProfileUrl: string;
+  downloadLocation: string;
+};
+
 export type EventInsightCard = {
   title: string;
   content: string;
@@ -80,6 +95,10 @@ export type EventInsightReport = {
   relationship_signal: EventInsightCard;
   value_signal: EventInsightCard;
 };
+
+export const autoImagePlaceholderSrc = "/auto-image-placeholder.svg";
+const unsplashAttributionSource = "little_joy_tracker";
+const unsplashAttributionMedium = "referral";
 
 type CredentialErrors = {
   email?: string;
@@ -313,6 +332,81 @@ function normalizeEventInsightCard(item: unknown): EventInsightCard | null {
   }
 
   return { title, content };
+}
+
+export function normalizeAutoImageAttribution(
+  input: unknown,
+): AutoImageAttribution | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const candidate = input as Record<string, unknown>;
+  const source = candidate.source;
+  const query = typeof candidate.query === "string" ? candidate.query.trim() : "";
+  const photoId =
+    typeof candidate.photoId === "string" ? candidate.photoId.trim() : "";
+  const photoPageUrl =
+    typeof candidate.photoPageUrl === "string"
+      ? candidate.photoPageUrl.trim()
+      : "";
+  const photographerName =
+    typeof candidate.photographerName === "string"
+      ? candidate.photographerName.trim()
+      : "";
+  const photographerProfileUrl =
+    typeof candidate.photographerProfileUrl === "string"
+      ? candidate.photographerProfileUrl.trim()
+      : "";
+  const downloadLocation =
+    typeof candidate.downloadLocation === "string"
+      ? candidate.downloadLocation.trim()
+      : "";
+  const keywords = Array.isArray(candidate.keywords)
+    ? candidate.keywords
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+
+  if (
+    source !== "unsplash" ||
+    !query ||
+    !photoId ||
+    !photoPageUrl ||
+    !photographerName ||
+    !photographerProfileUrl ||
+    !downloadLocation ||
+    keywords.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    source: "unsplash",
+    query,
+    keywords,
+    photoId,
+    photoPageUrl,
+    photographerName,
+    photographerProfileUrl,
+    downloadLocation,
+  };
+}
+
+export function withUnsplashAttributionParams(url: string) {
+  if (!url.trim()) {
+    return "";
+  }
+
+  try {
+    const nextUrl = new URL(url);
+    nextUrl.searchParams.set("utm_source", unsplashAttributionSource);
+    nextUrl.searchParams.set("utm_medium", unsplashAttributionMedium);
+    return nextUrl.toString();
+  } catch {
+    return url;
+  }
 }
 
 function rewriteInsightTextToSecondPerson(value: string) {

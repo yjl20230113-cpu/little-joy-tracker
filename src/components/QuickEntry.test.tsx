@@ -157,6 +157,16 @@ describe("QuickEntry", () => {
     expect(screen.queryByTestId("quick-entry-insight-panel")).not.toBeInTheDocument();
   });
 
+  it("shows the softened helper copy in the empty upload area", () => {
+    render(<QuickEntry {...baseProps} />);
+
+    expect(
+      screen.getByText(
+        "这一刻还没来得及拍照也没关系。先记下它，保存后小美会悄悄配上一张刚刚好的画面。",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("shows message as a centered toast and auto-hides it after three seconds", () => {
     vi.useFakeTimers();
 

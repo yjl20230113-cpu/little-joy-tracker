@@ -13,7 +13,9 @@ import { TimelineView } from "@/components/TimelineView";
 import {
   buildEventPayload,
   hasEventInsightUnseenJoy,
+  normalizeAutoImageAttribution,
   normalizeEventInsightResult,
+  type AutoImageStatus,
   type EventInsightReport,
   type EventInsightStatus,
   type PersonOption,
@@ -27,6 +29,27 @@ type SupabaseErrorLike = {
   message?: string;
 };
 
+function isMissingSchemaColumnMessage(message: string, columnPattern: RegExp) {
+  return (
+    columnPattern.test(message) &&
+    (/schema cache/i.test(message) ||
+      (/column/i.test(message) && /does not exist|unknown field/i.test(message)))
+  );
+}
+
+function isMissingAutoImageSchemaError(error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as SupabaseErrorLike).message ?? "").trim()
+      : error instanceof Error
+        ? error.message.trim()
+        : "";
+
+  return message
+    ? isMissingSchemaColumnMessage(message, /auto_image_(status|payload)/i)
+    : false;
+}
+
 type DetailEventRow = {
   id: string;
   title: string | null;
@@ -38,6 +61,8 @@ type DetailEventRow = {
   person_id: string;
   ai_insight_status: EventInsightStatus | null;
   ai_insight_payload: unknown;
+  auto_image_status: AutoImageStatus | null;
+  auto_image_payload: unknown;
   persons:
     | {
         id: string;
@@ -49,6 +74,15 @@ type DetailEventRow = {
       }>
     | null;
 };
+
+type EventTitleRow = {
+  title?: string | null;
+};
+
+const detailEventSelect =
+  "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
+const detailEventLegacySelect =
+  "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)";
 
 const copy = {
   loading: "正在打开这件小美好...",
@@ -73,7 +107,13 @@ function toHumanErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as SupabaseErrorLike).message;
     if (typeof message === "string" && message.trim()) {
-      return message.trim();
+      const normalized = message.trim();
+
+      if (isMissingAutoImageSchemaError({ message: normalized })) {
+        return "数据库还没有识别 events.auto_image_status / events.auto_image_payload 字段（或 API schema cache 未刷新）。当前会先按普通记录保存；如需 AI 配图，请执行 supabase-sql.md 里的 auto image 迁移并刷新 schema cache。";
+      }
+
+      return normalized;
     }
   }
 
@@ -87,7 +127,12 @@ function parseImageUrls(value: string | null) {
 
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
   } catch {
     return [];
   }
@@ -149,6 +194,8 @@ function mapDetailEvent(event: DetailEventRow): TimelineEntry {
     aiInsightStatus: event.ai_insight_status,
     aiInsight: report,
     aiInsightNeedsRefresh: needsRefresh,
+    autoImageStatus: event.auto_image_status,
+    autoImageAttribution: normalizeAutoImageAttribution(event.auto_image_payload),
   };
 }
 
@@ -195,9 +242,7 @@ export default function EventDetailPage() {
         await Promise.all([
           supabase
             .from("events")
-            .select(
-              "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
-            )
+            .select(detailEventSelect)
             .eq("user_id", session.user.id)
             .eq("id", eventId)
             .single(),
@@ -208,8 +253,23 @@ export default function EventDetailPage() {
             .order("created_at", { ascending: true }),
         ]);
 
-      if (eventError) {
-        setMessage(toHumanErrorMessage(eventError, copy.unknownError));
+      let nextEventData = eventData;
+      let nextEventError = eventError;
+
+      if (nextEventError && isMissingAutoImageSchemaError(nextEventError)) {
+        const legacyResult = await supabase
+          .from("events")
+          .select(detailEventLegacySelect)
+          .eq("user_id", session.user.id)
+          .eq("id", eventId)
+          .single();
+
+        nextEventData = legacyResult.data;
+        nextEventError = legacyResult.error;
+      }
+
+      if (nextEventError) {
+        setMessage(toHumanErrorMessage(nextEventError, copy.unknownError));
         setBooting(false);
         return;
       }
@@ -220,7 +280,7 @@ export default function EventDetailPage() {
         return;
       }
 
-      const nextEvent = mapDetailEvent(eventData as DetailEventRow);
+      const nextEvent = mapDetailEvent(nextEventData as DetailEventRow);
       setEvent(nextEvent);
       setPeople((peopleData ?? []) as PersonOption[]);
       setTitle((nextEvent.title ?? "").trim());
@@ -377,7 +437,9 @@ export default function EventDetailPage() {
       }
 
       const updatedTitle =
-        data && typeof data === "object" && "title" in data ? String((data as any).title) : "";
+        data && typeof data === "object" && "title" in data
+          ? String((data as EventTitleRow).title ?? "")
+          : "";
 
       if (!updatedTitle.trim()) {
         return;
@@ -536,6 +598,7 @@ export default function EventDetailPage() {
         (event.reason ?? "") !== (payload.reason ?? "") ||
         event.displayDate !== payload.display_date ||
         event.personId !== payload.person_id;
+      const detailImageChanged = uploadedImageUrl !== event.imageUrl;
 
       const updatePayload: Record<string, unknown> = {
         person_id: payload.person_id,
@@ -550,20 +613,37 @@ export default function EventDetailPage() {
         updatePayload.ai_insight_payload = null;
       }
 
+      if (detailImageChanged) {
+        updatePayload.auto_image_status = null;
+        updatePayload.auto_image_payload = null;
+      }
+
       if (titleTouched) {
         const trimmedTitle = title.trim();
         updatePayload.title = trimmedTitle ? trimmedTitle : null;
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from("events")
         .update(updatePayload)
         .eq("id", event.id)
         .eq("user_id", userId)
-        .select(
-          "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)",
-        )
+        .select(detailEventSelect)
         .single();
+
+      if (error && isMissingAutoImageSchemaError(error)) {
+        const legacyPayload = { ...updatePayload };
+        delete legacyPayload.auto_image_status;
+        delete legacyPayload.auto_image_payload;
+
+        ({ data, error } = await supabase
+          .from("events")
+          .update(legacyPayload)
+          .eq("id", event.id)
+          .eq("user_id", userId)
+          .select(detailEventLegacySelect)
+          .single());
+      }
 
       if (error) {
         throw error;

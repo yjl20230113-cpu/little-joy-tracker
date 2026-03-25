@@ -41,12 +41,23 @@ const eventRow = {
   title: "春日晚风",
   content: "我和自己散步回家，路上风很轻。",
   reason: "突然觉得今天没有那么赶了。",
-  image_urls: null,
+  image_urls: "[\"https://images.unsplash.com/photo-1\"]",
   display_date: "2026-03-24",
   created_at: "2026-03-24T00:18:00+08:00",
   person_id: "person-self",
   ai_insight_status: "ready",
   ai_insight_payload: baseInsightPayload,
+  auto_image_status: "ready",
+  auto_image_payload: {
+    source: "unsplash",
+    photoId: "photo-1",
+    query: "calm water ripples",
+    keywords: ["calm water ripples"],
+    photoPageUrl: "https://unsplash.com/photos/photo-1",
+    photographerName: "A Photographer",
+    photographerProfileUrl: "https://unsplash.com/@photographer",
+    downloadLocation: "https://api.unsplash.com/photos/photo-1/download",
+  },
   persons: {
     id: "person-self",
     name: "自己",
@@ -173,6 +184,7 @@ vi.mock("@/components/EventDetailPanel", () => ({
     event,
     editing,
     onContentChange,
+    onRemoveImage,
     onSave,
   }: {
     event: {
@@ -183,6 +195,7 @@ vi.mock("@/components/EventDetailPanel", () => ({
     };
     editing: boolean;
     onContentChange: (value: string) => void;
+    onRemoveImage: () => void;
     onSave: (event: React.FormEvent<HTMLFormElement>) => void;
   }) => (
     <form data-testid="event-detail-panel" onSubmit={onSave}>
@@ -196,6 +209,11 @@ vi.mock("@/components/EventDetailPanel", () => ({
           onClick={() => onContentChange("编辑后的内容")}
         >
           change-content
+        </button>
+      ) : null}
+      {editing ? (
+        <button type="button" onClick={onRemoveImage}>
+          remove-image
         </button>
       ) : null}
       {editing ? <button type="submit">save-detail</button> : null}
@@ -265,6 +283,28 @@ describe("EventDetailPage", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("event-detail-ai-status")).toHaveTextContent("pending");
+    });
+  });
+
+  it("clears auto-image persistence when the user removes the image while editing", async () => {
+    render(<EventDetailPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("event-detail-ai-status")).toHaveTextContent("ready");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "toggle-edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "remove-image" }));
+    fireEvent.click(screen.getByRole("button", { name: "save-detail" }));
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          image_urls: null,
+          auto_image_status: null,
+          auto_image_payload: null,
+        }),
+      );
     });
   });
 });

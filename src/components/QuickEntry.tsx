@@ -73,7 +73,8 @@ const copy = {
   pick: "从手机相册选择",
   remove: "移除当前照片",
   dismissSheet: "取消",
-  mediaHint: "手机上可以直接拍照，也可以从相册挑选。",
+  mediaHint:
+    "这一刻还没来得及拍照也没关系。先记下它，保存后小美会悄悄配上一张刚刚好的画面。",
   titleLabel: "这个瞬间的标题",
   titlePlaceholder: "比如：春日晚风",
   momentLabel: "那个瞬间",
