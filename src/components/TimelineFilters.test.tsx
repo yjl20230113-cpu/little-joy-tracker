@@ -2,30 +2,124 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { TimelineFilters } from "./TimelineFilters";
 
 describe("TimelineFilters", () => {
-  it("shows a past three months button instead of a custom date picker", () => {
-    const onRangeChange = vi.fn();
-
-    render(
+  it("shows start and end date pickers instead of preset range buttons", () => {
+    const { container } = render(
       <TimelineFilters
         peopleFilters={[{ id: "all", label: "All" }]}
         selectedPersonId="all"
         selectedRange="threeMonths"
-        customStartDate=""
-        customEndDate=""
+        customStartDate="2026-03-01"
+        customEndDate="2026-03-25"
         onPersonChange={() => {}}
-        onRangeChange={onRangeChange}
+        onRangeChange={() => {}}
         onCustomStartDateChange={() => {}}
         onCustomEndDateChange={() => {}}
         onSummaryClick={() => {}}
       />,
     );
 
-    expect(screen.getByRole("button", { name: /三个月/ })).toBeInTheDocument();
-    expect(screen.queryByTestId("app-date-picker-panel")).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("app-date-picker-trigger")).toHaveLength(2);
+    expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
+      "grid-cols-2",
+    );
+    expect(
+      screen.queryByRole("button", {
+        name: /\u4e00\u5468|\u4e00\u4e2a\u6708|\u4e09\u4e2a\u6708/,
+      }),
+    ).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /三个月/ }));
+  it("lets the user update both start and end dates", () => {
+    const onCustomStartDateChange = vi.fn();
+    const onCustomEndDateChange = vi.fn();
 
-    expect(onRangeChange).toHaveBeenCalledWith("threeMonths");
+    render(
+      <TimelineFilters
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="threeMonths"
+        customStartDate="2026-03-01"
+        customEndDate="2026-03-25"
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={onCustomStartDateChange}
+        onCustomEndDateChange={onCustomEndDateChange}
+        onSummaryClick={() => {}}
+      />,
+    );
+
+    const [startTrigger, endTrigger] = screen.getAllByTestId("app-date-picker-trigger");
+
+    fireEvent.click(startTrigger);
+    fireEvent.click(screen.getByRole("button", { name: "\u9009\u62e9 2026-03-02" }));
+    fireEvent.click(endTrigger);
+    fireEvent.click(screen.getByRole("button", { name: "\u9009\u62e9 2026-03-24" }));
+
+    expect(onCustomStartDateChange).toHaveBeenCalledWith("2026-03-02");
+    expect(onCustomEndDateChange).toHaveBeenCalledWith("2026-03-24");
+  });
+
+  it("anchors both date pickers below the trigger and centers them on the viewport", () => {
+    render(
+      <TimelineFilters
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate="2026-03-01"
+        customEndDate="2026-03-25"
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+      />,
+    );
+
+    const [startTrigger, endTrigger] = screen.getAllByTestId("app-date-picker-trigger");
+    (startTrigger as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect =
+      () =>
+        ({
+          width: 120,
+          height: 40,
+          top: 80,
+          left: 16,
+          right: 136,
+          bottom: 120,
+          x: 16,
+          y: 80,
+          toJSON: () => ({}),
+        }) as DOMRect;
+    (endTrigger as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect =
+      () =>
+        ({
+          width: 120,
+          height: 40,
+          top: 140,
+          left: 160,
+          right: 280,
+          bottom: 180,
+          x: 160,
+          y: 140,
+          toJSON: () => ({}),
+        }) as DOMRect;
+
+    fireEvent.click(startTrigger);
+
+    expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
+      "fixed",
+      "left-1/2",
+      "-translate-x-1/2",
+    );
+    expect(screen.getByTestId("app-date-picker-panel").style.top).toBe("130px");
+
+    fireEvent.mouseDown(document.body);
+    fireEvent.click(endTrigger);
+
+    expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
+      "fixed",
+      "left-1/2",
+      "-translate-x-1/2",
+    );
+    expect(screen.getByTestId("app-date-picker-panel").style.top).toBe("190px");
   });
 
   it("can hide the AI summary button when requested", () => {
@@ -90,7 +184,7 @@ describe("TimelineFilters", () => {
     );
 
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
-      "grid-cols-3",
+      "grid-cols-2",
     );
     expect(screen.getByTestId("timeline-summary-button")).toHaveClass("w-full");
   });

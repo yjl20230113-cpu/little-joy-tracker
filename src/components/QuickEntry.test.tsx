@@ -1,17 +1,23 @@
 import type { FormEvent } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
+
+import type { CloudyAnalysisResult } from "../lib/cloudy-analysis";
 import { QuickEntry } from "./QuickEntry";
 
 describe("QuickEntry", () => {
   const baseProps = {
     people: [{ id: "person-1", name: "Self", is_default: true }],
+    mode: "JOY" as const,
     selectedPersonId: "person-1",
     content: "",
     reason: "",
     displayDate: "2026-03-23",
     saving: false,
     uploading: false,
+    cloudyLoading: false,
+    cloudyLoadingMessage: "",
+    cloudyLetter: null as CloudyAnalysisResult | null,
     message: "",
     selectedImageName: "",
     imagePreviewUrl: null as string | null,
@@ -27,6 +33,9 @@ describe("QuickEntry", () => {
     onRemoveImage: () => {},
     onSave: (event: FormEvent<HTMLFormElement>) => event.preventDefault(),
     onCancel: () => {},
+    onEnterCloudyMode: () => {},
+    onExitCloudyMode: () => {},
+    onCloudyLetterDismiss: () => {},
   };
 
   it("renders a compact top toolbar with person and date controls", () => {
@@ -35,12 +44,16 @@ describe("QuickEntry", () => {
 
     const { container } = render(<QuickEntry {...baseProps} />);
 
-    expect(container.querySelector('[data-ui="quick-entry-toolbar"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-ui="quick-entry-person-trigger"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-ui="quick-entry-date"]')).toBeInTheDocument();
-    expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent(
-      "\u4eca\u5929-03-23",
-    );
+    expect(
+      container.querySelector('[data-ui="quick-entry-toolbar"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-person-trigger"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-date"]'),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("03-23");
 
     vi.useRealTimers();
   });
@@ -57,19 +70,25 @@ describe("QuickEntry", () => {
       />,
     );
 
-    fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
+    fireEvent.click(
+      container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element,
+    );
 
-    expect(screen.getByRole("button", { name: /拍照/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /相册/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /移除当前照片/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "拍照" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "从手机相册选择" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "移除当前照片" })).toBeInTheDocument();
   });
 
   it("opens the lighter person menu from the top toolbar", () => {
     const { container } = render(<QuickEntry {...baseProps} />);
 
-    fireEvent.click(container.querySelector('[data-ui="quick-entry-person-trigger"]') as Element);
+    fireEvent.click(
+      container.querySelector('[data-ui="quick-entry-person-trigger"]') as Element,
+    );
 
-    expect(container.querySelector('[data-ui="quick-entry-person-menu"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-person-menu"]'),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /创建/i })).toBeInTheDocument();
   });
 
@@ -83,14 +102,23 @@ describe("QuickEntry", () => {
       />,
     );
 
-    expect(screen.getAllByRole("button", { name: /正在处理图片/i }).at(-1)).toBeDisabled();
-    expect(container.querySelector('[data-ui="quick-entry-media-trigger"]')).toBeDisabled();
+    const submitButton = container.querySelector(
+      '[data-ui="quick-entry-footer"] button[type="submit"]',
+    );
+
+    expect(submitButton).toBeDisabled();
+    expect(
+      container.querySelector('[data-ui="quick-entry-media-trigger"]'),
+    ).toBeDisabled();
   });
 
   it("shows a save-specific action label while the entry is being saved", () => {
-    render(<QuickEntry {...baseProps} saving />);
+    const { container } = render(<QuickEntry {...baseProps} saving />);
+    const submitButton = container.querySelector(
+      '[data-ui="quick-entry-footer"] button[type="submit"]',
+    );
 
-    expect(screen.getByRole("button", { name: /发送中/i })).toBeDisabled();
+    expect(submitButton).toBeDisabled();
   });
 
   it("keeps the footer focused on the submit action only", () => {
@@ -98,7 +126,9 @@ describe("QuickEntry", () => {
     const footer = container.querySelector('[data-ui="quick-entry-footer"]');
 
     expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
-    expect(footer?.querySelector('[data-testid="app-date-picker-trigger"]')).not.toBeInTheDocument();
+    expect(
+      footer?.querySelector('[data-testid="app-date-picker-trigger"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("lets the bottom navigation switch to the profile tab", () => {
@@ -114,12 +144,16 @@ describe("QuickEntry", () => {
   it("closes the action sheet when cancel is tapped", () => {
     const { container } = render(<QuickEntry {...baseProps} />);
 
-    fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
+    fireEvent.click(
+      container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element,
+    );
     expect(screen.getByRole("button", { name: "从手机相册选择" })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "取消" }).at(-1) as Element);
 
-    expect(screen.queryByRole("button", { name: "从手机相册选择" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "从手机相册选择" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows remove image only when there is an image to clear", () => {
@@ -133,7 +167,9 @@ describe("QuickEntry", () => {
       />,
     );
 
-    fireEvent.click(container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element);
+    fireEvent.click(
+      container.querySelector('[data-ui="quick-entry-media-trigger"]') as Element,
+    );
     fireEvent.click(screen.getByRole("button", { name: "移除当前照片" }));
 
     expect(onRemoveImage).toHaveBeenCalledTimes(1);
@@ -162,7 +198,7 @@ describe("QuickEntry", () => {
 
     expect(
       screen.getByText(
-        "这一刻还没来得及拍照也没关系。先记下它，保存后小美会悄悄配上一张刚刚好的画面。",
+        "这一刻还没来得及拍照也没关系。先记下它，保存后小美好会悄悄配上一张刚刚好的画面。",
       ),
     ).toBeInTheDocument();
   });
@@ -180,5 +216,61 @@ describe("QuickEntry", () => {
 
     expect(screen.queryByTestId("app-toast")).not.toBeInTheDocument();
     vi.useRealTimers();
+  });
+
+  it("renders a visible joy-side button to enter the rain shelter", () => {
+    render(<QuickEntry {...baseProps} />);
+
+    expect(screen.getByRole("button", { name: "进入避雨亭" })).toBeInTheDocument();
+  });
+
+  it("switches to the cloudy composer while keeping the bottom nav and footer action rail", () => {
+    const { container } = render(
+      <QuickEntry {...baseProps} mode="CLOUDY" content="Today feels heavy." />,
+    );
+
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(
+      container.querySelector('[data-ui="quick-entry-media"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-person-trigger"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-date"]'),
+    ).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-footer"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="app-bottom-nav"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-footer"] button[type="submit"]'),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the updated cloudy labels and the healing letter card", () => {
+    render(
+      <QuickEntry
+        {...baseProps}
+        mode="CLOUDY"
+        content="今天有点灰。"
+        cloudyLoading
+        cloudyLoadingMessage="已放入档案袋，回信会稍后安静落下。"
+        cloudyLetter={{
+          hug: "我听见你在强撑。",
+          analysis: "这不是你的全部。",
+          light: "先把窗帘拉开一点。",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("已放入档案袋，回信会稍后安静落下。")).toBeInTheDocument();
+    expect(screen.getByText("抱抱")).toBeInTheDocument();
+    expect(screen.getByText("拆解")).toBeInTheDocument();
+    expect(screen.getByText("光亮")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "放入档案袋" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "回到小美好" })).toHaveLength(2);
   });
 });

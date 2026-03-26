@@ -315,6 +315,8 @@ export function EventDetailPanel({
                 value={event.displayDate}
                 onChange={onDateChange}
                 align="center"
+                placement="bottom"
+                centerPanelOnViewport
                 buttonLabel=""
                 buttonClassName="px-3 py-2 text-[0.76rem] font-medium shadow-none"
               />

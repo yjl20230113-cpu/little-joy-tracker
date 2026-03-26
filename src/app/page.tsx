@@ -14,6 +14,10 @@ import {
   EventDetailPanel,
 } from "@/components/EventDetailPanel";
 import {
+  CloudyArchiveView,
+  type CloudyArchiveItem,
+} from "@/components/CloudyArchiveView";
+import {
   QuickEntry,
   type HomeTab,
   type QuickEntryPerson,
@@ -46,6 +50,10 @@ import {
   validateCredentials,
 } from "@/lib/app-logic";
 import { generateMemoryTitles } from "@/lib/memory-title-client";
+import {
+  normalizeCloudyAnalysisResult,
+  type CloudyAnalysisResult,
+} from "@/lib/cloudy-analysis";
 import { uploadImageToStorage } from "@/lib/image-upload";
 import { clearUpdateAvailableBuildId } from "@/lib/pwa-update-client";
 import { supabase } from "@/lib/supabase";
@@ -91,6 +99,22 @@ function isMissingAutoImageSchemaError(error: unknown) {
     : false;
 }
 
+function isMissingCloudySchemaError(error: unknown) {
+  const message =
+    error && typeof error === "object" && "message" in error
+      ? String((error as SupabaseErrorLike).message ?? "").trim()
+      : error instanceof Error
+        ? error.message.trim()
+        : "";
+
+  return message
+    ? isMissingSchemaColumnMessage(
+        message,
+        /(event_type|ai_response|cloudy_analysis_status)/i,
+      )
+    : false;
+}
+
 function toHumanErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     return error.message || fallback;
@@ -115,6 +139,10 @@ function toHumanErrorMessage(error: unknown, fallback: string) {
 
       if (isMissingAutoImageSchemaError({ message: normalized })) {
         return "数据库还没有识别 events.auto_image_status / events.auto_image_payload 字段（或 API schema cache 未刷新）。当前会先按普通记录保存；如需 AI 配图，请在 Supabase SQL Editor 执行 supabase-sql.md 里的 auto image 迁移，并在 Settings -> API 点击 Reload schema cache。";
+      }
+
+      if (isMissingCloudySchemaError({ message: normalized })) {
+        return "鏁版嵁搴撹繕娌℃湁闆ㄦ妯″紡闇€瑕佺殑 events.event_type / events.ai_response / events.cloudy_analysis_status 瀛楁銆傝鍏堝湪 Supabase SQL Editor 鎵ц supabase-sql.md 閲岀殑 Rain Shelter 杩佺Щ锛屽啀鍥炴潵閲嶈瘯銆?";
       }
 
       if (/row-level security|rls/i.test(normalized)) {
@@ -184,12 +212,18 @@ const imageBucket =
 const profileImagePathPrefix = "profiles";
 const todayString = new Date().toISOString().slice(0, 10);
 const bootTimeoutMs = 2500;
+const cloudySavedCopy = "已放入档案袋，回信会稍后安静落下。";
+
+type Mode = "JOY" | "CLOUDY";
 
 type EventRow = {
   id: string;
   title: string | null;
   content: string;
   reason: string | null;
+  event_type?: "joy" | "cloudy" | null;
+  ai_response?: unknown;
+  cloudy_analysis_status?: "pending" | "ready" | "failed" | null;
   image_urls: string | null;
   display_date: string;
   created_at: string;
@@ -214,6 +248,9 @@ type DetailEventRow = {
   title: string | null;
   content: string;
   reason: string | null;
+  event_type?: "joy" | "cloudy" | null;
+  ai_response?: unknown;
+  cloudy_analysis_status?: "pending" | "ready" | "failed" | null;
   image_urls: string | null;
   display_date: string;
   created_at: string;
@@ -244,12 +281,31 @@ type EventTitleRow = {
   title?: string | null;
 };
 
+type FailedCloudyRow = {
+  id: string;
+  content: string;
+  person_id: string;
+  display_date: string;
+  ai_response: unknown;
+  cloudy_analysis_status: "pending" | "ready" | "failed" | null;
+};
+
+type CloudyArchiveRow = {
+  id: string;
+  content: string;
+  person_id: string;
+  display_date: string;
+  created_at: string;
+  ai_response: unknown;
+  cloudy_analysis_status: "pending" | "ready" | "failed" | null;
+};
+
 const timelineEventSelect =
-  "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
+  "id, title, content, reason, event_type, ai_response, cloudy_analysis_status, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
 const timelineEventLegacySelect =
   "id, title, content, reason, image_urls, display_date, created_at, ai_insight_status, ai_insight_payload, persons(id, name)";
 const detailEventSelect =
-  "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
+  "id, title, content, reason, event_type, ai_response, cloudy_analysis_status, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, auto_image_status, auto_image_payload, persons(id, name)";
 const detailEventLegacySelect =
   "id, title, content, reason, image_urls, display_date, created_at, person_id, ai_insight_status, ai_insight_payload, persons(id, name)";
 
@@ -381,6 +437,7 @@ async function fetchTimelineItems(userId: string) {
     .from("events")
     .select(timelineEventSelect)
     .eq("user_id", userId)
+    .eq("event_type", "joy")
     .order("display_date", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -389,6 +446,7 @@ async function fetchTimelineItems(userId: string) {
       .from("events")
       .select(timelineEventLegacySelect)
       .eq("user_id", userId)
+      .eq("event_type", "joy")
       .order("display_date", { ascending: false })
       .order("created_at", { ascending: false }));
   }
@@ -405,6 +463,7 @@ async function fetchTimelineItemDetail(userId: string, eventId: string) {
     .from("events")
     .select(detailEventSelect)
     .eq("user_id", userId)
+    .eq("event_type", "joy")
     .eq("id", eventId)
     .single();
 
@@ -413,6 +472,7 @@ async function fetchTimelineItemDetail(userId: string, eventId: string) {
       .from("events")
       .select(detailEventLegacySelect)
       .eq("user_id", userId)
+      .eq("event_type", "joy")
       .eq("id", eventId)
       .single());
   }
@@ -452,6 +512,7 @@ export default function HomePage() {
   const [authLoading, setAuthLoading] = useState(false);
   const [retryAfterSeconds, setRetryAfterSeconds] = useState(0);
   const [activeTab, setActiveTab] = useState<HomeTab>("quick-entry");
+  const [mode, setMode] = useState<Mode>("JOY");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
@@ -471,6 +532,11 @@ export default function HomePage() {
   const [content, setContent] = useState("");
   const [reason, setReason] = useState("");
   const [displayDate, setDisplayDate] = useState(todayString);
+  const [cloudyLetter, setCloudyLetter] = useState<CloudyAnalysisResult | null>(null);
+  const [cloudyLoading, setCloudyLoading] = useState(false);
+  const [cloudyLoadingMessage, setCloudyLoadingMessage] = useState("");
+  const [cloudyPendingEventId, setCloudyPendingEventId] = useState("");
+  const [cloudyRecoveryChecked, setCloudyRecoveryChecked] = useState(false);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [selectedImageName, setSelectedImageName] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
@@ -483,6 +549,11 @@ export default function HomePage() {
   const [insightMessage, setInsightMessage] = useState("");
   const [summaryReport, setSummaryReport] = useState<SummaryReport | null>(null);
   const [selectedTimelineEventId, setSelectedTimelineEventId] = useState("");
+  const [cloudyArchiveOpen, setCloudyArchiveOpen] = useState(false);
+  const [cloudyArchiveLoading, setCloudyArchiveLoading] = useState(false);
+  const [cloudyArchiveItems, setCloudyArchiveItems] = useState<CloudyArchiveItem[]>([]);
+  const [selectedCloudyArchiveItemId, setSelectedCloudyArchiveItemId] = useState("");
+  const [retryingCloudyArchiveItemId, setRetryingCloudyArchiveItemId] = useState("");
   const [timelineDetail, setTimelineDetail] = useState<TimelineEntry | null>(null);
   const [detailEditing, setDetailEditing] = useState(false);
   const [detailSaving, setDetailSaving] = useState(false);
@@ -705,6 +776,66 @@ export default function HomePage() {
   }, [session?.user.id]);
 
   useEffect(() => {
+    setCloudyRecoveryChecked(false);
+  }, [activeTab, session?.user.id]);
+
+  useEffect(() => {
+    if (
+      !session?.user.id ||
+      activeTab !== "quick-entry" ||
+      cloudyRecoveryChecked ||
+      cloudyLoading
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    setCloudyRecoveryChecked(true);
+
+    async function recoverFailedCloudy() {
+      try {
+        const failedCloudy = await findLatestFailedCloudy(session.user.id);
+
+        if (cancelled || !failedCloudy) {
+          return;
+        }
+
+        if (parseCloudyLetter(failedCloudy.ai_response)) {
+          return;
+        }
+
+        const recoveredPersonId = failedCloudy.person_id || getDefaultPersonId();
+        if (!recoveredPersonId) {
+          return;
+        }
+
+        void startCloudyAnalysisInBackground({
+          userId: session.user.id,
+          personId: recoveredPersonId,
+          content: failedCloudy.content,
+          displayDate: failedCloudy.display_date || todayString,
+          eventId: failedCloudy.id,
+        });
+      } catch (error) {
+        if (!cancelled) {
+          setMessage(toHumanErrorMessage(error, copy.unknownError));
+        }
+      }
+    }
+
+    void recoverFailedCloudy();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeTab,
+    cloudyLoading,
+    cloudyRecoveryChecked,
+    session?.user.id,
+  ]);
+
+  useEffect(() => {
     if (!selectedTimelineEventId) {
       return;
     }
@@ -818,6 +949,53 @@ export default function HomePage() {
 
   function getSelectedPersonName(personId: string) {
     return people.find((person) => person.id === personId)?.name ?? "自己";
+  }
+
+  function getDefaultPersonId() {
+    return pickInitialPerson(people)?.id ?? people[0]?.id ?? "";
+  }
+
+  function parseCloudyLetter(value: unknown) {
+    if (!value) {
+      return null;
+    }
+
+    try {
+      return normalizeCloudyAnalysisResult(value);
+    } catch {
+      return null;
+    }
+  }
+
+  function mapCloudyArchiveRowToItem(row: CloudyArchiveRow): CloudyArchiveItem {
+    return {
+      id: row.id,
+      content: row.content,
+      createdAt: row.created_at,
+      displayDate: row.display_date,
+      personId: row.person_id,
+      status: row.cloudy_analysis_status,
+      aiResponse: row.ai_response,
+    };
+  }
+
+  async function fetchCloudyArchiveItems(userId: string) {
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id, content, person_id, display_date, created_at, ai_response, cloudy_analysis_status",
+      )
+      .eq("user_id", userId)
+      .eq("event_type", "cloudy")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return ((data ?? []) as CloudyArchiveRow[]).map((row) =>
+      mapCloudyArchiveRowToItem(row),
+    );
   }
 
   function applyInsightToLocalState(
@@ -1176,6 +1354,237 @@ export default function HomePage() {
       }
       applyInsightToLocalState(params.eventId, "failed", null);
       return null;
+    }
+  }
+
+  async function requestCloudyAnalysis(contentValue: string) {
+    const response = await fetch("/api/cloudy-analysis", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content: contentValue,
+      }),
+    });
+
+    let payload: unknown = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        payload &&
+          typeof payload === "object" &&
+          "error" in payload &&
+          typeof payload.error === "string"
+          ? payload.error
+          : copy.unknownError,
+      );
+    }
+
+    return normalizeCloudyAnalysisResult(payload);
+  }
+
+  async function persistCloudyPendingState(params: {
+    eventId?: string;
+    userId: string;
+    personId: string;
+    content: string;
+    displayDate: string;
+  }) {
+    const payload = buildEventPayload({
+      userId: params.userId,
+      personId: params.personId,
+      content: params.content,
+      reason: "",
+      imageUrls: [],
+      displayDate: params.displayDate,
+      eventType: "cloudy",
+    });
+
+    const pendingPayload = {
+      ...payload,
+      ai_response: null,
+      cloudy_analysis_status: "pending" as const,
+    };
+
+    if (params.eventId) {
+      const { error } = await supabase
+        .from("events")
+        .update(pendingPayload)
+        .eq("id", params.eventId)
+        .eq("user_id", params.userId);
+
+      if (error) {
+        throw error;
+      }
+
+      return params.eventId;
+    }
+
+    const { data, error } = await supabase
+      .from("events")
+      .insert(pendingPayload)
+      .select("id")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data as { id?: string } | null)?.id ?? "";
+  }
+
+  async function persistCloudyAnalysisResult(params: {
+    eventId: string;
+    userId: string;
+    result: CloudyAnalysisResult;
+  }) {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        ai_response: params.result,
+        cloudy_analysis_status: "ready",
+      })
+      .eq("id", params.eventId)
+      .eq("user_id", params.userId);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function persistCloudyFailureState(params: {
+    eventId: string;
+    userId: string;
+  }) {
+    const { error } = await supabase
+      .from("events")
+      .update({
+        cloudy_analysis_status: "failed",
+      })
+      .eq("id", params.eventId)
+      .eq("user_id", params.userId);
+
+    if (error) {
+      throw error;
+    }
+  }
+
+  async function findLatestFailedCloudy(userId: string) {
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        "id, content, person_id, display_date, ai_response, cloudy_analysis_status",
+      )
+      .eq("user_id", userId)
+      .eq("event_type", "cloudy")
+      .eq("cloudy_analysis_status", "failed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return (data as FailedCloudyRow | null) ?? null;
+  }
+
+  async function analyzeCloudyEvent(params: {
+    userId: string;
+    personId: string;
+    content: string;
+    displayDate: string;
+    eventId?: string;
+  }) {
+    let eventId = params.eventId ?? "";
+
+    try {
+      eventId = await persistCloudyPendingState({
+        eventId: params.eventId,
+        userId: params.userId,
+        personId: params.personId,
+        content: params.content,
+        displayDate: params.displayDate,
+      });
+      setCloudyPendingEventId(eventId);
+
+      const result = await requestCloudyAnalysis(params.content);
+
+      if (eventId) {
+        await persistCloudyAnalysisResult({
+          eventId,
+          userId: params.userId,
+          result,
+        });
+      }
+
+      return {
+        eventId,
+        result,
+      };
+    } catch (error) {
+      if (eventId) {
+        try {
+          await persistCloudyFailureState({
+            eventId,
+            userId: params.userId,
+          });
+        } catch (persistError) {
+          throw persistError;
+        }
+      }
+
+      if (eventId) {
+        return Promise.reject({
+          error,
+          eventId,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  async function startCloudyAnalysisInBackground(params: {
+    userId: string;
+    personId: string;
+    content: string;
+    displayDate: string;
+    eventId: string;
+  }) {
+    try {
+      const { result } = await analyzeCloudyEvent(params);
+      setCloudyArchiveItems((current) =>
+        current.map((entry) =>
+          entry.id === params.eventId
+            ? {
+                ...entry,
+                status: "ready",
+                aiResponse: result,
+              }
+            : entry,
+        ),
+      );
+    } catch (error) {
+      setCloudyArchiveItems((current) =>
+        current.map((entry) =>
+          entry.id === params.eventId
+            ? {
+                ...entry,
+                status: "failed",
+              }
+            : entry,
+        ),
+      );
+      setMessage(toHumanErrorMessage(error, "这封回信暂时还没整理好，已经留在档案袋里了。"));
+    } finally {
+      setCloudyPendingEventId("");
     }
   }
 
@@ -1734,8 +2143,76 @@ export default function HomePage() {
     return { ok: true };
   }
 
+  async function handleCloudySave() {
+    if (!session?.user.id) {
+      setMessage(copy.unknownError);
+      return;
+    }
+
+    const defaultPersonId = getDefaultPersonId();
+    if (!defaultPersonId) {
+      setMessage(copy.emptyPeople);
+      return;
+    }
+
+    const nextContent = content.trim();
+    if (!nextContent) {
+      return;
+    }
+
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const eventId = await persistCloudyPendingState({
+        userId: session.user.id,
+        personId: defaultPersonId,
+        content: nextContent,
+        displayDate: todayString,
+        eventId: undefined,
+      });
+      const archiveItem: CloudyArchiveItem = {
+        id: eventId,
+        content: nextContent,
+        personId: defaultPersonId,
+        aiResponse: null,
+        status: "pending",
+        displayDate: todayString,
+        createdAt: new Date().toISOString(),
+      };
+
+      setCloudyArchiveItems((current) => {
+        const remaining = current.filter((entry) => entry.id !== eventId);
+        return [archiveItem, ...remaining];
+      });
+      setCloudyPendingEventId("");
+      setCloudyLetter(null);
+      setCloudyLoading(false);
+      setCloudyLoadingMessage("");
+      setContent("");
+      setMessage(cloudySavedCopy);
+
+      void startCloudyAnalysisInBackground({
+        userId: session.user.id,
+        personId: defaultPersonId,
+        content: nextContent,
+        displayDate: todayString,
+        eventId,
+      });
+    } catch (error) {
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (mode === "CLOUDY") {
+      await handleCloudySave();
+      return;
+    }
 
     if (!session?.user.id || !selectedPersonId) {
       setMessage(copy.emptyPeople);
@@ -2051,6 +2528,12 @@ export default function HomePage() {
     setPeople([]);
     setSelectedPersonId("");
     resetProfileState();
+    setMode("JOY");
+    setCloudyLetter(null);
+    setCloudyLoading(false);
+    setCloudyLoadingMessage("");
+    setCloudyPendingEventId("");
+    setCloudyRecoveryChecked(false);
     handleCancel();
   }
 
@@ -2101,10 +2584,33 @@ export default function HomePage() {
     setSelectedImageName("");
   }
 
+  function handleEnterCloudyMode() {
+    handleCancel();
+    setMessage("");
+    setMode("CLOUDY");
+    setCloudyLetter(null);
+    setCloudyLoading(false);
+    setCloudyLoadingMessage("");
+  }
+
+  function handleExitCloudyMode() {
+    handleCancel();
+    setMode("JOY");
+    setCloudyLetter(null);
+    setCloudyLoading(false);
+    setCloudyLoadingMessage("");
+    setCloudyPendingEventId("");
+  }
+
+  function handleCloudyLetterDismiss() {
+    handleExitCloudyMode();
+  }
+
   function handleTimelineTabChange(nextTab: HomeTab) {
     setActiveTab(nextTab);
 
     if (nextTab !== "timeline") {
+      handleCloseCloudyArchive();
       setSelectedTimelineEventId("");
       setTimelineDetail(null);
       setDetailEditing(false);
@@ -2122,6 +2628,7 @@ export default function HomePage() {
   function handleOpenTimelineDetail(eventId: string) {
     const cachedDetail = timelineItems.find((item) => item.id === eventId) ?? null;
 
+    handleCloseCloudyArchive();
     setActiveTab("timeline");
     setSelectedTimelineEventId(eventId);
     setDetailLoading(true);
@@ -2133,6 +2640,7 @@ export default function HomePage() {
   }
 
   function handleCloseTimelineDetail() {
+    handleCloseCloudyArchive();
     setSelectedTimelineEventId("");
     setTimelineDetail(null);
     setDetailEditing(false);
@@ -2173,6 +2681,114 @@ export default function HomePage() {
   function handleOpenInsightSummary() {
     handleTimelineTabChange("insight");
     void handleGenerateSummary();
+  }
+
+  async function loadCloudyArchive(userId: string) {
+    setCloudyArchiveLoading(true);
+
+    try {
+      setCloudyArchiveItems(await fetchCloudyArchiveItems(userId));
+    } catch (error) {
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
+    } finally {
+      setCloudyArchiveLoading(false);
+    }
+  }
+
+  function handleCloseCloudyArchive() {
+    setCloudyArchiveOpen(false);
+    setSelectedCloudyArchiveItemId("");
+    setRetryingCloudyArchiveItemId("");
+  }
+
+  function handleBackToCloudyArchiveList() {
+    setSelectedCloudyArchiveItemId("");
+  }
+
+  function handleOpenCloudyArchiveItem(itemId: string) {
+    setSelectedCloudyArchiveItemId(itemId);
+  }
+
+  async function handleRetryCloudyArchiveItem(itemId: string) {
+    if (!session?.user.id) {
+      return;
+    }
+
+    const item = cloudyArchiveItems.find((entry) => entry.id === itemId);
+
+    if (!item) {
+      return;
+    }
+
+    setRetryingCloudyArchiveItemId(itemId);
+    setMessage("");
+    setCloudyArchiveItems((current) =>
+      current.map((entry) =>
+        entry.id === itemId
+          ? {
+              ...entry,
+              status: "pending",
+            }
+          : entry,
+      ),
+    );
+
+    try {
+      const { result } = await analyzeCloudyEvent({
+        userId: session.user.id,
+        personId: item.personId || getDefaultPersonId(),
+        content: item.content,
+        displayDate: item.displayDate || todayString,
+        eventId: item.id,
+      });
+
+      setCloudyArchiveItems((current) =>
+        current.map((entry) =>
+          entry.id === itemId
+            ? {
+                ...entry,
+                status: "ready",
+                aiResponse: result,
+              }
+            : entry,
+        ),
+      );
+      setSelectedCloudyArchiveItemId(itemId);
+    } catch (error) {
+      setCloudyArchiveItems((current) =>
+        current.map((entry) =>
+          entry.id === itemId
+            ? {
+                ...entry,
+                status: "failed",
+              }
+            : entry,
+        ),
+      );
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
+    } finally {
+      setRetryingCloudyArchiveItemId("");
+    }
+  }
+
+  async function handleOpenCloudyArchive() {
+    setSelectedTimelineEventId("");
+    setTimelineDetail(null);
+    setDetailEditing(false);
+    setDetailMessage("");
+    setDetailLoading(false);
+    setDetailConfirmingDelete(false);
+    setCloudyArchiveOpen(true);
+    setSelectedCloudyArchiveItemId("");
+    setMessage("");
+
+    if (session?.user.id) {
+      await loadCloudyArchive(session.user.id);
+    }
+  }
+
+  function handleOpenCloudyArchivePlaceholder() {
+    setMessage("解忧档案袋正在整理中。");
   }
 
   async function handleGenerateSummary() {
@@ -2227,6 +2843,11 @@ export default function HomePage() {
     { id: "all", label: "\u5168\u90e8" },
     ...people.map((person) => ({ id: person.id, label: person.name })),
   ];
+  const selectedCloudyArchiveItem =
+    cloudyArchiveItems.find((item) => item.id === selectedCloudyArchiveItemId) ?? null;
+  const selectedCloudyArchiveLetter = selectedCloudyArchiveItem
+    ? parseCloudyLetter(selectedCloudyArchiveItem.aiResponse)
+    : null;
   const timelineDetailDraft = timelineDetail
       ? {
           ...timelineDetail,
@@ -2300,12 +2921,16 @@ export default function HomePage() {
           {activeTab === "quick-entry" ? (
             <QuickEntry
               people={people}
+              mode={mode}
               selectedPersonId={selectedPersonId}
               content={content}
               reason={reason}
               displayDate={displayDate}
               saving={saving}
               uploading={uploading}
+              cloudyLoading={cloudyLoading}
+              cloudyLoadingMessage={cloudyLoadingMessage}
+              cloudyLetter={cloudyLetter}
               message={message}
               onMessageClear={() => setMessage("")}
               selectedImageName={selectedImageName}
@@ -2330,6 +2955,9 @@ export default function HomePage() {
               }}
               onSave={handleSave}
               onCancel={handleCancel}
+              onEnterCloudyMode={handleEnterCloudyMode}
+              onExitCloudyMode={handleExitCloudyMode}
+              onCloudyLetterDismiss={handleCloudyLetterDismiss}
             />
           ) : activeTab === "timeline" ? (
             <TimelineView
@@ -2342,14 +2970,24 @@ export default function HomePage() {
               customEndDate={customEndDate}
               message={message}
               onMessageClear={() => setMessage("")}
-              topBarTitle={selectedTimelineEventId ? "" : undefined}
+              topBarTitle={
+                cloudyArchiveOpen || selectedTimelineEventId ? "" : undefined
+              }
               topBarLeftSlot={
-                selectedTimelineEventId ? (
+                cloudyArchiveOpen ? (
+                  <DetailTopBarBackButton
+                    onBack={
+                      selectedCloudyArchiveItem
+                        ? handleBackToCloudyArchiveList
+                        : handleCloseCloudyArchive
+                    }
+                  />
+                ) : selectedTimelineEventId ? (
                   <DetailTopBarBackButton onBack={handleCloseTimelineDetail} />
                 ) : undefined
               }
               topBarRightSlot={
-                timelineDetailDraft ? (
+                !cloudyArchiveOpen && timelineDetailDraft ? (
                   <DetailTopBarActionButtons
                     editing={detailEditing}
                     saving={detailSaving}
@@ -2360,7 +2998,19 @@ export default function HomePage() {
                 ) : undefined
               }
               detailContent={
-                timelineDetailDraft ? (
+                cloudyArchiveOpen ? (
+                  <CloudyArchiveView
+                    items={cloudyArchiveItems}
+                    loading={cloudyArchiveLoading}
+                    retryingId={retryingCloudyArchiveItemId}
+                    selectedItem={selectedCloudyArchiveItem}
+                    selectedLetter={selectedCloudyArchiveLetter}
+                    onBackToTimeline={handleCloseCloudyArchive}
+                    onOpenItem={handleOpenCloudyArchiveItem}
+                    onRetryItem={handleRetryCloudyArchiveItem}
+                    onBackToArchive={handleBackToCloudyArchiveList}
+                  />
+                ) : timelineDetailDraft ? (
                   <EventDetailPanel
                     event={timelineDetailDraft}
                     people={people}
@@ -2401,6 +3051,7 @@ export default function HomePage() {
               onCustomStartDateChange={setCustomStartDate}
               onCustomEndDateChange={setCustomEndDate}
               onSummaryClick={handleOpenInsightSummary}
+              onCloudyArchiveOpen={handleOpenCloudyArchive}
               onTabChange={handleTimelineTabChange}
               onEventOpen={handleOpenTimelineDetail}
             />

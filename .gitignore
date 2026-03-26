@@ -39,6 +39,7 @@ yarn-error.log*
 
 # local tooling / scratch
 .superpowers/
+.worktrees/
 ~/
 
 # typescript

@@ -41,6 +41,35 @@ describe("InsightView", () => {
     expect(document.querySelector("button[disabled]")).toBeDisabled();
   });
 
+  it("restores the preset range buttons between the people row and date pickers", () => {
+    const onRangeChange = vi.fn();
+    const { container } = render(
+      <InsightView
+        {...baseProps}
+        emptyHint=""
+        onRangeChange={onRangeChange}
+      />,
+    );
+
+    const filters = container.querySelector('[data-ui="timeline-filters"]');
+    const peopleRow = container.querySelector('[data-ui="timeline-filters-people-row"]');
+    const presetsRow = container.querySelector('[data-ui="timeline-filters-presets-row"]');
+    const datesRow = container.querySelector('[data-ui="timeline-filters-range-row"]');
+
+    expect(presetsRow).toHaveClass("grid-cols-3");
+    expect(presetsRow).toHaveClass("gap-2");
+    expect(screen.getByRole("button", { name: "一周" })).toHaveClass("whitespace-nowrap");
+    expect(screen.getByRole("button", { name: "一个月" })).toHaveClass("whitespace-nowrap");
+    expect(screen.getByRole("button", { name: "三个月" })).toHaveClass("whitespace-nowrap");
+    expect(filters?.children[0]).toBe(peopleRow);
+    expect(filters?.children[1]).toBe(presetsRow);
+    expect(filters?.children[2]).toBe(datesRow);
+
+    fireEvent.click(screen.getByRole("button", { name: "三个月" }));
+
+    expect(onRangeChange).toHaveBeenCalledWith("threeMonths");
+  });
+
   it("renders the report score from mood_weather.score instead of parsing the description", async () => {
     vi.useFakeTimers();
     const onShare = vi.fn();

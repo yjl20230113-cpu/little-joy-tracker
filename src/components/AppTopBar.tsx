@@ -6,6 +6,7 @@ type AppTopBarProps = {
   leadingIcon?: LucideIcon;
   trailingIcon?: LucideIcon;
   leftSlot?: ReactNode;
+  titleAccessory?: ReactNode;
   rightSlot?: ReactNode;
 };
 
@@ -14,6 +15,7 @@ export function AppTopBar({
   leadingIcon: LeadingIcon,
   trailingIcon: TrailingIcon,
   leftSlot,
+  titleAccessory,
   rightSlot,
 }: AppTopBarProps) {
   return (
@@ -38,6 +40,11 @@ export function AppTopBar({
         >
           {title}
         </h2>
+        {titleAccessory ? (
+          <div data-ui="app-topbar-title-accessory" className="shrink-0">
+            {titleAccessory}
+          </div>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-1 text-[var(--primary)]">
         {rightSlot ? (

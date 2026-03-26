@@ -45,6 +45,53 @@ COMMENT ON COLUMN public.events.auto_image_payload IS 'Persisted Unsplash auto-i
 
 COMMIT;
 
+-- Migration: add Rain Shelter persistence for cloudy entries.
+-- Run this in Supabase SQL editor.
+
+BEGIN;
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS event_type TEXT;
+
+UPDATE public.events
+SET event_type = 'joy'
+WHERE event_type IS NULL;
+
+ALTER TABLE public.events
+  ALTER COLUMN event_type SET DEFAULT 'joy';
+
+ALTER TABLE public.events
+  ALTER COLUMN event_type SET NOT NULL;
+
+ALTER TABLE public.events
+  DROP CONSTRAINT IF EXISTS events_event_type_check;
+
+ALTER TABLE public.events
+  ADD CONSTRAINT events_event_type_check
+  CHECK (event_type IN ('joy', 'cloudy'));
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS ai_response JSONB;
+
+ALTER TABLE public.events
+  ADD COLUMN IF NOT EXISTS cloudy_analysis_status TEXT;
+
+ALTER TABLE public.events
+  DROP CONSTRAINT IF EXISTS events_cloudy_analysis_status_check;
+
+ALTER TABLE public.events
+  ADD CONSTRAINT events_cloudy_analysis_status_check
+  CHECK (
+    cloudy_analysis_status IS NULL OR
+    cloudy_analysis_status IN ('pending', 'ready', 'failed')
+  );
+
+COMMENT ON COLUMN public.events.event_type IS 'Stable event type used to separate joy and cloudy records';
+COMMENT ON COLUMN public.events.ai_response IS 'Persisted Rain Shelter JSON response payload';
+COMMENT ON COLUMN public.events.cloudy_analysis_status IS 'Rain Shelter analysis lifecycle state';
+
+COMMIT;
+
 -- Migration: add user profiles for display name and avatar.
 -- Run this in Supabase SQL editor.
 

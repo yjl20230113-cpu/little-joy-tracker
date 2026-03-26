@@ -119,6 +119,7 @@ describe("buildEventPayload", () => {
       reason: "It felt peaceful",
       image_urls: null,
       display_date: "2026-03-22",
+      event_type: "joy",
     });
   });
 
@@ -138,7 +139,39 @@ describe("buildEventPayload", () => {
       reason: null,
       image_urls: null,
       display_date: "2026-03-22",
+      event_type: "joy",
     });
+  });
+
+  it("defaults event_type to joy and supports cloudy entries", () => {
+    expect(
+      buildEventPayload({
+        userId: "user-1",
+        personId: "person-1",
+        content: "Needed a quiet corner after work",
+        reason: "",
+        displayDate: "2026-03-22",
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        event_type: "joy",
+      }),
+    );
+
+    expect(
+      buildEventPayload({
+        userId: "user-1",
+        personId: "person-1",
+        content: "Everything felt too loud today",
+        reason: "",
+        displayDate: "2026-03-22",
+        eventType: "cloudy",
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        event_type: "cloudy",
+      }),
+    );
   });
 
   it("rejects blank content", () => {
@@ -239,6 +272,18 @@ describe("filterTimelineItems", () => {
     });
 
     expect(filtered.map((item) => item.id)).toEqual(["event-1"]);
+  });
+
+  it("uses the selected start and end dates when a custom range is provided", () => {
+    const filtered = filterTimelineItems(items, {
+      personId: "all",
+      range: "month",
+      customStartDate: "2026-03-01",
+      customEndDate: "2026-03-10",
+      today: "2026-03-22",
+    });
+
+    expect(filtered.map((item) => item.id)).toEqual(["event-2"]);
   });
 });
 

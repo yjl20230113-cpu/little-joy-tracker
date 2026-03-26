@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+
 import { TimelineView } from "./TimelineView";
 
 vi.mock("next/image", () => ({
@@ -20,7 +21,7 @@ describe("TimelineView", () => {
               {
                 id: "event-1",
                 title: "晨光散步",
-                content: "今天去散步，感觉很好。",
+                content: "今天去散步，感觉很轻。",
                 reason: "The night breeze felt soft",
                 imageUrl: "https://example.com/sky.jpg",
                 displayDate: "2026-03-22",
@@ -80,7 +81,9 @@ describe("TimelineView", () => {
       />,
     );
 
-    expect(screen.getByText(/~/)).toBeInTheDocument();
+    expect(
+      screen.getByText("这里空空的，快去记录一件小美好吧~"),
+    ).toBeInTheDocument();
   });
 
   it("keeps the timeline shell mounted while swapping the middle content to detail mode", () => {
@@ -94,7 +97,7 @@ describe("TimelineView", () => {
               {
                 id: "event-1",
                 title: "晨光散步",
-                content: "今天去散步，感觉很好。",
+                content: "今天去散步，感觉很轻。",
                 reason: "The night breeze felt soft",
                 imageUrl: null,
                 displayDate: "2026-03-22",
@@ -158,7 +161,7 @@ describe("TimelineView", () => {
             items: [
               {
                 id: "event-1",
-                title: "镜面湖光",
+                title: "湖面微光",
                 content: "今天的风像水面一样轻",
                 reason: null,
                 imageUrl: null,
@@ -193,6 +196,7 @@ describe("TimelineView", () => {
       "/auto-image-placeholder.svg",
     );
   });
+
   it("still renders the local placeholder when the image url is an empty string", () => {
     render(
       <TimelineView
@@ -203,8 +207,8 @@ describe("TimelineView", () => {
             items: [
               {
                 id: "event-1",
-                title: "闈欐按鏅氶湼",
-                content: "鏌斿拰鐨勬按闈㈡妸澶╃┖鎷夊緱寰堥暱",
+                title: "空白封面",
+                content: "这条记录没有真实图片",
                 reason: null,
                 imageUrl: "",
                 displayDate: "2026-03-22",
@@ -233,9 +237,95 @@ describe("TimelineView", () => {
       />,
     );
 
-    expect(screen.getByAltText("鏌斿拰鐨勬按闈㈡妸澶╃┖鎷夊緱寰堥暱")).toHaveAttribute(
+    expect(screen.getByAltText("这条记录没有真实图片")).toHaveAttribute(
       "src",
       "/auto-image-placeholder.svg",
+    );
+  });
+
+  it("shows a secondary archive entry for the cloudy archive bag", () => {
+    const onCloudyArchiveOpen = vi.fn();
+
+    render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+        onCloudyArchiveOpen={onCloudyArchiveOpen}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "解忧档案袋" }));
+
+    expect(onCloudyArchiveOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the archive entry horizontally inset like the summary button", () => {
+    const { container } = render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+        onCloudyArchiveOpen={() => {}}
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-ui="cloudy-archive-entry-wrap"]'),
+    ).toHaveClass("px-2.5");
+  });
+
+  it("keeps the people, date, summary, and archive rows on the same vertical rhythm", () => {
+    const { container } = render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+        onCloudyArchiveOpen={() => {}}
+      />,
+    );
+
+    expect(container.querySelector('[data-ui="timeline-filters"]')).toHaveClass(
+      "space-y-2.5",
+    );
+    expect(container.querySelector('[data-ui="timeline-list-stack"]')).toHaveClass(
+      "space-y-2.5",
     );
   });
 });

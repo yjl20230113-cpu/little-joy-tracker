@@ -37,18 +37,16 @@ type TimelineViewProps = {
   onCustomStartDateChange: (value: string) => void;
   onCustomEndDateChange: (value: string) => void;
   onSummaryClick: () => void;
+  onCloudyArchiveOpen?: () => void;
   onTabChange: (tab: HomeTab) => void;
   onEventOpen: (eventId: string) => void;
 };
 
 const copy = {
   title: "Little Joy Tracker",
-  empty: "\u8fd9\u91cc\u7a7a\u7a7a\u7684\uff0c\u5feb\u53bb\u8bb0\u5f55\u4e00\u4ef6\u5c0f\u7f8e\u597d\u5427~",
-  emptyHint: "\u518d\u5f80\u4e0b\u7ffb\uff0c\u90fd\u662f\u503c\u5f97\u56de\u5473\u7684\u5c0f\u7f8e\u597d",
-  record: "\u8bb0\u5f55",
-  timeline: "\u65f6\u95f4\u7ebf",
-  insight: "\u6d1e\u5bdf",
-  profile: "\u4e2a\u4eba",
+  empty: "这里空空的，快去记录一件小美好吧~",
+  emptyHint: "再往下翻，都是值得回味的小美好",
+  archive: "解忧档案袋",
 };
 
 export function TimelineView({
@@ -70,6 +68,7 @@ export function TimelineView({
   onCustomStartDateChange,
   onCustomEndDateChange,
   onSummaryClick,
+  onCloudyArchiveOpen,
   onTabChange,
   onEventOpen,
 }: TimelineViewProps) {
@@ -88,7 +87,7 @@ export function TimelineView({
         {detailContent ? (
           detailContent
         ) : (
-          <div className="space-y-3.5">
+          <div data-ui="timeline-list-stack" className="space-y-2.5">
             <TimelineFilters
               peopleFilters={peopleFilters}
               selectedPersonId={selectedPersonId}
@@ -102,14 +101,30 @@ export function TimelineView({
               onSummaryClick={onSummaryClick}
             />
 
+            {onCloudyArchiveOpen ? (
+              <div data-ui="cloudy-archive-entry-wrap" className="px-2.5">
+                <button
+                  type="button"
+                  onClick={onCloudyArchiveOpen}
+                  className="inline-flex w-full items-center justify-center rounded-[0.95rem] border border-[rgba(135,101,173,0.18)] bg-[rgba(245,239,255,0.92)] px-3.5 py-2 text-[0.74rem] font-semibold text-[#6d578f] shadow-[0_10px_20px_-20px_rgba(77,51,122,0.5)]"
+                >
+                  {copy.archive}
+                </button>
+              </div>
+            ) : null}
+
             <div className="space-y-4.5 pb-7">
               {groups.length === 0 ? (
                 <div className="joy-card flex flex-col items-center justify-center gap-3.5 rounded-[1.25rem] px-4.5 py-10 text-center">
                   <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(120,111,66,0.18)] text-[rgba(120,111,66,0.7)]">
                     <Sparkles className="size-6" />
                   </div>
-                  <p className="text-[0.94rem] font-semibold text-[var(--muted)]">{copy.empty}</p>
-                  <p className="text-[0.8rem] italic text-[var(--outline-strong)]">{copy.emptyHint}</p>
+                  <p className="text-[0.94rem] font-semibold text-[var(--muted)]">
+                    {copy.empty}
+                  </p>
+                  <p className="text-[0.8rem] italic text-[var(--outline-strong)]">
+                    {copy.emptyHint}
+                  </p>
                 </div>
               ) : (
                 groups.map((group) => (

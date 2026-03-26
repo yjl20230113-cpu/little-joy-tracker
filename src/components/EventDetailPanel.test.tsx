@@ -167,19 +167,34 @@ describe("EventDetailPanel", () => {
     expect(trigger?.querySelector("span")).toBeInTheDocument();
   });
 
-  it("centers the calendar panel on the detail date trigger", () => {
+  it("anchors the detail date picker below the trigger and centered on the viewport", () => {
     render(<EventDetailPanel {...baseProps} editing />);
 
-    fireEvent.click(
-      within(screen.getByTestId("detail-editor-date")).getByRole("button", {
-        name: /2026\/03\/22/,
-      }),
-    );
+    const trigger = within(screen.getByTestId("detail-editor-date")).getByRole("button", {
+      name: /2026\/03\/22/,
+    });
+    (trigger as unknown as { getBoundingClientRect: () => DOMRect }).getBoundingClientRect =
+      () =>
+        ({
+          width: 120,
+          height: 40,
+          top: 160,
+          left: 16,
+          right: 136,
+          bottom: 200,
+          x: 16,
+          y: 160,
+          toJSON: () => ({}),
+        }) as DOMRect;
+
+    fireEvent.click(trigger);
 
     expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
+      "fixed",
       "left-1/2",
       "-translate-x-1/2",
     );
+    expect(screen.getByTestId("app-date-picker-panel").style.top).toBe("210px");
   });
 
   it("lets the user edit the title in detail mode", () => {

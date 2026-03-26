@@ -112,6 +112,7 @@ type EventInput = {
   reason: string;
   imageUrls?: string[];
   displayDate: string;
+  eventType?: "joy" | "cloudy";
 };
 
 type EventPayload = {
@@ -121,6 +122,7 @@ type EventPayload = {
   reason: string | null;
   image_urls: string | null;
   display_date: string;
+  event_type: "joy" | "cloudy";
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -214,6 +216,7 @@ export function buildEventPayload(input: EventInput): EventPayload {
     reason: reason || null,
     image_urls: serializeImageUrls(input.imageUrls ?? []),
     display_date: input.displayDate,
+    event_type: input.eventType ?? "joy",
   };
 }
 
@@ -221,6 +224,10 @@ function addDays(dateString: string, offset: number) {
   const date = new Date(`${dateString}T00:00:00`);
   date.setDate(date.getDate() + offset);
   return date.toISOString().slice(0, 10);
+}
+
+function isDateOnlyValue(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function padTimePart(value: number) {
@@ -425,13 +432,24 @@ export function filterTimelineItems(
   items: TimelineEntry[],
   filters: TimelineFilters,
 ) {
-  const rangeStart =
-    filters.range === "week"
-      ? addDays(filters.today, -6)
-      : filters.range === "month"
-        ? addDays(filters.today, -29)
-        : addDays(filters.today, -89);
-  const rangeEnd = filters.today;
+  let rangeStart = isDateOnlyValue(filters.customStartDate)
+    ? filters.customStartDate
+    : "";
+  let rangeEnd = isDateOnlyValue(filters.customEndDate) ? filters.customEndDate : "";
+
+  if (!rangeStart && !rangeEnd) {
+    rangeStart =
+      filters.range === "week"
+        ? addDays(filters.today, -6)
+        : filters.range === "month"
+          ? addDays(filters.today, -29)
+          : addDays(filters.today, -89);
+    rangeEnd = filters.today;
+  }
+
+  if (rangeStart && rangeEnd && rangeStart > rangeEnd) {
+    [rangeStart, rangeEnd] = [rangeEnd, rangeStart];
+  }
 
   return items.filter((item) => {
     if (filters.personId !== "all" && item.personId !== filters.personId) {

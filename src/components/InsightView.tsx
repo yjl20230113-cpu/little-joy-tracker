@@ -119,6 +119,7 @@ export function InsightView({
                 onCustomStartDateChange={onCustomStartDateChange}
                 onCustomEndDateChange={onCustomEndDateChange}
                 showSummaryButton={false}
+                showPresetRangeButtons
               />
             </div>
 

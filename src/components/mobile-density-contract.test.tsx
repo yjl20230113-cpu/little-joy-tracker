@@ -87,7 +87,7 @@ describe("mobile density contract", () => {
     const filterPanel = container.querySelector('[data-ui="timeline-filters"]');
     expect(filterPanel).toHaveClass("rounded-[1rem]");
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
-      "grid-cols-3",
+      "grid-cols-2",
     );
     expect(filterPanel?.querySelector("button")).toHaveClass("px-3", "py-1.5");
 
