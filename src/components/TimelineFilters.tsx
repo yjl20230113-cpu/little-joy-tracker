@@ -106,20 +106,26 @@ export function TimelineFilters({
           value={customStartDate}
           onChange={onCustomStartDateChange}
           buttonLabel={copy.startDate}
+          buttonLabelMode="empty-only"
           placement="bottom"
           centerPanelOnViewport
           allowClear
           compact
+          compactDisplayStyle="short-year"
+          showTodayPrefix={false}
           buttonClassName="border border-[rgba(155,69,0,0.12)] bg-white/88 text-[var(--muted)]"
         />
         <AppDatePicker
           value={customEndDate}
           onChange={onCustomEndDateChange}
           buttonLabel={copy.endDate}
+          buttonLabelMode="empty-only"
           placement="bottom"
           centerPanelOnViewport
           allowClear
           compact
+          compactDisplayStyle="short-year"
+          showTodayPrefix={false}
           buttonClassName="border border-[rgba(155,69,0,0.12)] bg-white/88 text-[var(--muted)]"
         />
       </div>

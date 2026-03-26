@@ -274,11 +274,13 @@ vi.mock("@/components/QuickEntry", () => ({
     mode,
     selectedPersonId,
     content,
+    displayDate,
     cloudyLetter,
     cloudyLoadingMessage,
     onEnterCloudyMode,
     onCloudyLetterDismiss,
     onContentChange,
+    onDateChange,
     onImageChange,
     onTabChange,
     onSave,
@@ -286,11 +288,13 @@ vi.mock("@/components/QuickEntry", () => ({
     mode: "JOY" | "CLOUDY";
     selectedPersonId: string;
     content: string;
+    displayDate: string;
     cloudyLetter: { hug: string; analysis: string; light: string } | null;
     cloudyLoadingMessage: string;
     onEnterCloudyMode: () => void;
     onCloudyLetterDismiss: () => void;
     onContentChange: (value: string) => void;
+    onDateChange: (value: string) => void;
     onImageChange: (event: {
       target: {
         files?: File[];
@@ -304,6 +308,7 @@ vi.mock("@/components/QuickEntry", () => ({
       <div data-testid="mode">{mode}</div>
       <div data-testid="selected-person">{selectedPersonId}</div>
       <div data-testid="content">{content}</div>
+      <div data-testid="display-date">{displayDate}</div>
       <button type="button" onClick={onEnterCloudyMode}>
         enter-cloudy
       </button>
@@ -315,6 +320,9 @@ vi.mock("@/components/QuickEntry", () => ({
         onClick={() => onContentChange("A quiet walk home together")}
       >
         set-content
+      </button>
+      <button type="button" onClick={() => onDateChange("2025-03-12")}>
+        set-cloudy-date
       </button>
       <button
         type="button"
@@ -871,6 +879,7 @@ describe("HomePage bootstrapping", () => {
     fireEvent.click(screen.getByRole("button", { name: "enter-cloudy" }));
     expect(screen.getByTestId("mode")).toHaveTextContent("CLOUDY");
 
+    fireEvent.click(screen.getByRole("button", { name: "set-cloudy-date" }));
     fireEvent.click(screen.getByRole("button", { name: "set-content" }));
     fireEvent.click(screen.getByRole("button", { name: "save-entry" }));
 
@@ -881,6 +890,7 @@ describe("HomePage bootstrapping", () => {
     const inserted = insertMock.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(inserted.event_type).toBe("cloudy");
     expect(inserted.person_id).toBe("person-self");
+    expect(inserted.display_date).toBe("2025-03-12");
     expect(inserted.ai_response).toBeNull();
     expect(inserted.cloudy_analysis_status).toBe("pending");
 

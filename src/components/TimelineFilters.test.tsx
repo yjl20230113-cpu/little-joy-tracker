@@ -19,6 +19,8 @@ describe("TimelineFilters", () => {
     );
 
     expect(screen.getAllByTestId("app-date-picker-trigger")).toHaveLength(2);
+    expect(screen.getAllByTestId("app-date-picker-trigger")[0]).toHaveTextContent("26-03-01");
+    expect(screen.getAllByTestId("app-date-picker-trigger")[1]).toHaveTextContent("26-03-25");
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
       "grid-cols-2",
     );
@@ -187,5 +189,29 @@ describe("TimelineFilters", () => {
       "grid-cols-2",
     );
     expect(screen.getByTestId("timeline-summary-button")).toHaveClass("w-full");
+  });
+
+  it("shows label-only placeholders when the date range is empty", () => {
+    render(
+      <TimelineFilters
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+      />,
+    );
+
+    const [startTrigger, endTrigger] = screen.getAllByTestId("app-date-picker-trigger");
+
+    expect(startTrigger).toHaveTextContent("开始日期");
+    expect(startTrigger).not.toHaveTextContent("请选择日期");
+    expect(endTrigger).toHaveTextContent("结束日期");
+    expect(endTrigger).not.toHaveTextContent("请选择日期");
   });
 });

@@ -11,9 +11,12 @@ type AppDatePickerProps = {
   placement?: "top" | "bottom";
   allowClear?: boolean;
   buttonLabel?: string;
+  buttonLabelMode?: "prefix" | "empty-only";
   className?: string;
   buttonClassName?: string;
   compact?: boolean;
+  compactDisplayStyle?: "month-day" | "short-year";
+  showTodayPrefix?: boolean;
   centerPanelOnViewport?: boolean;
 };
 
@@ -92,7 +95,12 @@ function formatDateValue(value: string) {
   return `${parts.year}/${String(parts.month).padStart(2, "0")}/${String(parts.day).padStart(2, "0")}`;
 }
 
-function formatCompactDateValue(value: string, todayValue: string) {
+function formatCompactDateValue(
+  value: string,
+  todayValue: string,
+  compactDisplayStyle: "month-day" | "short-year",
+  showTodayPrefix: boolean,
+) {
   const parts = parseDateParts(value);
 
   if (!parts) {
@@ -101,8 +109,11 @@ function formatCompactDateValue(value: string, todayValue: string) {
 
   const month = String(parts.month).padStart(2, "0");
   const day = String(parts.day).padStart(2, "0");
-  const shortDate = `${month}-${day}`;
-  return value === todayValue ? `${copy.today}-${shortDate}` : shortDate;
+  const shortDate =
+    compactDisplayStyle === "short-year"
+      ? `${String(parts.year).slice(-2)}-${month}-${day}`
+      : `${month}-${day}`;
+  return showTodayPrefix && value === todayValue ? `${copy.today}-${shortDate}` : shortDate;
 }
 
 function buildCalendarCells(year: number, month: number) {
@@ -133,9 +144,12 @@ export function AppDatePicker({
   placement = "top",
   allowClear = false,
   buttonLabel,
+  buttonLabelMode = "prefix",
   className = "",
   buttonClassName = "",
   compact = false,
+  compactDisplayStyle = "month-day",
+  showTodayPrefix = true,
   centerPanelOnViewport = false,
 }: AppDatePickerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -233,11 +247,19 @@ export function AppDatePicker({
   );
 
   const triggerLabel = compact
-    ? formatCompactDateValue(value, todayValue)
+    ? formatCompactDateValue(value, todayValue, compactDisplayStyle, showTodayPrefix)
     : formatDateValue(value);
+  const hasValue = Boolean(parseDateParts(value));
   const panelWidthClass = compact
     ? "w-[min(13.5rem,calc(100vw-1.5rem))]"
     : "w-[min(16rem,calc(100vw-2rem))]";
+  const triggerText = buttonLabel
+    ? buttonLabelMode === "empty-only"
+      ? hasValue
+        ? triggerLabel
+        : buttonLabel
+      : `${buttonLabel} ${triggerLabel}`
+    : triggerLabel;
 
   const panel = (
     <div
@@ -395,7 +417,7 @@ export function AppDatePicker({
         <span className="inline-flex min-w-0 items-center gap-2">
           <CalendarDays className={`${compact ? "size-[0.88rem]" : "size-[0.95rem]"} shrink-0`} />
           <span className={compact ? "whitespace-nowrap" : "truncate"}>
-            {buttonLabel ? `${buttonLabel} ${triggerLabel}` : triggerLabel}
+            {triggerText}
           </span>
         </span>
         <ChevronDown

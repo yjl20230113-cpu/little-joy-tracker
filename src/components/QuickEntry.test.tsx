@@ -230,14 +230,12 @@ describe("QuickEntry", () => {
     );
 
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(container.querySelector('[data-ui="cloudy-date"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-media"]'),
     ).not.toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-person-trigger"]'),
-    ).not.toBeInTheDocument();
-    expect(
-      container.querySelector('[data-ui="quick-entry-date"]'),
     ).not.toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-footer"]'),
@@ -248,6 +246,17 @@ describe("QuickEntry", () => {
     expect(
       container.querySelector('[data-ui="quick-entry-footer"] button[type="submit"]'),
     ).toBeInTheDocument();
+  });
+
+  it("places the cloudy date picker between the top bar and the input card", () => {
+    const { container } = render(<QuickEntry {...baseProps} mode="CLOUDY" />);
+    const cloudyDate = container.querySelector('[data-ui="cloudy-date"]');
+    const textbox = screen.getByRole("textbox");
+
+    expect(cloudyDate).toBeInTheDocument();
+    expect(
+      cloudyDate?.compareDocumentPosition(textbox) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("shows the updated cloudy labels and the healing letter card", () => {

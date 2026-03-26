@@ -299,6 +299,21 @@ export function QuickEntry({
           ) : null}
           {isCloudyMode ? (
             <div className="relative space-y-4">
+              <div data-ui="cloudy-date" className="flex justify-start px-1">
+                <div className="min-h-9 w-[10.2rem]">
+                  <AppDatePicker
+                    value={displayDate}
+                    onChange={onDateChange}
+                    placement="bottom"
+                    centerPanelOnViewport
+                    align="center"
+                    compact
+                    className="min-h-9"
+                    buttonClassName="min-h-9 rounded-[0.9rem] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
+                  />
+                </div>
+              </div>
+
               <div className="joy-card rounded-[1.5rem] border-[rgba(145,123,181,0.2)] bg-[linear-gradient(180deg,rgba(251,249,255,0.9),rgba(243,232,255,0.94))] px-4 py-4 shadow-[0_24px_54px_-34px_rgba(77,51,122,0.38)]">
                 <p className="text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
                   Rain Shelter

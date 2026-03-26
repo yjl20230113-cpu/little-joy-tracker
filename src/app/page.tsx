@@ -2168,7 +2168,7 @@ export default function HomePage() {
         userId: session.user.id,
         personId: defaultPersonId,
         content: nextContent,
-        displayDate: todayString,
+        displayDate,
         eventId: undefined,
       });
       const archiveItem: CloudyArchiveItem = {
@@ -2177,7 +2177,7 @@ export default function HomePage() {
         personId: defaultPersonId,
         aiResponse: null,
         status: "pending",
-        displayDate: todayString,
+        displayDate,
         createdAt: new Date().toISOString(),
       };
 
@@ -2196,7 +2196,7 @@ export default function HomePage() {
         userId: session.user.id,
         personId: defaultPersonId,
         content: nextContent,
-        displayDate: todayString,
+        displayDate,
         eventId,
       });
     } catch (error) {
