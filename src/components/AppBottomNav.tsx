@@ -5,6 +5,9 @@ import { useUpdateAvailableBuildId } from "../lib/pwa-update-client";
 type AppBottomNavProps = {
   activeTab: HomeTab;
   onTabChange: (tab: HomeTab) => void;
+  tone?: "default" | "warm";
+  surfaceClassName?: string;
+  activeItemClassName?: string;
   labels?: {
     record: string;
     timeline: string;
@@ -30,15 +33,21 @@ const navItems = [
 export function AppBottomNav({
   activeTab,
   onTabChange,
+  tone = "default",
+  surfaceClassName,
+  activeItemClassName,
   labels = defaultLabels,
 }: AppBottomNavProps) {
   const updateAvailableBuildId = useUpdateAvailableBuildId();
   const showProfileUpdateBadge = Boolean(updateAvailableBuildId);
+  const navToneClass =
+    "border-[rgba(205,162,101,0.14)] bg-[rgba(255,251,231,0.96)] shadow-[0_-12px_24px_-28px_rgba(155,69,0,0.14)] backdrop-blur-[18px]";
 
   return (
     <nav
       data-ui="app-bottom-nav"
-      className="joy-blur-panel joy-safe-bottom relative z-10 flex shrink-0 items-start rounded-none border-x-0 border-b-0 border-t border-[rgba(155,69,0,0.06)] px-2 pb-1 pt-1 sm:h-[5.8rem] sm:items-center sm:rounded-t-[1.8rem] sm:border-x sm:border-b sm:px-3.5 sm:pb-2.5 sm:pt-2"
+      data-tone={tone}
+      className={`joy-safe-bottom relative z-10 mt-1 flex shrink-0 items-start rounded-none border-x-0 border-b-0 border-t px-2 pb-1 pt-1 sm:mt-0 sm:h-[5.8rem] sm:items-center sm:rounded-t-[1.55rem] sm:border-x sm:border-b sm:px-3.5 sm:pb-2.5 sm:pt-2.5 ${navToneClass} ${surfaceClassName ?? ""}`}
     >
       <div className="grid w-full grid-cols-4 gap-0.5">
         {navItems.map(({ tab, icon: Icon, labelKey }) => {
@@ -53,7 +62,7 @@ export function AppBottomNav({
               onClick={() => onTabChange(tab)}
               className={`mx-auto flex h-[3.72rem] w-[90%] flex-col items-center justify-center gap-[0.18rem] rounded-[1.3rem] px-1 text-[0.62rem] leading-[1.05] tracking-[0.005em] transition-all duration-200 ${
                 active
-                  ? "bg-[rgba(255,219,201,0.82)] font-medium text-[var(--primary)] shadow-[0_8px_14px_-16px_rgba(155,69,0,0.16)]"
+                  ? `${activeItemClassName ?? "bg-[rgba(255,219,201,0.82)]"} font-medium text-[var(--primary)] shadow-[0_8px_14px_-16px_rgba(155,69,0,0.16)]`
                   : "font-normal text-[var(--muted)]"
               }`}
             >

@@ -80,7 +80,7 @@ const copy = {
   cloudyPublish: "放入档案袋",
   cloudyPublishing: "正在放入档案袋...",
   cloudyReturn: "回到小美好",
-  cloudyEntry: "进入避雨亭",
+  cloudyEntry: "进入小烦恼",
   cloudyIntro:
     "先别急着把自己整理好。把心里那团湿漉漉的话放下来，我会陪你把它慢慢摊开。",
   recordForEmpty: "请选择",
@@ -267,6 +267,8 @@ export function QuickEntry({
         <div
           data-ui="quick-entry-scroll"
           className={`joy-app-content joy-scroll-hidden relative px-3 pb-4.5 pt-2.5 sm:px-4.5 ${
+            isCloudyMode ? "bg-[#eadfff]" : ""
+          } ${
             hasComposerContent ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
         >
@@ -275,7 +277,7 @@ export function QuickEntry({
               <motion.div
                 aria-hidden="true"
                 data-ui="cloudy-mode-surface"
-                className="absolute inset-x-0 top-0 h-full overflow-hidden bg-[linear-gradient(180deg,#f8f2ff_0%,#f3e8ff_65%,#efe5ff_100%)]"
+                className="absolute inset-x-0 top-0 h-full overflow-hidden bg-[#eadfff]"
                 initial={false}
                 animate={{
                   height: isCloudyMode ? "100%" : "0%",
@@ -565,23 +567,33 @@ export function QuickEntry({
 
         <div
           data-ui="quick-entry-footer"
-          className="joy-blur-panel relative z-10 flex min-h-[3rem] items-center justify-end border-y border-[rgba(29,29,3,0.04)] px-3 py-1 sm:px-5"
+          className={`relative z-10 min-h-[3rem] px-3 py-1 sm:px-5 ${isCloudyMode ? "bg-[#eadfff]" : ""}`}
         >
-          <button
-            type="submit"
-            disabled={submitAction.disabled}
-            className="joy-topbar-button joy-topbar-button--primary min-h-9 shrink-0 px-3.5 py-2 text-[0.78rem]"
+          <div
+            data-ui="quick-entry-save-rail"
+            className="ml-auto flex w-fit items-center rounded-[1.4rem] border border-white/70 bg-[rgba(255,255,255,0.7)] px-2.5 py-2 shadow-[0_18px_34px_-26px_rgba(29,29,3,0.28)] backdrop-blur-md"
           >
-            {submitAction.disabled ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="size-4" />
-            )}
-            {submitAction.label}
-          </button>
+            <button
+              type="submit"
+              disabled={submitAction.disabled}
+              className="joy-topbar-button joy-topbar-button--primary min-h-9 shrink-0 px-3.5 py-2 text-[0.78rem]"
+            >
+              {submitAction.disabled ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-4" />
+              )}
+              {submitAction.label}
+            </button>
+          </div>
         </div>
 
-        <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+        <div
+          data-ui="quick-entry-nav-support"
+          className={isCloudyMode ? "bg-[#eadfff]" : ""}
+        >
+          <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+        </div>
       </form>
 
       <AppToast message={message} onClear={onMessageClear} />

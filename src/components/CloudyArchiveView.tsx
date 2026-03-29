@@ -1,6 +1,6 @@
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw, Trash2 } from "lucide-react";
 
-import { formatTimelineTime } from "../lib/app-logic";
+import { formatTimelineHeading, formatTimelineTime } from "../lib/app-logic";
 import type { CloudyAnalysisResult } from "../lib/cloudy-analysis";
 import { CloudyLetterCard } from "./CloudyLetterCard";
 
@@ -20,10 +20,18 @@ type CloudyArchiveViewProps = {
   retryingId: string;
   selectedItem: CloudyArchiveItem | null;
   selectedLetter: CloudyAnalysisResult | null;
+  deleteMode: boolean;
+  deletingItemId: string;
   onBackToTimeline: () => void;
   onOpenItem: (itemId: string) => void;
   onRetryItem: (itemId: string) => void;
   onBackToArchive: () => void;
+  onDeleteConfirm: (itemId: string) => void;
+};
+
+type ArchiveGroup = {
+  date: string;
+  items: CloudyArchiveItem[];
 };
 
 const statusCopy = {
@@ -32,6 +40,15 @@ const statusCopy = {
   failed: "待补信",
   unknown: "未分类",
 };
+
+const metaPillClass =
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(143,122,192,0.18)] bg-white/84 px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] shadow-[0_8px_18px_-18px_rgba(93,62,149,0.55)]";
+const datePillClass = `${metaPillClass} text-[#6f638b]`;
+const statusPillClass = `${metaPillClass} bg-[rgba(143,122,192,0.14)] text-[#7a64a7]`;
+const actionPillClass =
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(188,126,42,0.18)] bg-[linear-gradient(180deg,rgba(255,248,238,0.98),rgba(255,242,221,0.98))] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#b86116] shadow-[0_10px_20px_-18px_rgba(184,97,22,0.58)] transition-colors hover:bg-[linear-gradient(180deg,rgba(255,246,233,1),rgba(255,235,205,1))]";
+const deletePillClass =
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(214,110,86,0.18)] bg-[linear-gradient(180deg,rgba(255,247,243,0.98),rgba(255,236,230,0.98))] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#b75b39] shadow-[0_10px_20px_-18px_rgba(183,91,57,0.5)] disabled:opacity-70";
 
 function getStatusLabel(status: CloudyArchiveItem["status"]) {
   if (status === "pending") {
@@ -49,68 +66,92 @@ function getStatusLabel(status: CloudyArchiveItem["status"]) {
   return statusCopy.unknown;
 }
 
+function groupArchiveItems(items: CloudyArchiveItem[]): ArchiveGroup[] {
+  const groups = new Map<string, CloudyArchiveItem[]>();
+
+  for (const item of items) {
+    const current = groups.get(item.displayDate) ?? [];
+    current.push(item);
+    groups.set(item.displayDate, current);
+  }
+
+  return Array.from(groups.entries()).map(([date, groupedItems]) => ({
+    date,
+    items: groupedItems,
+  }));
+}
+
 export function CloudyArchiveView({
   items,
   loading,
   retryingId,
   selectedItem,
   selectedLetter,
+  deleteMode,
+  deletingItemId,
   onBackToTimeline: _onBackToTimeline,
   onOpenItem,
   onRetryItem,
   onBackToArchive,
+  onDeleteConfirm,
 }: CloudyArchiveViewProps) {
+  const groupedItems = groupArchiveItems(items);
+
   if (selectedItem) {
     if (selectedLetter) {
       return (
-        <CloudyLetterCard
-          letter={selectedLetter}
-          footerActionLabel="回到档案袋"
-          onFooterAction={onBackToArchive}
-        />
+        <section data-ui="cloudy-archive-view" className="space-y-3 pb-5">
+          <CloudyLetterCard
+            letter={selectedLetter}
+            footerActionLabel="回到档案袋"
+            onFooterAction={onBackToArchive}
+          />
+        </section>
       );
     }
 
     return (
-      <section className="joy-card rounded-[1.35rem] px-4 py-5">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
-          The Healing Letter
-        </p>
-        <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#53456c]">
-          这封回信暂时还打不开
-        </h3>
-        <p className="mt-3 text-[0.92rem] leading-7 text-[#5f5574]">
-          这条记录已经留在档案袋里了，只是纸页有一点潮。再整理一次，会比重新倾诉更轻一点。
-        </p>
-        <div className="mt-5 space-y-2">
-          <button
-            type="button"
-            onClick={() => onRetryItem(selectedItem.id)}
-            disabled={retryingId === selectedItem.id}
-            className="joy-topbar-button joy-topbar-button--primary w-full justify-center"
-          >
-            {retryingId === selectedItem.id ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            重新整理这封回信
-          </button>
-          <button
-            type="button"
-            onClick={onBackToArchive}
-            className="joy-topbar-button w-full justify-center bg-white/78 text-[#6b5a86]"
-          >
-            回到档案袋
-          </button>
-        </div>
+      <section data-ui="cloudy-archive-view" className="space-y-3 pb-5">
+        <section className="joy-card rounded-[1.35rem] border-[rgba(145,123,181,0.18)] bg-white/78 px-4 py-5">
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+            The Healing Letter
+          </p>
+          <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#53456c]">
+            这封回信暂时还打不开
+          </h3>
+          <p className="mt-3 text-[0.92rem] leading-7 text-[#5f5574]">
+            这条记录已经留在档案袋里了，只是纸页还有一点潮。再整理一次，会比重新倾诉更轻一点。
+          </p>
+          <div className="mt-5 space-y-2">
+            <button
+              type="button"
+              onClick={() => onRetryItem(selectedItem.id)}
+              disabled={retryingId === selectedItem.id}
+              className="joy-topbar-button joy-topbar-button--primary w-full justify-center"
+            >
+              {retryingId === selectedItem.id ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+              重新整理这封回信
+            </button>
+            <button
+              type="button"
+              onClick={onBackToArchive}
+              className="joy-topbar-button w-full justify-center bg-white/78 text-[#6b5a86]"
+            >
+              回到档案袋
+            </button>
+          </div>
+        </section>
       </section>
     );
   }
 
   return (
-    <section data-ui="cloudy-archive-view" className="space-y-3">
-      <div className="joy-card rounded-[1.25rem] px-4 py-4">
+    <section data-ui="cloudy-archive-view" className="space-y-3 pb-5">
+      <div className="joy-card rounded-[1.25rem] border-[rgba(145,123,181,0.18)] bg-white/72 px-4 py-4">
         <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
           Rain Shelter Archive
         </p>
@@ -123,90 +164,130 @@ export function CloudyArchiveView({
       </div>
 
       {loading ? (
-        <div className="joy-card flex items-center gap-3 rounded-[1.2rem] px-4 py-4 text-[0.9rem] text-[var(--muted)]">
+        <div className="joy-card flex items-center gap-3 rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-white/78 px-4 py-4 text-[0.9rem] text-[#5f5574]">
           <LoaderCircle className="size-4 animate-spin text-[#8f7ac0]" />
           正在整理你的避雨记录...
         </div>
       ) : items.length === 0 ? (
-        <div className="joy-card rounded-[1.2rem] px-4 py-5 text-[0.92rem] leading-7 text-[#5f5574]">
+        <div className="joy-card rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-white/74 px-4 py-5 text-[0.92rem] leading-7 text-[#5f5574]">
           暂时还没有被放进档案袋的记录。等下一场雨来时，这里会替你留下一盏灯。
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {items.map((item) => {
-            const isReady = item.status === "ready";
-            const isFailed = item.status === "failed";
-            const isRetrying = retryingId === item.id;
+        <div className="space-y-4">
+          {groupedItems.map((group) => (
+            <section key={group.date} className="space-y-2.5">
+              <div className="flex items-center gap-2 px-1">
+                <h4 className="shrink-0 text-[1.15rem] font-black tracking-[-0.04em] text-[#5a4d73]">
+                  {formatTimelineHeading(group.date)}
+                </h4>
+                <div className="h-px flex-1 bg-[rgba(143,122,192,0.18)]" />
+              </div>
 
-            return (
-              <article
-                key={item.id}
-                className="joy-card rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-[linear-gradient(180deg,rgba(251,249,255,0.96),rgba(244,239,251,0.96))] px-4 py-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-white/70 px-2 py-0.5 text-[0.65rem] font-semibold text-[#7a6d94]">
-                        {item.displayDate}
-                      </span>
-                      <span className="rounded-full bg-[rgba(143,122,192,0.14)] px-2 py-0.5 text-[0.65rem] font-semibold text-[#7a64a7]">
-                        {getStatusLabel(item.status)}
-                      </span>
-                    </div>
-                    {isReady ? (
-                      <button
-                        type="button"
-                        onClick={() => onOpenItem(item.id)}
-                        className="mt-2 block w-full text-left text-[0.96rem] leading-7 text-[#4c4460]"
-                      >
-                        {item.content}
-                      </button>
-                    ) : (
-                      <p className="mt-2 text-[0.96rem] leading-7 text-[#4c4460]">
-                        {item.content}
-                      </p>
-                    )}
-                    <p className="mt-2 text-[0.74rem] font-medium text-[#8d84a0]">
-                      {formatTimelineTime(item.createdAt)}
-                    </p>
-                  </div>
+              <div className="space-y-2.5">
+                {group.items.map((item) => {
+                  const isReady = item.status === "ready";
+                  const isFailed = item.status === "failed";
+                  const isRetrying = retryingId === item.id;
+                  const isDeleting = deletingItemId === item.id;
 
-                  {isReady ? (
-                    <button
-                      type="button"
-                      onClick={() => onOpenItem(item.id)}
-                      className="joy-topbar-button shrink-0 bg-white/78 px-3 text-[#6b5a86]"
+                  return (
+                    <article
+                      key={item.id}
+                      className="joy-card rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-[linear-gradient(180deg,rgba(251,249,255,0.96),rgba(244,239,251,0.96))] px-4 py-4 transition-all"
                     >
-                      查看回信
-                    </button>
-                  ) : null}
-                </div>
+                      <div
+                        data-ui="cloudy-archive-card-header"
+                        className="flex flex-wrap items-center justify-between gap-2.5"
+                      >
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className={datePillClass}>{item.displayDate}</span>
+                          <span className={statusPillClass}>{getStatusLabel(item.status)}</span>
+                        </div>
 
-                {isFailed ? (
-                  <button
-                    type="button"
-                    onClick={() => onRetryItem(item.id)}
-                    disabled={isRetrying}
-                    className="joy-topbar-button joy-topbar-button--primary mt-3 w-full justify-center"
-                  >
-                    {isRetrying ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
-                    )}
-                    重试回信
-                  </button>
-                ) : null}
+                        {deleteMode ? (
+                          <button
+                            type="button"
+                            data-testid={`cloudy-archive-delete-card-${item.id}`}
+                            onClick={() => onDeleteConfirm(item.id)}
+                            disabled={isDeleting}
+                            className={deletePillClass}
+                          >
+                            {isDeleting ? (
+                              <LoaderCircle className="mr-1.5 size-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="mr-1.5 size-3.5" />
+                            )}
+                            删除
+                          </button>
+                        ) : isReady ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenItem(item.id)}
+                            className={actionPillClass}
+                          >
+                            查看回信
+                          </button>
+                        ) : null}
+                      </div>
 
-                {item.status === "pending" ? (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[0.74rem] font-medium text-[#6b5a86]">
-                    <LoaderCircle className="size-3.5 animate-spin" />
-                    正在慢慢整理这封回信
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
+                      <div
+                        data-ui="cloudy-archive-card-content"
+                        className="mt-3 min-w-0"
+                      >
+                        {isReady && !deleteMode ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenItem(item.id)}
+                            className="block w-full text-left text-[1rem] leading-8 text-[#4c4460]"
+                          >
+                            {item.content}
+                          </button>
+                        ) : (
+                          <p className="text-[1rem] leading-8 text-[#4c4460]">
+                            {item.content}
+                          </p>
+                        )}
+
+                        <p className="mt-3 text-[0.76rem] font-medium text-[#8d84a0]">
+                          {formatTimelineTime(item.createdAt)}
+                        </p>
+                      </div>
+
+                      {isFailed && !deleteMode ? (
+                        <button
+                          type="button"
+                          onClick={() => onRetryItem(item.id)}
+                          disabled={isRetrying}
+                          className="joy-topbar-button joy-topbar-button--primary mt-3 w-full justify-center"
+                        >
+                          {isRetrying ? (
+                            <LoaderCircle className="size-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="size-4" />
+                          )}
+                          重试回信
+                        </button>
+                      ) : null}
+
+                      {item.status === "pending" ? (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[0.74rem] font-medium text-[#6b5a86]">
+                          <LoaderCircle className="size-3.5 animate-spin" />
+                          正在慢慢整理这封回信
+                        </div>
+                      ) : null}
+
+                      {isDeleting ? (
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[rgba(255,237,232,0.88)] px-3 py-1 text-[0.74rem] font-medium text-[#b75b39]">
+                          <LoaderCircle className="size-3.5 animate-spin" />
+                          正在永久删除这条记录
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </section>

@@ -121,11 +121,14 @@ describe("QuickEntry", () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it("keeps the footer focused on the submit action only", () => {
+  it("keeps the floating save rail separate from the bottom nav", () => {
     const { container } = render(<QuickEntry {...baseProps} />);
     const footer = container.querySelector('[data-ui="quick-entry-footer"]');
 
     expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-save-rail"]'),
+    ).toBeInTheDocument();
     expect(
       footer?.querySelector('[data-testid="app-date-picker-trigger"]'),
     ).not.toBeInTheDocument();
@@ -221,15 +224,21 @@ describe("QuickEntry", () => {
   it("renders a visible joy-side button to enter the rain shelter", () => {
     render(<QuickEntry {...baseProps} />);
 
-    expect(screen.getByRole("button", { name: "进入避雨亭" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "进入小烦恼" })).toBeInTheDocument();
   });
 
   it("switches to the cloudy composer while keeping the bottom nav and footer action rail", () => {
     const { container } = render(
       <QuickEntry {...baseProps} mode="CLOUDY" content="Today feels heavy." />,
     );
+    const cloudySurface = container.querySelector('[data-ui="cloudy-mode-surface"]');
+    const footer = container.querySelector('[data-ui="quick-entry-footer"]');
+    const navSupport = container.querySelector('[data-ui="quick-entry-nav-support"]');
 
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(cloudySurface).toHaveClass("bg-[#eadfff]");
+    expect(footer).toHaveClass("bg-[#eadfff]");
+    expect(navSupport).toHaveClass("bg-[#eadfff]");
     expect(container.querySelector('[data-ui="cloudy-date"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-media"]'),
@@ -268,6 +277,7 @@ describe("QuickEntry", () => {
         cloudyLoading
         cloudyLoadingMessage="已放入档案袋，回信会稍后安静落下。"
         cloudyLetter={{
+          themeTitle: "允许一切发生",
           hug: "我听见你在强撑。",
           analysis: "这不是你的全部。",
           light: "先把窗帘拉开一点。",

@@ -566,7 +566,15 @@ export default function EventDetailPage() {
   async function handleSave(eventForm: FormEvent<HTMLFormElement>) {
     eventForm.preventDefault();
 
+    await saveDraft();
+  }
+
+  async function saveDraft() {
     if (!event || !userId || !personId) {
+      return;
+    }
+
+    if (saving) {
       return;
     }
 
@@ -806,6 +814,15 @@ export default function EventDetailPage() {
                     setEditing((current) => !current);
                     setMessage("");
                     setConfirmingDelete(false);
+                  }}
+                  onSaveRequest={() => {
+                    void saveDraft();
+                  }}
+                  onCancelEdit={() => {
+                    restoreForm(event);
+                    setEditing(false);
+                    setConfirmingDelete(false);
+                    setMessage("");
                   }}
                   onDeleteRequest={() => setConfirmingDelete(true)}
                 />

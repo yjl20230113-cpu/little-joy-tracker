@@ -8,11 +8,40 @@ import {
 
 export function PwaRegistrar() {
   useEffect(() => {
-    if (
-      process.env.NODE_ENV !== "production" ||
-      typeof window === "undefined" ||
-      typeof document === "undefined"
-    ) {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
+    async function clearDevPwaState() {
+      clearUpdateAvailableBuildId();
+
+      if ("serviceWorker" in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        } catch {
+          // Dev cleanup failures should never block the page.
+        }
+      }
+
+      if (typeof caches === "undefined") {
+        return;
+      }
+
+      try {
+        const cacheKeys = await caches.keys();
+        await Promise.all(
+          cacheKeys
+            .filter((key) => key.startsWith("little-joy-tracker-shell-"))
+            .map((key) => caches.delete(key)),
+        );
+      } catch {
+        // Cache cleanup failures should never block the page.
+      }
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      void clearDevPwaState();
       return;
     }
 

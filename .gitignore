@@ -30,6 +30,17 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# local dev server logs / pid files (do not commit)
+.cmd-test.log
+.dev-*.err.log
+.dev-*.out.log
+.dev-*.pid
+.next-start-*.err.log
+.next-start-*.out.log
+.server-*.log
+.start-*.err.log
+.start-*.out.log
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example

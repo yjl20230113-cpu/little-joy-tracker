@@ -22,13 +22,15 @@ const session = {
   },
 };
 
-const peopleRows = [
+const basePeopleRows = [
   {
     id: "person-self",
     name: "Self",
     is_default: true,
   },
 ];
+
+const peopleRows = basePeopleRows.map((row) => ({ ...row }));
 
 const baseEventRows = [
   {
@@ -101,6 +103,7 @@ let cloudyArchiveRows: Array<{
   display_date: string;
   created_at: string;
 }> = [];
+let deleteEventRequestQueue: Array<Promise<{ error: null }>> = [];
 
 function resetEventRows() {
   eventRows.splice(
@@ -113,16 +116,56 @@ function resetEventRows() {
   );
 }
 
+function resetPeopleRows() {
+  peopleRows.splice(
+    0,
+    peopleRows.length,
+    ...basePeopleRows.map((row) => ({ ...row })),
+  );
+}
+
 function createQueryBuilder(table: string) {
   const filters: Array<{ field: string; value: unknown }> = [];
   let orderCount = 0;
   let updatePayload: Record<string, unknown> | null = null;
+  let deleteRequested = false;
 
   const builder = {
     select: vi.fn(() => builder),
     eq: vi.fn((field: string, value: unknown) => {
       filters.push({ field, value });
       eqCalls.push({ table, field, value });
+
+      if (
+        deleteRequested &&
+        table === "events" &&
+        filters.some((filter) => filter.field === "id") &&
+        filters.some((filter) => filter.field === "user_id")
+      ) {
+        const eventId = String(
+          filters.find((filter) => filter.field === "id")?.value ?? "",
+        );
+
+        for (let index = eventRows.length - 1; index >= 0; index -= 1) {
+          if (eventRows[index]?.id === eventId) {
+            eventRows.splice(index, 1);
+          }
+        }
+
+        cloudyArchiveRows = cloudyArchiveRows.filter((row) => row.id !== eventId);
+        failedCloudyRow = failedCloudyRow?.id === eventId ? null : failedCloudyRow;
+
+        const nextDeleteRequest = deleteEventRequestQueue.shift();
+
+        if (nextDeleteRequest) {
+          return nextDeleteRequest;
+        }
+
+        return Promise.resolve({
+          error: null,
+        });
+      }
+
       return builder;
     }),
     limit: vi.fn(() => builder),
@@ -194,6 +237,10 @@ function createQueryBuilder(table: string) {
           ? (payload as Record<string, unknown>)
           : null;
       updateMock(payload);
+      return builder;
+    }),
+    delete: vi.fn(() => {
+      deleteRequested = true;
       return builder;
     }),
     maybeSingle: vi.fn(() => {
@@ -271,28 +318,36 @@ vi.mock("@/components/AuthScreen", () => ({
 
 vi.mock("@/components/QuickEntry", () => ({
   QuickEntry: ({
+    people,
     mode,
     selectedPersonId,
     content,
     displayDate,
+    saving,
+    uploading,
     cloudyLetter,
     cloudyLoadingMessage,
     onEnterCloudyMode,
     onCloudyLetterDismiss,
+    onPersonChange,
     onContentChange,
     onDateChange,
     onImageChange,
     onTabChange,
     onSave,
   }: {
+    people: Array<{ id: string }>;
     mode: "JOY" | "CLOUDY";
     selectedPersonId: string;
     content: string;
     displayDate: string;
+    saving: boolean;
+    uploading: boolean;
     cloudyLetter: { hug: string; analysis: string; light: string } | null;
     cloudyLoadingMessage: string;
     onEnterCloudyMode: () => void;
     onCloudyLetterDismiss: () => void;
+    onPersonChange: (value: string) => void;
     onContentChange: (value: string) => void;
     onDateChange: (value: string) => void;
     onImageChange: (event: {
@@ -306,7 +361,7 @@ vi.mock("@/components/QuickEntry", () => ({
   }) => (
     <form data-testid="quick-entry" onSubmit={onSave}>
       <div data-testid="mode">{mode}</div>
-      <div data-testid="selected-person">{selectedPersonId}</div>
+      <div data-testid="selected-person">{selectedPersonId || people[0]?.id || ""}</div>
       <div data-testid="content">{content}</div>
       <div data-testid="display-date">{displayDate}</div>
       <button type="button" onClick={onEnterCloudyMode}>
@@ -320,6 +375,9 @@ vi.mock("@/components/QuickEntry", () => ({
         onClick={() => onContentChange("A quiet walk home together")}
       >
         set-content
+      </button>
+      <button type="button" onClick={() => onPersonChange("")}>
+        clear-person
       </button>
       <button type="button" onClick={() => onDateChange("2025-03-12")}>
         set-cloudy-date
@@ -348,7 +406,9 @@ vi.mock("@/components/QuickEntry", () => ({
           </button>
         </>
       ) : null}
-      <button type="submit">save-entry</button>
+      <button type="submit" disabled={saving || uploading}>
+        save-entry
+      </button>
     </form>
   ),
 }));
@@ -403,9 +463,17 @@ vi.mock("@/components/EventDetailPanel", () => ({
 vi.mock("@/components/TimelineView", () => ({
   TimelineView: ({
     groups,
+    peopleFilters,
+    selectedPersonId,
     customStartDate,
     customEndDate,
+    shellTone,
+    navTone,
     detailContent,
+    overlayContent,
+    topBarLeftSlot,
+    topBarRightSlot,
+    onPersonChange,
     onCustomStartDateChange,
     onCustomEndDateChange,
     onEventOpen,
@@ -414,9 +482,17 @@ vi.mock("@/components/TimelineView", () => ({
     onTabChange,
   }: {
     groups: Array<{ items: Array<{ id: string }> }>;
+    peopleFilters: Array<{ id: string; label: string }>;
+    selectedPersonId: string;
     customStartDate: string;
     customEndDate: string;
+    shellTone?: "warm" | "cloudy";
+    navTone?: "default" | "warm";
     detailContent?: React.ReactNode;
+    overlayContent?: React.ReactNode;
+    topBarLeftSlot?: React.ReactNode;
+    topBarRightSlot?: React.ReactNode;
+    onPersonChange: (personId: string) => void;
     onCustomStartDateChange: (value: string) => void;
     onCustomEndDateChange: (value: string) => void;
     onEventOpen: (eventId: string) => void;
@@ -424,12 +500,28 @@ vi.mock("@/components/TimelineView", () => ({
     onCloudyArchiveOpen?: () => void;
     onTabChange: (tab: "quick-entry" | "timeline" | "insight" | "profile") => void;
   }) => (
-    <div data-testid="timeline-view">
+    <div
+      data-testid="timeline-view"
+      data-shell-tone={shellTone ?? "warm"}
+      data-nav-tone={navTone ?? "default"}
+    >
+      <div data-testid="timeline-selected-person">{selectedPersonId}</div>
       <div data-testid="timeline-start-date">{customStartDate}</div>
       <div data-testid="timeline-end-date">{customEndDate}</div>
+      <div data-testid="timeline-topbar-left">{topBarLeftSlot}</div>
+      <div data-testid="timeline-topbar-right">{topBarRightSlot}</div>
       <button type="button" onClick={() => onTabChange("quick-entry")}>
         go-quick-entry
       </button>
+      {peopleFilters.map((filter) => (
+        <button
+          key={filter.id}
+          type="button"
+          onClick={() => onPersonChange(filter.id)}
+        >
+          {`timeline-person-${filter.label}`}
+        </button>
+      ))}
       <button
         type="button"
         onClick={() => onCustomStartDateChange("2026-03-20")}
@@ -460,6 +552,7 @@ vi.mock("@/components/TimelineView", () => ({
       )}
       <div data-testid="detail-mode">{detailContent ? "detail" : "list"}</div>
       {detailContent}
+      {overlayContent}
     </div>
   ),
 }));
@@ -478,11 +571,13 @@ describe("HomePage bootstrapping", () => {
     fetchMock.mockReset();
     eqCalls.length = 0;
     global.fetch = fetchMock as typeof fetch;
+    resetPeopleRows();
     resetEventRows();
     titleBackfillShouldAffectRow = true;
     insertSingleResults = [];
     failedCloudyRow = null;
     cloudyArchiveRows = [];
+    deleteEventRequestQueue = [];
     eventRows[0].ai_insight_status = null;
     eventRows[0].ai_insight_payload = null;
 
@@ -568,6 +663,15 @@ describe("HomePage bootstrapping", () => {
     detailQueryResult = new Promise<DetailQueryResult>(() => undefined);
 
     render(<HomePage />);
+
+    // Default timeline end date is "today"; make the range include the seeded event row.
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-view")).toBeInTheDocument();
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "set-timeline-end" }));
+    });
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "open-event-1" })).toBeInTheDocument();
@@ -945,6 +1049,53 @@ describe("HomePage bootstrapping", () => {
     expect(screen.getByTestId("content")).toHaveTextContent("A quiet walk home together");
   });
 
+  it("recovers the default person after returning to quick entry so an unsaved joy draft can still be saved", async () => {
+    window.history.replaceState({}, "", "/?tab=quick-entry");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      if (String(input).includes("/api/generate-auto-image")) {
+        return new Promise(() => undefined);
+      }
+
+      if (String(input).includes("/api/event-insight")) {
+        return new Promise(() => undefined);
+      }
+
+      throw new Error(`Unexpected fetch: ${String(input)}`);
+    });
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-person")).toHaveTextContent("person-self");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "set-content" }));
+    fireEvent.click(screen.getByRole("button", { name: "clear-person" }));
+    fireEvent.click(screen.getByRole("button", { name: "go-timeline" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-view")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "go-quick-entry" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("quick-entry")).toBeInTheDocument();
+      expect(screen.getByTestId("selected-person")).toHaveTextContent("person-self");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "save-entry" }));
+
+    await waitFor(() => {
+      expect(insertMock).toHaveBeenCalled();
+    });
+  });
+
   it("retries the latest failed cloudy record on return and keeps the timeline query joy-only", async () => {
     window.history.replaceState({}, "", "/?tab=quick-entry");
     getSessionMock.mockResolvedValueOnce({
@@ -981,6 +1132,7 @@ describe("HomePage bootstrapping", () => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           ai_response: {
+            themeTitle: "今晚先把心放在这里",
             hug: "我知道你已经撑得很久了。",
             analysis: "乌云只是暂时挡住了天光。",
             light: "摸一摸杯壁的温度，让手心先回到这里。",
@@ -1014,6 +1166,7 @@ describe("HomePage bootstrapping", () => {
         content: "今天在会议上突然被点名，心里一直在发沉。",
         person_id: "person-self",
         ai_response: {
+          themeTitle: "缝隙里的光",
           hug: "我听见那一下的慌乱。",
           analysis: "那不是你不够好，只是场面太急了。",
           light: "先去窗边站一分钟。",
@@ -1110,6 +1263,7 @@ describe("HomePage bootstrapping", () => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           ai_response: {
+            themeTitle: "今晚先把心放在这里",
             hug: "我知道你今天走得很重。",
             analysis: "这不是你的错，只是身体在提醒你慢一点。",
             light: "去洗手台用冷水拍拍脸。",
@@ -1120,5 +1274,207 @@ describe("HomePage bootstrapping", () => {
     });
 
     expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("renders the cloudy archive as a pure timeline without the old filter block", async () => {
+    window.history.replaceState({}, "", "/?tab=timeline");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    cloudyArchiveRows = [
+      {
+        id: "cloudy-self",
+        content: "自己那条阴天记录",
+        person_id: "person-self",
+        ai_response: null,
+        cloudy_analysis_status: "failed",
+        display_date: "2026-03-26",
+        created_at: "2026-03-26T09:00:00+08:00",
+      },
+      {
+        id: "cloudy-dad",
+        content: "爸爸那条阴天记录",
+        person_id: "person-dad",
+        ai_response: null,
+        cloudy_analysis_status: "failed",
+        display_date: "2026-03-25",
+        created_at: "2026-03-25T21:00:00+08:00",
+      },
+    ];
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-view")).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "timeline-person-Self" }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "timeline-person-Self" }));
+    expect(screen.getByTestId("timeline-selected-person")).toHaveTextContent("person-self");
+
+    fireEvent.click(screen.getByRole("button", { name: "open-cloudy-archive" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("自己那条阴天记录")).toBeInTheDocument();
+      expect(screen.getByText("爸爸那条阴天记录")).toBeInTheDocument();
+      expect(screen.queryByTestId("timeline-filters")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("timeline-view")).toHaveAttribute(
+      "data-nav-tone",
+      "default",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "back" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-selected-person")).toHaveTextContent("person-self");
+    });
+  });
+
+  it("uses top-bar delete mode and per-card confirmation for archive deletion", async () => {
+    window.history.replaceState({}, "", "/?tab=timeline");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    cloudyArchiveRows = [
+      {
+        id: "cloudy-ready",
+        content: "今天在会议上突然被点名，心里一直在发沉。",
+        person_id: "person-self",
+        ai_response: {
+          themeTitle: "允许一切发生",
+          hug: "我听见了那一下坠下去的失重感。",
+          analysis: "那不是你的价值被抹掉，只是别人的慌乱碰到了你。",
+          light: "去窗边站一分钟，让眼睛看一看远处。",
+        },
+        cloudy_analysis_status: "ready",
+        display_date: "2026-03-26",
+        created_at: "2026-03-26T11:20:00+08:00",
+      },
+    ];
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-view")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "open-cloudy-archive" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("今天在会议上突然被点名，心里一直在发沉。")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "删除" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    expect(screen.getByRole("button", { name: "完成" })).toBeInTheDocument();
+    expect(screen.getByTestId("cloudy-archive-delete-card-cloudy-ready")).toBeInTheDocument();
+    expect(screen.getByTestId("cloudy-archive-delete-card-cloudy-ready")).toHaveTextContent(
+      "删除",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "完成" }));
+    expect(
+      screen.queryByTestId("cloudy-archive-delete-card-cloudy-ready"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "删除" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    fireEvent.click(screen.getByTestId("cloudy-archive-delete-card-cloudy-ready"));
+
+    expect(screen.getByTestId("cloudy-archive-delete-dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("cloudy-archive-delete-dialog-confirm"));
+
+    await waitFor(() => {
+      expect(eqCalls).toEqual(
+        expect.arrayContaining([
+          { table: "events", field: "id", value: "cloudy-ready" },
+          { table: "events", field: "user_id", value: "user-1" },
+        ]),
+      );
+      expect(
+        screen.queryByText("今天在会议上突然被点名，心里一直在发沉。"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("removes an archive card immediately after delete confirmation before the backend responds", async () => {
+    window.history.replaceState({}, "", "/?tab=timeline");
+    getSessionMock.mockResolvedValueOnce({
+      data: {
+        session,
+      },
+    });
+    cloudyArchiveRows = [
+      {
+        id: "cloudy-ready",
+        content: "今天在会议上突然被点名，心里一直在发沉。",
+        person_id: "person-self",
+        ai_response: {
+          themeTitle: "允许一切发生",
+          hug: "我听见了那一下坠下去的失重感。",
+          analysis: "那不是你的价值被抹掉，只是别人的慌乱碰到了你。",
+          light: "去窗边站一分钟，让眼睛看一看远处。",
+        },
+        cloudy_analysis_status: "ready",
+        display_date: "2026-03-26",
+        created_at: "2026-03-26T11:20:00+08:00",
+      },
+    ];
+
+    let resolveDeleteRequest: ((value: { error: null }) => void) | null = null;
+    deleteEventRequestQueue.push(
+      new Promise<{ error: null }>((resolve) => {
+        resolveDeleteRequest = resolve;
+      }),
+    );
+
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("timeline-view")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "open-cloudy-archive" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("今天在会议上突然被点名，心里一直在发沉。")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    fireEvent.click(screen.getByTestId("cloudy-archive-delete-card-cloudy-ready"));
+
+    expect(screen.getByTestId("cloudy-archive-delete-dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("cloudy-archive-delete-dialog-confirm"));
+
+    expect(screen.queryByTestId("cloudy-archive-delete-dialog")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("今天在会议上突然被点名，心里一直在发沉。"),
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveDeleteRequest?.({ error: null });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(eqCalls).toEqual(
+        expect.arrayContaining([
+          { table: "events", field: "id", value: "cloudy-ready" },
+          { table: "events", field: "user_id", value: "user-1" },
+        ]),
+      );
+    });
   });
 });

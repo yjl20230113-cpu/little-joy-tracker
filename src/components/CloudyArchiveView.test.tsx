@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { vi } from "vitest";
 
 import type { CloudyAnalysisResult } from "../lib/cloudy-analysis";
@@ -7,80 +8,125 @@ import { CloudyArchiveView, type CloudyArchiveItem } from "./CloudyArchiveView";
 const baseItems: CloudyArchiveItem[] = [
   {
     id: "cloudy-ready",
-    content: "开会时被突然否定，心里一直坠着。",
+    content: "今天在会议上突然被点名，心里一直在发沉。",
     createdAt: "2026-03-26T10:30:00+08:00",
     displayDate: "2026-03-26",
     personId: "person-self",
     status: "ready",
     aiResponse: {
-      hug: "我听见那一下的失重感。",
+      themeTitle: "缝隙里的光",
+      hug: "我听见了那一下坠下去的失重感。",
       analysis: "那不是你的价值被抹掉，只是别人的慌乱碰到了你。",
       light: "去窗边站一分钟，让眼睛看一看远处。",
     },
   },
   {
     id: "cloudy-failed",
-    content: "今天像是被潮湿的棉被裹住了。",
+    content: "今天整个人像被阴雨泡皱了。",
     createdAt: "2026-03-25T22:10:00+08:00",
     displayDate: "2026-03-25",
-    personId: "person-self",
+    personId: "person-dad",
     status: "failed",
     aiResponse: null,
   },
 ];
 
+function renderArchive(
+  overrideProps: Partial<ComponentProps<typeof CloudyArchiveView>> = {},
+) {
+  const props: ComponentProps<typeof CloudyArchiveView> = {
+    items: baseItems,
+    loading: false,
+    retryingId: "",
+    selectedItem: null,
+    selectedLetter: null,
+    deleteMode: false,
+    deletingItemId: "",
+    onBackToTimeline: () => {},
+    onOpenItem: () => {},
+    onRetryItem: () => {},
+    onBackToArchive: () => {},
+    onDeleteConfirm: () => {},
+    ...overrideProps,
+  };
+
+  return render(<CloudyArchiveView {...props} />);
+}
+
 describe("CloudyArchiveView", () => {
-  it("renders the archive list with summaries, timestamps, and status actions", () => {
+  it("renders a grouped archive timeline without the old filter block", () => {
+    renderArchive();
+
+    expect(screen.getByText("解忧档案袋")).toBeInTheDocument();
+    expect(screen.queryByTestId("timeline-filters")).not.toBeInTheDocument();
+    expect(screen.getByText("今天在会议上突然被点名，心里一直在发沉。")).toBeInTheDocument();
+    expect(screen.getByText("今天整个人像被阴雨泡皱了。")).toBeInTheDocument();
+    expect(screen.getAllByText(/2026/).length).toBeGreaterThan(1);
+  });
+
+  it("calls the open and retry handlers from archive cards in normal mode", () => {
     const onOpenItem = vi.fn();
     const onRetryItem = vi.fn();
 
-    render(
-      <CloudyArchiveView
-        items={baseItems}
-        loading={false}
-        retryingId=""
-        selectedItem={null}
-        selectedLetter={null}
-        onBackToTimeline={() => {}}
-        onOpenItem={onOpenItem}
-        onRetryItem={onRetryItem}
-        onBackToArchive={() => {}}
-      />,
+    renderArchive({ onOpenItem, onRetryItem });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "今天在会议上突然被点名，心里一直在发沉。" }),
     );
-
-    expect(screen.getByText("解忧档案袋")).toBeInTheDocument();
-    expect(screen.getByText("开会时被突然否定，心里一直坠着。")).toBeInTheDocument();
-    expect(screen.getByText("今天像是被潮湿的棉被裹住了。")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /开会时被突然否定/ }));
     fireEvent.click(screen.getByRole("button", { name: "重试回信" }));
 
     expect(onOpenItem).toHaveBeenCalledWith("cloudy-ready");
     expect(onRetryItem).toHaveBeenCalledWith("cloudy-failed");
   });
 
+  it("places the ready action in the header row so the content can use the full card width", () => {
+    renderArchive();
+
+    const readyCard = screen.getByRole("button", { name: "查看回信" }).closest("article");
+
+    expect(readyCard).not.toBeNull();
+
+    const header = readyCard?.querySelector('[data-ui="cloudy-archive-card-header"]');
+    const content = readyCard?.querySelector('[data-ui="cloudy-archive-card-content"]');
+
+    expect(header).not.toBeNull();
+    expect(content).not.toBeNull();
+    expect(
+      within(header as HTMLElement).getByRole("button", { name: "查看回信" }),
+    ).toBeInTheDocument();
+    expect(
+      within(content as HTMLElement).queryByRole("button", { name: "查看回信" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("switches cards into per-item delete mode without rendering a bottom confirm bar", () => {
+    const onDeleteConfirm = vi.fn();
+
+    renderArchive({
+      deleteMode: true,
+      onDeleteConfirm,
+    });
+
+    fireEvent.click(screen.getByTestId("cloudy-archive-delete-card-cloudy-failed"));
+
+    expect(onDeleteConfirm).toHaveBeenCalledWith("cloudy-failed");
+    expect(screen.queryByTestId("cloudy-archive-delete-confirm")).not.toBeInTheDocument();
+  });
+
   it("renders the stored healing letter when a ready record is selected", () => {
     const selectedLetter: CloudyAnalysisResult = {
-      hug: "我听见那一下的失重感。",
+      themeTitle: "缝隙里的光",
+      hug: "我听见了那一下坠下去的失重感。",
       analysis: "那不是你的价值被抹掉，只是别人的慌乱碰到了你。",
       light: "去窗边站一分钟，让眼睛看一看远处。",
     };
 
-    render(
-      <CloudyArchiveView
-        items={baseItems}
-        loading={false}
-        retryingId=""
-        selectedItem={baseItems[0]}
-        selectedLetter={selectedLetter}
-        onBackToTimeline={() => {}}
-        onOpenItem={() => {}}
-        onRetryItem={() => {}}
-        onBackToArchive={() => {}}
-      />,
-    );
+    renderArchive({
+      selectedItem: baseItems[0],
+      selectedLetter,
+    });
 
-    expect(screen.getByText("抱抱")).toBeInTheDocument();
+    expect(screen.getByText("情绪镜像")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "回到档案袋" })).toBeInTheDocument();
   });
 });

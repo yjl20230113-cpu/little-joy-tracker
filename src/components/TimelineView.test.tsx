@@ -328,4 +328,44 @@ describe("TimelineView", () => {
       "space-y-2.5",
     );
   });
+
+  it("supports a cloudy shell tone and viewport overlay content", () => {
+    render(
+      <TimelineView
+        activeTab="timeline"
+        groups={[]}
+        peopleFilters={[{ id: "all", label: "All" }]}
+        selectedPersonId="all"
+        selectedRange="week"
+        customStartDate=""
+        customEndDate=""
+        message=""
+        shellTone="cloudy"
+        topBarTone="warm"
+        navTone="warm"
+        overlayContent={<div data-testid="timeline-overlay">confirm dialog</div>}
+        onPersonChange={() => {}}
+        onRangeChange={() => {}}
+        onCustomStartDateChange={() => {}}
+        onCustomEndDateChange={() => {}}
+        onSummaryClick={() => {}}
+        onTabChange={() => {}}
+        onEventOpen={() => {}}
+      />,
+    );
+
+    expect(document.querySelector('[data-ui="timeline-view-shell"]')).toHaveAttribute(
+      "data-shell-tone",
+      "cloudy",
+    );
+    expect(document.querySelector('[data-ui="app-topbar"]')).toHaveAttribute(
+      "data-tone",
+      "warm",
+    );
+    expect(document.querySelector('[data-ui="app-bottom-nav"]')).toHaveAttribute(
+      "data-tone",
+      "warm",
+    );
+    expect(screen.getByTestId("timeline-overlay")).toBeInTheDocument();
+  });
 });

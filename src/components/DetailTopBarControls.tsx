@@ -1,4 +1,10 @@
-﻿import { ArrowLeft, LoaderCircle, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  LoaderCircle,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 type DetailTopBarBackButtonProps = {
   onBack: () => void;
@@ -9,6 +15,8 @@ type DetailTopBarActionButtonsProps = {
   saving: boolean;
   deleting: boolean;
   onEditToggle: () => void;
+  onSaveRequest: () => void;
+  onCancelEdit: () => void;
   onDeleteRequest: () => void;
 };
 
@@ -32,21 +40,47 @@ export function DetailTopBarActionButtons({
   saving,
   deleting,
   onEditToggle,
+  onSaveRequest,
+  onCancelEdit,
   onDeleteRequest,
 }: DetailTopBarActionButtonsProps) {
+  if (editing) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={onSaveRequest}
+          disabled={saving || deleting}
+          className="joy-topbar-button joy-topbar-button--primary"
+        >
+          {saving ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <CheckCircle2 className="size-4" />
+          )}
+          {saving ? "保存中..." : "保存修改"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancelEdit}
+          disabled={saving || deleting}
+          className="joy-topbar-button"
+        >
+          取消编辑
+        </button>
+      </>
+    );
+  }
+
   return (
     <>
       <button
         type="button"
         onClick={onEditToggle}
         disabled={saving || deleting}
-        className={`joy-topbar-button ${editing ? "joy-topbar-button--primary" : ""}`}
+        className="joy-topbar-button"
       >
-        {saving ? (
-          <LoaderCircle className="size-4 animate-spin" />
-        ) : (
-          <Pencil className="size-4" />
-        )}
+        <Pencil className="size-4" />
         编辑
       </button>
       <button
@@ -66,4 +100,3 @@ export function DetailTopBarActionButtons({
     </>
   );
 }
-

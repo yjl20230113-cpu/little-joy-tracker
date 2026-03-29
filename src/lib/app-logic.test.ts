@@ -285,6 +285,44 @@ describe("filterTimelineItems", () => {
 
     expect(filtered.map((item) => item.id)).toEqual(["event-2"]);
   });
+
+  it("re-sorts stale local items by display date and created time after an edit changes the date", () => {
+    const filtered = filterTimelineItems(
+      [
+        {
+          id: "event-edited",
+          title: "Edited",
+          content: "Edited",
+          reason: null,
+          imageUrl: null,
+          displayDate: "2026-03-28",
+          createdAt: "2026-03-29T14:52:00+08:00",
+          personName: "自己",
+          personId: "person-self",
+        },
+        {
+          id: "event-newer",
+          title: "Newer",
+          content: "Newer",
+          reason: null,
+          imageUrl: null,
+          displayDate: "2026-03-29",
+          createdAt: "2026-03-29T14:51:00+08:00",
+          personName: "自己",
+          personId: "person-self",
+        },
+      ],
+      {
+        personId: "all",
+        range: "month",
+        customStartDate: "2026-03-01",
+        customEndDate: "2026-03-29",
+        today: "2026-03-29",
+      },
+    );
+
+    expect(filtered.map((item) => item.id)).toEqual(["event-newer", "event-edited"]);
+  });
 });
 
 describe("groupTimelineItemsByDate", () => {

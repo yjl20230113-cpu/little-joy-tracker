@@ -70,15 +70,10 @@ describe("EventDetailPanel", () => {
     onCancelEdit: vi.fn(),
   };
 
-  it("asks for confirmation before deleting the record", () => {
+  it("does not render the delete confirmation inline inside the scrolling panel", () => {
     render(<EventDetailPanel {...baseProps} confirmingDelete />);
 
-    expect(screen.getByTestId("detail-delete-confirm")).toBeInTheDocument();
-    expect(baseProps.onDeleteConfirm).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByTestId("detail-delete-confirm-action"));
-
-    expect(baseProps.onDeleteConfirm).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("detail-delete-confirm")).not.toBeInTheDocument();
   });
 
   it("shows record-style editing controls when editing is enabled", () => {
@@ -95,11 +90,11 @@ describe("EventDetailPanel", () => {
     expect(screen.getByTestId("detail-editor-person-trigger")).toBeInTheDocument();
     expect(screen.getByTestId("detail-editor-date")).toBeInTheDocument();
     expect(screen.getByTestId("detail-editor-title")).toBeInTheDocument();
-    expect(screen.getByTestId("detail-editor-save")).toBeInTheDocument();
-    expect(screen.getByTestId("detail-editor-cancel")).toBeInTheDocument();
+    expect(screen.queryByTestId("detail-editor-save")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("detail-editor-cancel")).not.toBeInTheDocument();
   });
 
-  it("shows an upload-specific action label while a detail image is uploading", () => {
+  it("keeps the detail form editable while upload state is handled from the top bar", () => {
     render(
       <EventDetailPanel
         {...baseProps}
@@ -108,8 +103,7 @@ describe("EventDetailPanel", () => {
       />,
     );
 
-    expect(screen.getByTestId("detail-editor-save")).toHaveTextContent("正在处理图片...");
-    expect(screen.getByTestId("detail-editor-save")).toBeDisabled();
+    expect(screen.queryByTestId("detail-editor-save")).not.toBeInTheDocument();
   });
 
   it("hides the media block in read mode when there is no image", () => {

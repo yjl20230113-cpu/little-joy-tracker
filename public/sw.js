@@ -6,6 +6,11 @@ const APP_SHELL = [
   "/icon-512.png",
   "/apple-touch-icon.png",
 ];
+const DEV_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
+
+function isLocalDevHost() {
+  return DEV_HOSTNAMES.has(self.location.hostname);
+}
 
 async function putInCache(request, response, cacheKey = request) {
   if (!response || !response.ok) {
@@ -32,6 +37,11 @@ async function networkFirst(request, cacheKey = request) {
 }
 
 self.addEventListener("install", (event) => {
+  if (isLocalDevHost()) {
+    self.skipWaiting();
+    return;
+  }
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
   );
@@ -39,6 +49,20 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("activate", (event) => {
+  if (isLocalDevHost()) {
+    event.waitUntil(
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith("little-joy-tracker-shell-"))
+            .map((key) => caches.delete(key)),
+        ),
+      ),
+    );
+    self.clients.claim();
+    return;
+  }
+
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -52,6 +76,10 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  if (isLocalDevHost()) {
+    return;
+  }
+
   const request = event.request;
   const url = new URL(request.url);
 

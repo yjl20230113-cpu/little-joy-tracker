@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Trash2 } from "lucide-react";
 import {
   DetailTopBarActionButtons,
   DetailTopBarBackButton,
@@ -554,6 +554,10 @@ export default function HomePage() {
   const [cloudyArchiveItems, setCloudyArchiveItems] = useState<CloudyArchiveItem[]>([]);
   const [selectedCloudyArchiveItemId, setSelectedCloudyArchiveItemId] = useState("");
   const [retryingCloudyArchiveItemId, setRetryingCloudyArchiveItemId] = useState("");
+  const [cloudyArchiveDeleteMode, setCloudyArchiveDeleteMode] = useState(false);
+  const [pendingCloudyArchiveDeleteId, setPendingCloudyArchiveDeleteId] = useState("");
+  const [deletingCloudyArchiveItemId, setDeletingCloudyArchiveItemId] = useState("");
+  const cloudyArchivePrefetchedUserRef = useRef("");
   const [timelineDetail, setTimelineDetail] = useState<TimelineEntry | null>(null);
   const [detailEditing, setDetailEditing] = useState(false);
   const [detailSaving, setDetailSaving] = useState(false);
@@ -778,6 +782,22 @@ export default function HomePage() {
   useEffect(() => {
     setCloudyRecoveryChecked(false);
   }, [activeTab, session?.user.id]);
+
+  useEffect(() => {
+    if (activeTab !== "quick-entry" || people.length === 0) {
+      return;
+    }
+
+    const hasSelectedPerson = people.some((person) => person.id === selectedPersonId);
+    if (selectedPersonId && hasSelectedPerson) {
+      return;
+    }
+
+    const fallbackPersonId = pickInitialPerson(people)?.id ?? people[0]?.id ?? "";
+    if (fallbackPersonId && fallbackPersonId !== selectedPersonId) {
+      setSelectedPersonId(fallbackPersonId);
+    }
+  }, [activeTab, people, selectedPersonId]);
 
   useEffect(() => {
     if (
@@ -2200,6 +2220,9 @@ export default function HomePage() {
         eventId,
       });
     } catch (error) {
+      setCloudyArchiveItems(previousCloudyArchiveItems);
+      setSelectedCloudyArchiveItemId(previousSelectedCloudyArchiveItemId);
+      setRetryingCloudyArchiveItemId(previousRetryingCloudyArchiveItemId);
       setMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
       setSaving(false);
@@ -2354,8 +2377,16 @@ export default function HomePage() {
   async function handleDetailSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    await saveDetailDraft();
+  }
+
+  async function saveDetailDraft() {
     if (!session?.user.id || !timelineDetail || !detailPersonId) {
       setDetailMessage(copy.emptyPeople);
+      return;
+    }
+
+    if (detailSaving) {
       return;
     }
 
@@ -2488,14 +2519,40 @@ export default function HomePage() {
       }
     } catch (error) {
       setDetailMessage(toHumanErrorMessage(error, copy.unknownError));
-    } finally {
+  } finally {
       setDetailSaving(false);
       setDetailUploading(false);
     }
   }
 
+  function removeEventRecordFromLocalState(eventId: string) {
+    setTimelineItems((current) => current.filter((item) => item.id !== eventId));
+    setCloudyArchiveItems((current) => current.filter((item) => item.id !== eventId));
+    setTimelineDetail((current) => (current?.id === eventId ? null : current));
+    setSelectedTimelineEventId((current) => (current === eventId ? "" : current));
+    setSelectedCloudyArchiveItemId((current) => (current === eventId ? "" : current));
+    setRetryingCloudyArchiveItemId((current) => (current === eventId ? "" : current));
+  }
+
+  async function deleteEventRecord(eventId: string) {
+    if (!session?.user.id) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", eventId)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      throw error;
+    }
+
+  }
+
   async function handleDetailDelete() {
-    if (!session?.user.id || !timelineDetail) {
+    if (!timelineDetail) {
       return;
     }
 
@@ -2503,18 +2560,10 @@ export default function HomePage() {
     setDetailMessage("");
 
     try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", timelineDetail.id)
-        .eq("user_id", session.user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      setTimelineItems(await fetchTimelineItems(session.user.id));
+      await deleteEventRecord(timelineDetail.id);
+      removeEventRecordFromLocalState(timelineDetail.id);
       setMessage("这件小美好已从时间线中轻轻放下。");
+      setMessage("这条记录已被永久删除。");
       handleCloseTimelineDetail();
     } catch (error) {
       setDetailMessage(toHumanErrorMessage(error, copy.unknownError));
@@ -2688,6 +2737,7 @@ export default function HomePage() {
 
     try {
       setCloudyArchiveItems(await fetchCloudyArchiveItems(userId));
+      cloudyArchivePrefetchedUserRef.current = userId;
     } catch (error) {
       setMessage(toHumanErrorMessage(error, copy.unknownError));
     } finally {
@@ -2699,6 +2749,9 @@ export default function HomePage() {
     setCloudyArchiveOpen(false);
     setSelectedCloudyArchiveItemId("");
     setRetryingCloudyArchiveItemId("");
+    setCloudyArchiveDeleteMode(false);
+    setPendingCloudyArchiveDeleteId("");
+    setDeletingCloudyArchiveItemId("");
   }
 
   function handleBackToCloudyArchiveList() {
@@ -2707,6 +2760,55 @@ export default function HomePage() {
 
   function handleOpenCloudyArchiveItem(itemId: string) {
     setSelectedCloudyArchiveItemId(itemId);
+  }
+
+  function handleCloudyArchiveDeleteModeToggle() {
+    setCloudyArchiveDeleteMode((current) => !current);
+    setPendingCloudyArchiveDeleteId("");
+  }
+
+  function handleRequestCloudyArchiveDelete(itemId: string) {
+    if (!itemId || deletingCloudyArchiveItemId) {
+      return;
+    }
+
+    setPendingCloudyArchiveDeleteId(itemId);
+  }
+
+  function handleCancelCloudyArchiveDelete() {
+    setPendingCloudyArchiveDeleteId("");
+  }
+
+  async function handleConfirmCloudyArchiveDelete() {
+    if (!pendingCloudyArchiveDeleteId) {
+      return;
+    }
+
+    setPendingCloudyArchiveDeleteId("");
+    await handleDeleteCloudyArchiveItem(pendingCloudyArchiveDeleteId);
+  }
+
+  async function handleDeleteCloudyArchiveItem(itemId: string) {
+    if (!itemId) {
+      return;
+    }
+
+    const previousCloudyArchiveItems = cloudyArchiveItems;
+    const previousSelectedCloudyArchiveItemId = selectedCloudyArchiveItemId;
+    const previousRetryingCloudyArchiveItemId = retryingCloudyArchiveItemId;
+
+    setDeletingCloudyArchiveItemId(itemId);
+    setMessage("");
+    removeEventRecordFromLocalState(itemId);
+
+    try {
+      await deleteEventRecord(itemId);
+      setMessage("这条记录已被永久删除。");
+    } catch (error) {
+      setMessage(toHumanErrorMessage(error, copy.unknownError));
+    } finally {
+      setDeletingCloudyArchiveItemId("");
+    }
   }
 
   async function handleRetryCloudyArchiveItem(itemId: string) {
@@ -2771,21 +2873,65 @@ export default function HomePage() {
     }
   }
 
-  async function handleOpenCloudyArchive() {
-    setSelectedTimelineEventId("");
-    setTimelineDetail(null);
-    setDetailEditing(false);
-    setDetailMessage("");
-    setDetailLoading(false);
-    setDetailConfirmingDelete(false);
-    setCloudyArchiveOpen(true);
-    setSelectedCloudyArchiveItemId("");
-    setMessage("");
+  function handleOpenCloudyArchive() {
+    startTransition(() => {
+      setSelectedTimelineEventId("");
+      setTimelineDetail(null);
+      setDetailEditing(false);
+      setDetailMessage("");
+      setDetailLoading(false);
+      setDetailConfirmingDelete(false);
+      setCloudyArchiveOpen(true);
+      setSelectedCloudyArchiveItemId("");
+      setCloudyArchiveDeleteMode(false);
+      setPendingCloudyArchiveDeleteId("");
+      setDeletingCloudyArchiveItemId("");
+      setMessage("");
+    });
 
     if (session?.user.id) {
-      await loadCloudyArchive(session.user.id);
+      void loadCloudyArchive(session.user.id);
     }
   }
+
+  useEffect(() => {
+    if (!session?.user.id) {
+      cloudyArchivePrefetchedUserRef.current = "";
+      return;
+    }
+
+    if (cloudyArchivePrefetchedUserRef.current === session.user.id) {
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const schedulePrefetch = () => {
+      if (cloudyArchivePrefetchedUserRef.current === session.user.id) {
+        return;
+      }
+
+      void loadCloudyArchive(session.user.id);
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(schedulePrefetch, {
+        timeout: 1200,
+      });
+
+      return () => {
+        window.cancelIdleCallback?.(idleId);
+      };
+    }
+
+    const timeoutId = window.setTimeout(schedulePrefetch, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [session?.user.id]);
 
   function handleOpenCloudyArchivePlaceholder() {
     setMessage("解忧档案袋正在整理中。");
@@ -2838,6 +2984,7 @@ export default function HomePage() {
     customEndDate,
     today: todayString,
   });
+  const filteredCloudyArchiveItems = cloudyArchiveItems;
   const timelineGroups = groupTimelineItemsByDate(filteredTimelineItems);
   const timelinePeopleFilters = [
     { id: "all", label: "\u5168\u90e8" },
@@ -2862,6 +3009,77 @@ export default function HomePage() {
         imageUrl: detailEditing ? detailImagePreviewUrl : timelineDetail.imageUrl,
       }
     : null;
+  const timelineOverlayContent = pendingCloudyArchiveDeleteId ? (
+    <div
+      data-testid="cloudy-archive-delete-dialog"
+      className="joy-card w-full max-w-sm rounded-[1.4rem] p-5"
+    >
+      <h3 className="text-[1.1rem] font-black tracking-[-0.04em] text-[var(--primary)]">
+        确认永久删除这条记录
+      </h3>
+      <p className="mt-3 text-[0.9rem] leading-6 text-[var(--muted)]">
+        永久删除后，这条避雨记录和对应回信都无法恢复，确认要继续吗？
+      </p>
+      <div className="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleCancelCloudyArchiveDelete}
+          className="rounded-full px-4 py-2 text-[0.9rem] font-semibold text-[var(--muted)]"
+        >
+          先保留
+        </button>
+        <button
+          type="button"
+          data-testid="cloudy-archive-delete-dialog-confirm"
+          onClick={handleConfirmCloudyArchiveDelete}
+          disabled={Boolean(deletingCloudyArchiveItemId)}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-soft)] px-4 py-2.5 text-[0.9rem] font-bold text-white disabled:opacity-70"
+        >
+          {deletingCloudyArchiveItemId ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <Trash2 className="size-4" />
+          )}
+          确认删除
+        </button>
+      </div>
+    </div>
+  ) : detailConfirmingDelete ? (
+    <div
+      data-testid="detail-delete-confirm"
+      className="joy-card w-full max-w-sm rounded-[1.4rem] p-5"
+    >
+      <h3 className="text-[1.1rem] font-black tracking-[-0.04em] text-[var(--primary)]">
+        确认永久删除这条记录
+      </h3>
+      <p className="mt-3 text-[0.9rem] leading-6 text-[var(--muted)]">
+        永久删除后将无法恢复，确认要继续吗？
+      </p>
+      <div className="mt-6 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => setDetailConfirmingDelete(false)}
+          className="rounded-full px-4 py-2 text-[0.9rem] font-semibold text-[var(--muted)]"
+        >
+          先保留
+        </button>
+        <button
+          type="button"
+          data-testid="detail-delete-confirm-action"
+          onClick={handleDetailDelete}
+          disabled={detailDeleting}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-soft)] px-4 py-2.5 text-[0.9rem] font-bold text-white disabled:opacity-70"
+        >
+          {detailDeleting ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <Trash2 className="size-4" />
+          )}
+          确认删除
+        </button>
+      </div>
+    </div>
+  ) : null;
 
   if (booting) {
     return (
@@ -2970,6 +3188,9 @@ export default function HomePage() {
               customEndDate={customEndDate}
               message={message}
               onMessageClear={() => setMessage("")}
+              shellTone={cloudyArchiveOpen ? "cloudy" : "warm"}
+              topBarTone="warm"
+              overlayContent={timelineOverlayContent}
               topBarTitle={
                 cloudyArchiveOpen || selectedTimelineEventId ? "" : undefined
               }
@@ -2987,12 +3208,36 @@ export default function HomePage() {
                 ) : undefined
               }
               topBarRightSlot={
-                !cloudyArchiveOpen && timelineDetailDraft ? (
+                cloudyArchiveOpen && !selectedCloudyArchiveItem ? (
+                  cloudyArchiveDeleteMode ? (
+                    <button
+                      type="button"
+                      onClick={handleCloudyArchiveDeleteModeToggle}
+                      disabled={Boolean(deletingCloudyArchiveItemId)}
+                      className="joy-topbar-button"
+                    >
+                      完成
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCloudyArchiveDeleteModeToggle}
+                      disabled={Boolean(deletingCloudyArchiveItemId)}
+                      className="joy-topbar-button joy-topbar-button--danger"
+                    >
+                      删除
+                    </button>
+                  )
+                ) : !cloudyArchiveOpen && timelineDetailDraft ? (
                   <DetailTopBarActionButtons
                     editing={detailEditing}
                     saving={detailSaving}
                     deleting={detailDeleting}
                     onEditToggle={handleDetailEditToggle}
+                    onSaveRequest={() => {
+                      void saveDetailDraft();
+                    }}
+                    onCancelEdit={handleDetailCancelEdit}
                     onDeleteRequest={() => setDetailConfirmingDelete(true)}
                   />
                 ) : undefined
@@ -3000,15 +3245,18 @@ export default function HomePage() {
               detailContent={
                 cloudyArchiveOpen ? (
                   <CloudyArchiveView
-                    items={cloudyArchiveItems}
+                    items={filteredCloudyArchiveItems}
                     loading={cloudyArchiveLoading}
                     retryingId={retryingCloudyArchiveItemId}
                     selectedItem={selectedCloudyArchiveItem}
                     selectedLetter={selectedCloudyArchiveLetter}
+                    deleteMode={cloudyArchiveDeleteMode}
+                    deletingItemId={deletingCloudyArchiveItemId}
                     onBackToTimeline={handleCloseCloudyArchive}
                     onOpenItem={handleOpenCloudyArchiveItem}
                     onRetryItem={handleRetryCloudyArchiveItem}
                     onBackToArchive={handleBackToCloudyArchiveList}
+                    onDeleteConfirm={handleRequestCloudyArchiveDelete}
                   />
                 ) : timelineDetailDraft ? (
                   <EventDetailPanel

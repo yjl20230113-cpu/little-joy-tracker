@@ -8,6 +8,7 @@ type AppTopBarProps = {
   leftSlot?: ReactNode;
   titleAccessory?: ReactNode;
   rightSlot?: ReactNode;
+  tone?: "warm" | "cloudy";
 };
 
 export function AppTopBar({
@@ -17,11 +18,18 @@ export function AppTopBar({
   leftSlot,
   titleAccessory,
   rightSlot,
+  tone = "warm",
 }: AppTopBarProps) {
+  const barToneClass =
+    tone === "cloudy"
+      ? "border-[rgba(124,111,147,0.08)] bg-[rgba(242,234,255,0.88)] shadow-[0_10px_22px_-24px_rgba(77,51,122,0.24)]"
+      : "border-[rgba(155,69,0,0.06)] bg-[rgba(255,253,190,0.82)] shadow-[0_10px_22px_-24px_rgba(29,29,3,0.22)]";
+
   return (
     <header
       data-ui="app-topbar"
-      className="joy-safe-top relative z-10 flex min-h-[4rem] shrink-0 items-center justify-between border-b border-[rgba(155,69,0,0.06)] bg-[rgba(255,253,190,0.82)] px-3.5 py-1.5 shadow-[0_10px_22px_-24px_rgba(29,29,3,0.22)] sm:px-5"
+      data-tone={tone}
+      className={`joy-safe-top relative z-10 flex min-h-[4rem] shrink-0 items-center justify-between border-b px-3.5 py-1.5 sm:px-5 ${barToneClass}`}
     >
       <div className="flex min-w-0 items-center gap-2">
         {leftSlot ? (

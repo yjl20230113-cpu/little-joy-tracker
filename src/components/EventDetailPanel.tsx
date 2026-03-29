@@ -3,7 +3,6 @@ import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Camera,
-  CheckCircle2,
   ChevronDown,
   Lightbulb,
   LoaderCircle,
@@ -23,7 +22,6 @@ import {
   formatDetailTimestamp,
   withUnsplashAttributionParams,
 } from "../lib/app-logic";
-import { getSubmitActionState } from "../lib/image-upload";
 import { fallbackMemoryTitle } from "../lib/memory-title";
 
 type DetailPerson = {
@@ -95,8 +93,8 @@ const copy = {
   recordedBy: "由我记录",
   createdAt: "记录于",
   emptyReason: "这份感受还没写下，但这个瞬间已经很亮了。",
-  deleteConfirmTitle: "确认删除这条记录",
-  deleteConfirmBody: "删除后将无法恢复，确认要继续吗？",
+  deleteConfirmTitle: "确认永久删除这条记录",
+  deleteConfirmBody: "永久删除后将无法恢复，确认要继续吗？",
   keepRecord: "先保留",
   confirmDelete: "确认删除",
   emptyImage: "暂时没有图片，但这个瞬间一样很亮。",
@@ -119,16 +117,16 @@ export function EventDetailPanel({
   event,
   people,
   editing,
-  saving,
-  deleting,
+  saving: _saving,
+  deleting: _deleting,
   uploading,
-  confirmingDelete,
+  confirmingDelete: _confirmingDelete,
   message,
   onMessageClear,
   selectedImageName,
   imagePreviewUrl,
-  onDeleteCancel,
-  onDeleteConfirm,
+  onDeleteCancel: _onDeleteCancel,
+  onDeleteConfirm: _onDeleteConfirm,
   onTitleChange,
   onContentChange,
   onReasonChange,
@@ -138,7 +136,7 @@ export function EventDetailPanel({
   onRemoveImage,
   onRetryInsight,
   onSave,
-  onCancelEdit,
+  onCancelEdit: _onCancelEdit,
 }: EventDetailPanelProps) {
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
@@ -163,18 +161,6 @@ export function EventDetailPanel({
     normalizedCurrentImageUrl ??
     (shouldShowAutoPlaceholder ? autoImagePlaceholderSrc : null);
   const imageAlt = shouldShowAutoPlaceholder ? event.content : headline || event.content;
-  const submitAction = getSubmitActionState({
-    saving,
-    uploading,
-    idleLabel: copy.save,
-    savingLabel: copy.saving,
-    uploadingLabel: copy.uploading,
-  });
-
-  async function handleDeleteConfirm() {
-    await onDeleteConfirm();
-  }
-
   return (
     <div className="relative space-y-3.5 pb-7">
       <section className="joy-card overflow-hidden rounded-[1.25rem] p-3 sm:p-3.5">
@@ -195,6 +181,7 @@ export function EventDetailPanel({
 
         {editing ? (
           <form
+            id="detail-editor-form"
             data-testid="detail-editor-form"
             onSubmit={onSave}
             className="mt-3.5 space-y-3.5"
@@ -359,30 +346,6 @@ export function EventDetailPanel({
                 className="min-h-22 w-full resize-none border-none bg-transparent p-0 text-[0.84rem] leading-6 text-[var(--muted)] outline-none placeholder:text-[var(--muted)]/24"
               />
             </label>
-
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                data-testid="detail-editor-cancel"
-                onClick={onCancelEdit}
-                className="joy-control-pill bg-transparent px-3 text-[var(--muted)] transition-colors hover:text-[var(--primary)]"
-              >
-                {copy.cancel}
-              </button>
-              <button
-                type="submit"
-                data-testid="detail-editor-save"
-                disabled={submitAction.disabled}
-                className="joy-topbar-button joy-topbar-button--primary"
-              >
-                {submitAction.disabled ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="size-4" />
-                )}
-                {submitAction.label}
-              </button>
-            </div>
           </form>
         ) : (
             <div className="space-y-4.5 px-1 pb-1 pt-3.5 sm:px-2">
@@ -551,45 +514,6 @@ export function EventDetailPanel({
       </section>
 
       <AppToast message={message} onClear={onMessageClear} />
-
-      {confirmingDelete ? (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(29,29,3,0.24)] px-6">
-          <div
-            data-testid="detail-delete-confirm"
-            className="joy-card w-full max-w-sm rounded-[1.4rem] p-5"
-          >
-            <h3 className="text-[1.1rem] font-black tracking-[-0.04em] text-[var(--primary)]">
-              {copy.deleteConfirmTitle}
-            </h3>
-            <p className="mt-3 text-[0.9rem] leading-6 text-[var(--muted)]">
-              {copy.deleteConfirmBody}
-            </p>
-            <div className="mt-6 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={onDeleteCancel}
-                className="rounded-full px-4 py-2 text-[0.9rem] font-semibold text-[var(--muted)]"
-              >
-                {copy.keepRecord}
-              </button>
-              <button
-                type="button"
-                data-testid="detail-delete-confirm-action"
-                onClick={handleDeleteConfirm}
-                disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--primary-soft)] px-4 py-2.5 text-[0.9rem] font-bold text-white disabled:opacity-70"
-              >
-                {deleting ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="size-4" />
-                )}
-                {copy.confirmDelete}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {editing && isMediaSheetOpen ? (
         <div

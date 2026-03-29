@@ -451,21 +451,29 @@ export function filterTimelineItems(
     [rangeStart, rangeEnd] = [rangeEnd, rangeStart];
   }
 
-  return items.filter((item) => {
-    if (filters.personId !== "all" && item.personId !== filters.personId) {
-      return false;
-    }
+  return items
+    .filter((item) => {
+      if (filters.personId !== "all" && item.personId !== filters.personId) {
+        return false;
+      }
 
-    if (rangeStart && item.displayDate < rangeStart) {
-      return false;
-    }
+      if (rangeStart && item.displayDate < rangeStart) {
+        return false;
+      }
 
-    if (rangeEnd && item.displayDate > rangeEnd) {
-      return false;
-    }
+      if (rangeEnd && item.displayDate > rangeEnd) {
+        return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((left, right) => {
+      if (left.displayDate !== right.displayDate) {
+        return right.displayDate.localeCompare(left.displayDate);
+      }
+
+      return right.createdAt.localeCompare(left.createdAt);
+    });
 }
 
 export function groupTimelineItemsByDate(items: TimelineEntry[]): TimelineGroup[] {

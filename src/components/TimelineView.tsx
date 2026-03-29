@@ -29,9 +29,13 @@ type TimelineViewProps = {
   message: string;
   onMessageClear?: () => void;
   detailContent?: ReactNode;
+  overlayContent?: ReactNode;
   topBarTitle?: string;
   topBarLeftSlot?: ReactNode;
   topBarRightSlot?: ReactNode;
+  shellTone?: "warm" | "cloudy";
+  topBarTone?: "warm" | "cloudy";
+  navTone?: "default" | "warm";
   onPersonChange: (personId: string) => void;
   onRangeChange: (range: TimelineRange) => void;
   onCustomStartDateChange: (value: string) => void;
@@ -60,9 +64,13 @@ export function TimelineView({
   message,
   onMessageClear,
   detailContent,
+  overlayContent,
   topBarTitle,
   topBarLeftSlot,
   topBarRightSlot,
+  shellTone = "warm",
+  topBarTone = shellTone,
+  navTone = "default",
   onPersonChange,
   onRangeChange,
   onCustomStartDateChange,
@@ -72,15 +80,30 @@ export function TimelineView({
   onTabChange,
   onEventOpen,
 }: TimelineViewProps) {
+  const shellBackdrop =
+    shellTone === "cloudy"
+      ? "bg-[linear-gradient(180deg,#f2eaff_0%,#ece2ff_100%)]"
+      : "bg-[linear-gradient(180deg,#fffef0_0%,#fff8c8_100%)]";
+  const shellGlow =
+    shellTone === "cloudy"
+      ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.5),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]"
+      : "bg-[radial-gradient(circle_at_top,rgba(255,140,66,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]";
+
   return (
-    <section className="joy-app-shell w-full">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,140,66,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]" />
+    <section
+      data-ui="timeline-view-shell"
+      data-shell-tone={shellTone}
+      className="joy-app-shell w-full"
+    >
+      <div className={`absolute inset-0 ${shellBackdrop}`} />
+      <div className={`absolute inset-0 ${shellGlow}`} />
       <AppTopBar
         title={topBarTitle ?? copy.title}
         leadingIcon={topBarLeftSlot ? undefined : BookOpen}
         trailingIcon={topBarRightSlot ? undefined : Sparkles}
         leftSlot={topBarLeftSlot}
         rightSlot={topBarRightSlot}
+        tone={topBarTone}
       />
 
       <div className="joy-app-content joy-scroll-hidden px-3 pb-5 pt-2 sm:px-4.5">
@@ -200,7 +223,15 @@ export function TimelineView({
         )}
       </div>
 
-      <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
+      <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} tone={navTone} />
+      {overlayContent ? (
+        <div
+          data-ui="timeline-shell-overlay"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(29,29,3,0.24)] px-5"
+        >
+          {overlayContent}
+        </div>
+      ) : null}
       <AppToast message={message} onClear={onMessageClear} />
     </section>
   );
