@@ -60,6 +60,15 @@ describe("AuthScreen", () => {
     expect(screen.getByText("注册后自动进入记录页")).toBeInTheDocument();
   });
 
+  it("keeps the sign-in helper chip on one line and nudges it inward", () => {
+    renderAuthScreen();
+
+    const helperChip = screen.getByText("登录后继续写下今天的治愈瞬间").parentElement;
+
+    expect(helperChip).toHaveClass("whitespace-nowrap");
+    expect(helperChip).toHaveClass("sm:mr-2");
+  });
+
   it("submits from the keyboard when pressing Enter in the password field", () => {
     const onSubmit = vi.fn();
 

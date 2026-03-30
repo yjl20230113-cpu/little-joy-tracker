@@ -132,7 +132,7 @@ export function AuthScreen({
 
             <div className="overflow-hidden rounded-[1.25rem] border border-[rgba(255,184,120,0.34)] bg-[linear-gradient(180deg,rgba(255,231,210,0.78),rgba(255,255,255,0.9))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_14px_24px_-28px_rgba(168,90,24,0.28)]">
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0">
                   <p className="inline-flex rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-[var(--primary)]">
                     {heroTag}
                   </p>
@@ -143,7 +143,7 @@ export function AuthScreen({
                     {description}
                   </p>
                 </div>
-                <div className="hidden rounded-[1rem] bg-white/74 px-3 py-2 text-right text-[10px] font-semibold leading-5 text-[var(--primary)] sm:block">
+                <div className="hidden shrink-0 whitespace-nowrap rounded-[1rem] bg-white/74 px-3 py-2 text-left text-[10px] font-semibold leading-5 text-[var(--primary)] sm:mr-2 sm:block">
                   <div>{helperChip}</div>
                   {retryAfterSeconds > 0 ? (
                     <div className="mt-1 text-[10px] text-[var(--primary)]/74">

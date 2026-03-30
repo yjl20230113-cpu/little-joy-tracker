@@ -32,6 +32,7 @@ yarn-error.log*
 
 # local dev server logs / pid files (do not commit)
 .cmd-test.log
+.codex-dev*.log
 .dev-*.err.log
 .dev-*.out.log
 .dev-*.pid
