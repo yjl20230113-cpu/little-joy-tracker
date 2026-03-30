@@ -40,4 +40,18 @@ describe("mobile app shell contract", () => {
     expect(source).toContain("--cloudy-accent-soft: #e3dde5;");
     expect(source).toContain("--cloudy-surface: #f5f2f6;");
   });
+
+  it("uses a rose-slate outer canvas instead of the legacy yellow shell color", () => {
+    const globalsSource = readSource("src", "app", "globals.css");
+    const layoutSource = readSource("src", "app", "layout.tsx");
+    const manifestSource = readSource("src", "app", "manifest.ts");
+
+    expect(globalsSource).toContain("background-color: #f3ebe7;");
+    expect(layoutSource).toContain('themeColor: "#f3ebe7"');
+    expect(layoutSource).not.toContain('themeColor: "#fff8c8"');
+    expect(manifestSource).toContain('background_color: "#f3ebe7"');
+    expect(manifestSource).toContain('theme_color: "#f3ebe7"');
+    expect(manifestSource).not.toContain('background_color: "#fff8c8"');
+    expect(manifestSource).not.toContain('theme_color: "#fff8c8"');
+  });
 });

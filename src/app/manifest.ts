@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "一个轻快、私密、适合在 iPhone 上记录生活片刻的小美好记录器。",
     start_url: "/?tab=quick-entry",
     display: "standalone",
-    background_color: "#fff8c8",
-    theme_color: "#fff8c8",
+    background_color: "#f3ebe7",
+    theme_color: "#f3ebe7",
     icons: [
       {
         src: "/icon-192.png",

@@ -184,10 +184,13 @@ select {
 }
 
 .joy-grid {
+  background-color: #f3ebe7;
   background-image:
-    linear-gradient(rgba(75, 53, 45, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(75, 53, 45, 0.03) 1px, transparent 1px);
-  background-size: 22px 22px;
+    radial-gradient(circle at top, rgba(241, 216, 208, 0.58), transparent 34%),
+    radial-gradient(circle at bottom, rgba(226, 220, 230, 0.42), transparent 30%),
+    linear-gradient(rgba(75, 53, 45, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 53, 45, 0.028) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px, 22px 22px;
 }
 
 .joy-blur-panel {

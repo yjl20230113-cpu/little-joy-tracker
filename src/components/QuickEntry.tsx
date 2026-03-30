@@ -435,7 +435,7 @@ export function QuickEntry({
                       type="button"
                       data-ui="quick-entry-person-trigger"
                       onClick={() => setIsPersonMenuOpen((current) => !current)}
-                      className="joy-control-pill min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 text-[0.75rem] text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
+                      className="joy-control-pill h-9 min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-0 text-[0.75rem] font-semibold text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     >
                       <span className="truncate">
                         {selectedPerson?.name ?? copy.recordForEmpty}
@@ -539,7 +539,7 @@ export function QuickEntry({
                       align="center"
                       compact
                       className="min-h-9"
-                      buttonClassName="min-h-9 rounded-full border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
+                      buttonClassName="h-9 min-h-9 rounded-full border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-0 text-[0.75rem] font-semibold shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     />
                   </div>
                 </div>

@@ -63,6 +63,10 @@ describe("QuickEntry", () => {
       "bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]",
     );
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("03-23");
+    expect(
+      container.querySelector('[data-ui="quick-entry-person-trigger"]'),
+    ).toHaveClass("h-9", "min-h-9");
+    expect(screen.getByTestId("app-date-picker-trigger")).toHaveClass("h-9", "min-h-9");
 
     vi.useRealTimers();
   });

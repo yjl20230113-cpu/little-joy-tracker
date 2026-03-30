@@ -28,7 +28,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#fff8c8",
+  themeColor: "#f3ebe7",
 };
 
 const rootFontVariables = {
