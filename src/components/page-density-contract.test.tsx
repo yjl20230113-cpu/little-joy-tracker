@@ -35,7 +35,7 @@ describe("page density contract", () => {
     );
 
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-media"]')).toHaveClass(
-      "h-[10rem]",
+      "h-[7.6rem]",
     );
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-toolbar"]')).toHaveClass(
       "justify-start",
@@ -91,9 +91,9 @@ describe("page density contract", () => {
       />,
     );
 
-    expect(screen.getByText(/2026/)).toHaveClass("text-[1.32rem]");
+    expect(screen.getByText(/2026/)).toHaveClass("text-[1.2rem]");
     expect(screen.getByRole("button", { name: /First journal day/i })).toHaveClass(
-      "rounded-[1rem]",
+      "rounded-[1.15rem]",
     );
     expect(
       screen.getByRole("button", { name: /First journal day/i }).querySelector("div"),
@@ -212,10 +212,10 @@ describe("page density contract", () => {
 
     expect(screen.getByTestId("profile-email-chip")).toHaveClass("w-full");
     expect(screen.getByTestId("profile-display-name")).toHaveClass("text-[1rem]");
-    expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-[18vh]");
+    expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-8");
     expect(screen.getByTestId("profile-logout-action")).toHaveClass(
-      "bg-[var(--primary-soft)]",
-      "text-white",
+      "bg-[rgba(255,252,248,0.9)]",
+      "text-[var(--primary)]",
     );
   });
 });

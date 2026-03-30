@@ -21,6 +21,9 @@ describe("TimelineFilters", () => {
     expect(screen.getAllByTestId("app-date-picker-trigger")).toHaveLength(2);
     expect(screen.getAllByTestId("app-date-picker-trigger")[0]).toHaveTextContent("26-03-01");
     expect(screen.getAllByTestId("app-date-picker-trigger")[1]).toHaveTextContent("26-03-25");
+    expect(container.querySelector('[data-ui="timeline-filters"]')).toHaveClass(
+      "bg-[rgba(255,250,247,0.82)]",
+    );
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
       "grid-cols-2",
     );
@@ -188,7 +191,10 @@ describe("TimelineFilters", () => {
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
       "grid-cols-2",
     );
-    expect(screen.getByTestId("timeline-summary-button")).toHaveClass("w-full");
+    expect(screen.getByTestId("timeline-summary-button")).toHaveClass(
+      "w-full",
+      "bg-[rgba(255,243,237,0.92)]",
+    );
   });
 
   it("shows label-only placeholders when the date range is empty", () => {

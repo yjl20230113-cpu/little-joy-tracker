@@ -3,10 +3,9 @@ import { vi } from "vitest";
 import { ProfileView } from "./ProfileView";
 
 describe("ProfileView", () => {
-  it("defaults to a read-only profile card and only exposes editing through the edit button", () => {
+  it("defaults to a read-only profile card and only exposes editing through the top bar button", () => {
     const onEditProfile = vi.fn();
-
-    render(
+    const { container } = render(
       <ProfileView
         email="joy@example.com"
         displayName="Joy"
@@ -31,9 +30,17 @@ describe("ProfileView", () => {
     expect(screen.getByTestId("profile-display-name")).toHaveTextContent("Joy");
     expect(screen.getByText("joy@example.com")).toBeInTheDocument();
     expect(screen.queryByTestId("profile-name-input")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("profile-body-copy")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "编辑" })).toBeInTheDocument();
     expect(screen.queryByTestId("profile-avatar-camera-badge")).not.toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="profile-editorial-intro"]'),
+    ).toHaveClass("bg-[rgba(255,250,247,0.92)]");
+    expect(
+      container.querySelector('[data-ui="profile-identity-card"]'),
+    ).toHaveClass("bg-[rgba(255,252,248,0.94)]");
+    expect(
+      container.querySelector('[data-ui="app-topbar-trailing"] button'),
+    ).toHaveTextContent("编辑");
+    expect(screen.queryByTestId("profile-primary-action-slot")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "编辑" }));
 
@@ -56,7 +63,7 @@ describe("ProfileView", () => {
         avatarUrl="https://example.com/avatar.jpg"
         selectedImageName="avatar.jpg"
         activeTab="profile"
-        message="今天也要好好照顾自己"
+        message=""
         editing={true}
         saving={false}
         uploading={false}
@@ -78,7 +85,7 @@ describe("ProfileView", () => {
     expect(screen.getByLabelText("更换头像")).toBeEnabled();
     expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("名称"), {
+    fireEvent.change(screen.getByTestId("profile-name-input"), {
       target: { value: "Joy Chen" },
     });
     fireEvent.change(screen.getByLabelText("上传头像"), {
@@ -87,9 +94,11 @@ describe("ProfileView", () => {
       },
     });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
-    fireEvent.click(screen.getByRole("button", { name: "更新" }));
-    fireEvent.click(screen.getByRole("button", { name: "退出登录" }));
-    fireEvent.click(screen.getByRole("button", { name: "每日悦点" }));
+    fireEvent.click(screen.getByTestId("profile-refresh-action"));
+    fireEvent.click(screen.getByTestId("profile-logout-action"));
+    fireEvent.click(
+      document.querySelector('[data-ui="app-bottom-nav"] button') as HTMLButtonElement,
+    );
 
     expect(onDisplayNameChange).toHaveBeenCalledWith("Joy Chen");
     expect(onAvatarSelect).toHaveBeenCalled();
@@ -125,14 +134,14 @@ describe("ProfileView", () => {
 
     expect(screen.getByTestId("profile-email-field")).toHaveClass("w-full");
     expect(screen.getByTestId("profile-email-chip")).toHaveClass("flex", "w-full");
-    expect(screen.getByTestId("profile-primary-action-slot")).toHaveClass("justify-end");
     expect(screen.getByTestId("profile-refresh-action")).toHaveClass("w-full");
-    expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-[18vh]");
+    expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-8");
     expect(screen.getByTestId("profile-logout-action")).toHaveClass(
       "w-full",
       "justify-center",
-      "bg-[var(--primary-soft)]",
-      "text-white",
+      "bg-[rgba(255,252,248,0.9)]",
+      "text-[var(--primary)]",
+      "border-[rgba(75,53,45,0.08)]",
     );
   });
 

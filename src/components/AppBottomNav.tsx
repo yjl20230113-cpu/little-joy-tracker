@@ -41,13 +41,15 @@ export function AppBottomNav({
   const updateAvailableBuildId = useUpdateAvailableBuildId();
   const showProfileUpdateBadge = Boolean(updateAvailableBuildId);
   const navToneClass =
-    "border-[rgba(205,162,101,0.14)] bg-[rgba(255,251,231,0.96)] shadow-[0_-12px_24px_-28px_rgba(155,69,0,0.14)] backdrop-blur-[18px]";
+    tone === "warm"
+      ? "border-[rgba(143,133,149,0.12)] bg-[rgba(246,241,245,0.94)] shadow-[0_-16px_28px_-30px_rgba(95,82,102,0.18)] backdrop-blur-[20px]"
+      : "border-[rgba(75,53,45,0.08)] bg-[rgba(251,247,244,0.92)] shadow-[0_-16px_28px_-30px_rgba(75,53,45,0.16)] backdrop-blur-[20px]";
 
   return (
     <nav
       data-ui="app-bottom-nav"
       data-tone={tone}
-      className={`joy-safe-bottom relative z-10 mt-1 flex shrink-0 items-start rounded-none border-x-0 border-b-0 border-t px-2 pb-1 pt-1 sm:mt-0 sm:h-[5.8rem] sm:items-center sm:rounded-t-[1.55rem] sm:border-x sm:border-b sm:px-3.5 sm:pb-2.5 sm:pt-2.5 ${navToneClass} ${surfaceClassName ?? ""}`}
+      className={`joy-safe-bottom relative z-10 mt-1 flex shrink-0 items-start rounded-none border-x-0 border-b-0 border-t px-2 pb-1 pt-1 sm:mt-0 sm:h-[5.8rem] sm:items-center sm:rounded-t-[1.55rem] sm:border-x sm:border-b sm:px-3 sm:pb-2.5 sm:pt-2.5 ${navToneClass} ${surfaceClassName ?? ""}`}
     >
       <div className="grid w-full grid-cols-4 gap-0.5">
         {navItems.map(({ tab, icon: Icon, labelKey }) => {
@@ -62,7 +64,7 @@ export function AppBottomNav({
               onClick={() => onTabChange(tab)}
               className={`mx-auto flex h-[3.72rem] w-[90%] flex-col items-center justify-center gap-[0.18rem] rounded-[1.3rem] px-1 text-[0.62rem] leading-[1.05] tracking-[0.005em] transition-all duration-200 ${
                 active
-                  ? `${activeItemClassName ?? "bg-[rgba(255,219,201,0.82)]"} font-medium text-[var(--primary)] shadow-[0_8px_14px_-16px_rgba(155,69,0,0.16)]`
+                  ? `${activeItemClassName ?? "bg-[rgba(241,216,208,0.82)]"} font-medium text-[var(--primary)] shadow-[0_12px_18px_-18px_rgba(75,53,45,0.22)]`
                   : "font-normal text-[var(--muted)]"
               }`}
             >

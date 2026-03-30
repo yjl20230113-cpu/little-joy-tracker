@@ -162,10 +162,10 @@ export function EventDetailPanel({
     (shouldShowAutoPlaceholder ? autoImagePlaceholderSrc : null);
   const imageAlt = shouldShowAutoPlaceholder ? event.content : headline || event.content;
   return (
-    <div className="relative space-y-3.5 pb-7">
-      <section className="joy-card overflow-hidden rounded-[1.25rem] p-3 sm:p-3.5">
+    <div data-ui="event-detail-panel" className="relative space-y-3.5 pb-7">
+      <section className="joy-card overflow-hidden rounded-[1.45rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,251,247,0.92)] p-3 sm:p-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.18)]">
         {!editing && imageSrc ? (
-          <div className="relative overflow-hidden rounded-[1rem] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))]">
+          <div className="relative overflow-hidden rounded-[1.1rem] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]">
             <div className="relative h-[10.75rem] overflow-hidden sm:h-[12rem]">
               <Image
                 src={imageSrc}
@@ -174,7 +174,7 @@ export function EventDetailPanel({
                 className="object-cover"
                 unoptimized
               />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,14,4,0.08),transparent_35%,rgba(255,248,194,0.95)_100%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(75,53,45,0.08),transparent_35%,rgba(255,249,245,0.95)_100%)]" />
             </div>
           </div>
         ) : null}
@@ -188,7 +188,7 @@ export function EventDetailPanel({
           >
             <div
               data-testid="detail-editor-media"
-            className="relative flex h-[10rem] w-full flex-col justify-end overflow-hidden rounded-[0.95rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.25rem]"
+            className="relative flex h-[10rem] w-full flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))] sm:h-[11.25rem]"
             >
               {normalizedCurrentImageUrl ? (
                 <>
@@ -258,7 +258,7 @@ export function EventDetailPanel({
                 type="button"
                 data-testid="detail-editor-person-trigger"
                 onClick={() => setIsPersonMenuOpen((current) => !current)}
-                className="joy-control-pill bg-[var(--surface-soft)] px-3 text-[var(--muted)] shadow-[0_10px_22px_-18px_rgba(29,29,3,0.16)]"
+                className="joy-control-pill border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 text-[var(--muted)] shadow-[0_10px_22px_-18px_rgba(75,53,45,0.16)]"
               >
                 <span>
                   {copy.recordFor}
@@ -268,7 +268,7 @@ export function EventDetailPanel({
               </button>
 
               {isPersonMenuOpen ? (
-                <div className="absolute left-0 top-full z-20 mt-2.5 w-72 rounded-[1rem] border border-[rgba(155,69,0,0.08)] bg-white/95 p-3 shadow-[0_14px_24px_-20px_rgba(29,29,3,0.24)] backdrop-blur">
+                <div className="absolute left-0 top-full z-20 mt-2.5 w-72 rounded-[1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.96)] p-3 shadow-[0_14px_24px_-20px_rgba(75,53,45,0.22)] backdrop-blur">
                   <div className="space-y-2">
                     {people.map((person) => (
                       <button
@@ -281,7 +281,7 @@ export function EventDetailPanel({
                         className={`flex w-full items-center justify-between rounded-[1rem] px-3 py-2.5 text-left text-[0.9rem] font-semibold transition-colors ${
                           person.id === event.personId
                             ? "bg-[var(--primary-wash)] text-[var(--primary)]"
-                            : "bg-[var(--surface-soft)] text-[var(--muted)]"
+                            : "bg-[rgba(255,248,244,0.9)] text-[var(--muted)]"
                         }`}
                       >
                         <span className="truncate">{person.name}</span>
@@ -305,11 +305,11 @@ export function EventDetailPanel({
                 placement="bottom"
                 centerPanelOnViewport
                 buttonLabel=""
-                buttonClassName="px-3 py-2 text-[0.76rem] font-medium shadow-none"
+                buttonClassName="border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-2 text-[0.76rem] font-medium shadow-none"
               />
             </div>
 
-            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+            <label className="joy-soft-panel block rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.86)] px-3 py-3">
               <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                 {copy.titleLabel}
               </span>
@@ -322,7 +322,7 @@ export function EventDetailPanel({
               />
             </label>
 
-            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+            <label className="joy-soft-panel block rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.86)] px-3 py-3">
               <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                 {copy.momentLabel}
               </span>
@@ -334,7 +334,7 @@ export function EventDetailPanel({
               />
             </label>
 
-            <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+            <label className="joy-soft-panel block rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.86)] px-3 py-3">
               <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                 <Lightbulb className="size-3.5" />
                 {copy.reasonLabel}
@@ -348,12 +348,12 @@ export function EventDetailPanel({
             </label>
           </form>
         ) : (
-            <div className="space-y-4.5 px-1 pb-1 pt-3.5 sm:px-2">
+            <div data-ui="detail-reading-shell" className="space-y-5 px-1 pb-1 pt-3.5 sm:px-2">
               <div className="flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-[var(--secondary-soft)] px-2.5 py-1.5 text-[0.72rem] font-bold text-[var(--secondary)]">
+              <span className="rounded-full bg-[rgba(227,221,229,0.84)] px-2.5 py-1.5 text-[0.72rem] font-bold text-[var(--secondary)]">
                 {event.personName}
               </span>
-              <span className="text-[0.78rem] font-semibold tracking-[0.05em] text-[var(--outline-strong)]">
+              <span className="rounded-full bg-[rgba(255,248,244,0.82)] px-2.5 py-1.5 text-[0.72rem] font-semibold tracking-[0.05em] text-[var(--outline-strong)]">
                 {event.displayDate}
               </span>
             </div>
@@ -364,7 +364,7 @@ export function EventDetailPanel({
               </h3>
             ) : null}
 
-            <section>
+            <section className="rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.86)] px-3.5 py-3.5">
               <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/42">
                 {copy.momentLabel}
               </p>
@@ -373,7 +373,7 @@ export function EventDetailPanel({
               </p>
             </section>
 
-            <section className="border-l-2 border-[rgba(255,140,66,0.24)] pl-4">
+            <section className="rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.8)] px-3.5 py-3.5">
               <p className="mb-2.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/56">
                 {copy.reasonLabel}
               </p>
@@ -411,13 +411,13 @@ export function EventDetailPanel({
             {event.aiInsightStatus === "ready" && event.aiInsight ? (
               <section
                 data-testid="detail-ai-panel"
-                className="space-y-3.5 rounded-[1rem] border border-[rgba(255,140,66,0.12)] bg-[rgba(255,250,234,0.9)] px-3.5 py-3.5"
+                className="space-y-3.5 rounded-[1.1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,251,247,0.9)] px-3.5 py-3.5"
               >
                 <p className="text-[0.86rem] font-black tracking-[-0.03em] text-[var(--primary)]">
                   {copy.aiPanelTitle}
                 </p>
 
-                <div className="rounded-[1rem] bg-white/72 px-3.5 py-3">
+                <div className="rounded-[1rem] border border-[rgba(75,53,45,0.05)] bg-[rgba(255,252,248,0.86)] px-3.5 py-3">
                   <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--secondary)]/70">
                     {copy.aiUnseenJoy}
                   </p>
@@ -429,7 +429,7 @@ export function EventDetailPanel({
                   </p>
                 </div>
 
-                <div className="rounded-[1rem] bg-white/82 px-3.5 py-3">
+                <div className="rounded-[1rem] border border-[rgba(75,53,45,0.05)] bg-[rgba(255,252,248,0.9)] px-3.5 py-3">
                   <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--primary)]/58">
                     {copy.aiHighlight}
                   </p>
@@ -441,7 +441,7 @@ export function EventDetailPanel({
                   </p>
                 </div>
 
-                <div className="space-y-2.5 rounded-[1rem] bg-white/66 px-3.5 py-3">
+                <div className="space-y-2.5 rounded-[1rem] border border-[rgba(75,53,45,0.05)] bg-[rgba(255,252,248,0.82)] px-3.5 py-3">
                   <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-[var(--outline-strong)]">
                     {copy.aiSignals}
                   </p>
@@ -452,7 +452,7 @@ export function EventDetailPanel({
                   ].map(([label, card]) => (
                     <div
                       key={label}
-                      className="rounded-[0.95rem] border border-[rgba(155,69,0,0.06)] bg-white/72 px-3 py-2.5"
+                      className="rounded-[0.95rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,255,255,0.72)] px-3 py-2.5"
                     >
                       <p className="inline-flex rounded-full bg-[var(--primary-wash)] px-2 py-1 text-[0.64rem] font-extrabold uppercase tracking-[0.14em] text-[var(--primary)]">
                         {label}
@@ -472,14 +472,14 @@ export function EventDetailPanel({
             {event.aiInsightStatus === "pending" ? (
               <div
                 data-testid="detail-ai-pending"
-                className="rounded-[1rem] bg-[rgba(255,248,194,0.68)] px-3.5 py-3 text-[0.8rem] font-medium text-[var(--muted)]"
+                className="rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.82)] px-3.5 py-3 text-[0.8rem] font-medium text-[var(--muted)]"
               >
                 {copy.aiPending}
               </div>
             ) : null}
 
             {event.aiInsightStatus === "failed" ? (
-              <div className="rounded-[1rem] bg-[rgba(255,239,232,0.9)] px-3.5 py-3">
+              <div className="rounded-[1rem] border border-[rgba(193,127,102,0.12)] bg-[rgba(255,243,237,0.9)] px-3.5 py-3">
                 <p className="text-[0.8rem] leading-6 text-[#b75b39]">
                   {copy.aiPending}
                 </p>
@@ -487,7 +487,7 @@ export function EventDetailPanel({
                   type="button"
                   data-testid="detail-ai-retry"
                   onClick={onRetryInsight}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[0.76rem] font-bold text-[var(--primary)]"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.94)] px-3 py-2 text-[0.76rem] font-bold text-[var(--primary)]"
                 >
                   <LoaderCircle className="size-3.5" />
                   {copy.aiRetry}
@@ -495,7 +495,7 @@ export function EventDetailPanel({
               </div>
             ) : null}
 
-            <div className="flex items-center gap-3 rounded-[1rem] bg-white/64 px-3 py-3">
+            <div className="flex items-center gap-3 rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.8)] px-3 py-3">
               <div className="flex size-11 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)]">
                 <Pencil className="size-5" />
               </div>

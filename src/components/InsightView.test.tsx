@@ -30,7 +30,7 @@ describe("InsightView", () => {
   };
 
   it("shows an empty state and disables generation when there is no data", () => {
-    render(
+    const { container } = render(
       <InsightView
         {...baseProps}
         generateDisabled
@@ -38,6 +38,9 @@ describe("InsightView", () => {
       />,
     );
 
+    expect(
+      container.querySelector('[data-ui="insight-editorial-intro"]'),
+    ).toHaveClass("bg-[rgba(255,250,247,0.9)]");
     expect(document.querySelector("button[disabled]")).toBeDisabled();
   });
 
@@ -133,6 +136,7 @@ describe("InsightView", () => {
     expect(screen.getByText("Little Joy Tracker")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "治愈社区" })).toBeInTheDocument();
     expect(overlay).toBeInTheDocument();
+    expect(overlay).toHaveClass("bg-[rgba(250,245,241,0.76)]");
     expect(topBar && overlay.contains(topBar)).toBe(false);
     expect(bottomNav && overlay.contains(bottomNav)).toBe(false);
   });

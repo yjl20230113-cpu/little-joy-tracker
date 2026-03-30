@@ -11,7 +11,7 @@ describe("TimelineView", () => {
   it("shows grouped events and lets the user open a detail view", () => {
     const onEventOpen = vi.fn();
 
-    render(
+    const { container } = render(
       <TimelineView
         activeTab="timeline"
         groups={[
@@ -54,6 +54,10 @@ describe("TimelineView", () => {
     expect(screen.getByText(/2026/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /All/i })).toBeInTheDocument();
     expect(screen.getByText("14:30")).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="timeline-event-card"]')).toHaveClass(
+      "rounded-[1.15rem]",
+      "bg-[rgba(255,252,248,0.94)]",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /晨光散步/i }));
 
@@ -267,7 +271,14 @@ describe("TimelineView", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "解忧档案袋" }));
+    const archiveButton = screen.getByRole("button", { name: "解忧档案袋" });
+
+    expect(archiveButton).toHaveClass(
+      "bg-[rgba(247,242,245,0.94)]",
+      "border-[rgba(143,133,149,0.18)]",
+    );
+
+    fireEvent.click(archiveButton);
 
     expect(onCloudyArchiveOpen).toHaveBeenCalledTimes(1);
   });

@@ -55,9 +55,15 @@ function renderArchive(
 
 describe("CloudyArchiveView", () => {
   it("renders a grouped archive timeline without the old filter block", () => {
-    renderArchive();
+    const { container } = renderArchive();
 
     expect(screen.getByText("解忧档案袋")).toBeInTheDocument();
+    expect(container.querySelector('[data-ui="cloudy-archive-intro"]')).toHaveClass(
+      "bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))]",
+    );
+    expect(container.querySelector('[data-ui="cloudy-archive-card"]')).toHaveClass(
+      "bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))]",
+    );
     expect(screen.queryByTestId("timeline-filters")).not.toBeInTheDocument();
     expect(screen.getByText("今天在会议上突然被点名，心里一直在发沉。")).toBeInTheDocument();
     expect(screen.getByText("今天整个人像被阴雨泡皱了。")).toBeInTheDocument();
@@ -82,9 +88,11 @@ describe("CloudyArchiveView", () => {
   it("places the ready action in the header row so the content can use the full card width", () => {
     renderArchive();
 
-    const readyCard = screen.getByRole("button", { name: "查看回信" }).closest("article");
+    const readyButton = screen.getByRole("button", { name: "查看回信" });
+    const readyCard = readyButton.closest("article");
 
     expect(readyCard).not.toBeNull();
+    expect(readyButton).toHaveClass("bg-[rgba(255,252,253,0.84)]");
 
     const header = readyCard?.querySelector('[data-ui="cloudy-archive-card-header"]');
     const content = readyCard?.querySelector('[data-ui="cloudy-archive-card-content"]');

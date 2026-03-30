@@ -53,6 +53,15 @@ describe("QuickEntry", () => {
     expect(
       container.querySelector('[data-ui="quick-entry-date"]'),
     ).toBeInTheDocument();
+    expect(
+      container.querySelector('[data-ui="quick-entry-intro"]'),
+    ).toHaveClass("bg-[rgba(255,250,247,0.92)]");
+    expect(
+      container.querySelector('[data-ui="quick-entry-media"]'),
+    ).toHaveClass(
+      "h-[7.6rem]",
+      "bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]",
+    );
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("03-23");
 
     vi.useRealTimers();
@@ -128,7 +137,7 @@ describe("QuickEntry", () => {
     expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-save-rail"]'),
-    ).toBeInTheDocument();
+    ).toHaveClass("bg-[rgba(255,250,247,0.78)]");
     expect(
       footer?.querySelector('[data-testid="app-date-picker-trigger"]'),
     ).not.toBeInTheDocument();
@@ -236,9 +245,11 @@ describe("QuickEntry", () => {
     const navSupport = container.querySelector('[data-ui="quick-entry-nav-support"]');
 
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
-    expect(cloudySurface).toHaveClass("bg-[#eadfff]");
-    expect(footer).toHaveClass("bg-[#eadfff]");
-    expect(navSupport).toHaveClass("bg-[#eadfff]");
+    expect(cloudySurface).toHaveClass(
+      "bg-[linear-gradient(180deg,rgba(245,242,246,0.98),rgba(237,231,241,0.98))]",
+    );
+    expect(footer).toHaveClass("bg-[rgba(242,237,241,0.96)]");
+    expect(navSupport).toHaveClass("bg-[rgba(242,237,241,0.96)]");
     expect(container.querySelector('[data-ui="cloudy-date"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-media"]'),

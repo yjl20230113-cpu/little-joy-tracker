@@ -8,9 +8,13 @@ describe("AppDatePicker", () => {
 
     fireEvent.click(screen.getByTestId("app-date-picker-trigger"));
 
+    expect(screen.getByTestId("app-date-picker-trigger")).toHaveClass(
+      "bg-[rgba(255,250,247,0.92)]",
+    );
     expect(screen.getByTestId("app-date-picker-panel")).toHaveClass(
       "left-1/2",
       "-translate-x-1/2",
+      "border-[rgba(75,53,45,0.08)]",
     );
   });
 

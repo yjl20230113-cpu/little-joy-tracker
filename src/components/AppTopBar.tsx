@@ -22,14 +22,14 @@ export function AppTopBar({
 }: AppTopBarProps) {
   const barToneClass =
     tone === "cloudy"
-      ? "border-[rgba(124,111,147,0.08)] bg-[rgba(242,234,255,0.88)] shadow-[0_10px_22px_-24px_rgba(77,51,122,0.24)]"
-      : "border-[rgba(155,69,0,0.06)] bg-[rgba(255,253,190,0.82)] shadow-[0_10px_22px_-24px_rgba(29,29,3,0.22)]";
+      ? "border-[rgba(143,133,149,0.1)] bg-[rgba(247,243,246,0.88)] shadow-[0_16px_28px_-28px_rgba(95,82,102,0.24)]"
+      : "border-[rgba(75,53,45,0.08)] bg-[rgba(252,248,245,0.82)] shadow-[0_16px_28px_-28px_rgba(75,53,45,0.22)]";
 
   return (
     <header
       data-ui="app-topbar"
       data-tone={tone}
-      className={`joy-safe-top relative z-10 flex min-h-[4rem] shrink-0 items-center justify-between border-b px-3.5 py-1.5 sm:px-5 ${barToneClass}`}
+      className={`joy-safe-top relative z-10 flex min-h-[3.6rem] shrink-0 items-center justify-between border-b px-3 py-1.5 sm:px-4.5 ${barToneClass}`}
     >
       <div className="flex min-w-0 items-center gap-2">
         {leftSlot ? (
@@ -37,14 +37,14 @@ export function AppTopBar({
         ) : LeadingIcon ? (
           <div
             data-ui="app-topbar-leading"
-            className="flex size-[2.15rem] shrink-0 items-center justify-center rounded-full bg-[var(--primary-wash)] text-[var(--primary)] shadow-[0_10px_18px_-18px_rgba(155,69,0,0.24)]"
+            className="flex size-[1.95rem] shrink-0 items-center justify-center rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.88)] text-[var(--primary)] shadow-[0_12px_20px_-20px_rgba(75,53,45,0.2)]"
           >
-            <LeadingIcon className="size-[1.05rem]" />
+            <LeadingIcon className="size-[0.96rem]" />
           </div>
         ) : null}
         <h2
           data-ui="app-topbar-title"
-          className="truncate text-[1rem] font-black tracking-[-0.04em] text-[var(--primary)] sm:text-[1.125rem]"
+          className="truncate text-[0.96rem] font-black tracking-[-0.055em] text-[var(--primary)] sm:text-[1.04rem]"
         >
           {title}
         </h2>
@@ -62,9 +62,9 @@ export function AppTopBar({
         ) : TrailingIcon ? (
           <div
             data-ui="app-topbar-trailing"
-            className="flex size-[2.15rem] items-center justify-center rounded-full"
+            className="flex size-[1.95rem] items-center justify-center rounded-full border border-[rgba(75,53,45,0.06)] bg-[rgba(255,250,247,0.72)]"
           >
-            <TrailingIcon className="size-[1.05rem] fill-current" />
+            <TrailingIcon className="size-[0.94rem] fill-current" />
           </div>
         ) : null}
       </div>

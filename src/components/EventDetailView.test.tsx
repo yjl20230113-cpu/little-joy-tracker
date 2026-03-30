@@ -36,6 +36,10 @@ describe("EventDetailView", () => {
     expect(screen.getByRole("button", { name: "心绪日志" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "治愈社区" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "个人中心" })).toBeInTheDocument();
+    expect(document.querySelector('[data-ui="event-detail-view-card"]')).toHaveClass(
+      "rounded-[1.8rem]",
+      "bg-[rgba(255,251,247,0.92)]",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "返回时间线" }));
     fireEvent.click(screen.getByRole("button", { name: "编辑" }));

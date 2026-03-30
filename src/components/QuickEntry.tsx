@@ -229,8 +229,8 @@ export function QuickEntry({
 
   return (
     <section className="joy-app-shell w-full">
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#fffef0,#fff8c8)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,140,66,0.2),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#fcf8f5_0%,#f7efe9_52%,#f1e6df_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(193,127,102,0.16),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.42),transparent_42%)]" />
 
       <AppTopBar
         title={copy.brand}
@@ -241,7 +241,7 @@ export function QuickEntry({
             <button
               type="button"
               onClick={onExitCloudyMode}
-              className="joy-topbar-button bg-white/78 text-[#6b5a86]"
+              className="joy-topbar-button border-[rgba(143,133,149,0.16)] bg-[rgba(255,252,253,0.84)] text-[#5f5568]"
             >
               <Sun className="size-4" />
               {copy.cloudyReturn}
@@ -250,7 +250,7 @@ export function QuickEntry({
             <button
               type="button"
               onClick={onEnterCloudyMode}
-              className="joy-topbar-button bg-white/84 text-[#957eb7] shadow-[0_14px_22px_-18px_rgba(93,62,149,0.5)]"
+              className="joy-topbar-button border-[rgba(193,127,102,0.16)] bg-[rgba(255,244,238,0.92)] text-[#7a5548] shadow-[0_14px_22px_-18px_rgba(75,53,45,0.22)]"
               aria-label={copy.cloudyEntry}
             >
               <Cloud className="size-4" />
@@ -267,7 +267,7 @@ export function QuickEntry({
         <div
           data-ui="quick-entry-scroll"
           className={`joy-app-content joy-scroll-hidden relative px-3 pb-4.5 pt-2.5 sm:px-4.5 ${
-            isCloudyMode ? "bg-[#eadfff]" : ""
+            isCloudyMode ? "bg-[linear-gradient(180deg,rgba(245,242,246,0.98),rgba(237,231,241,0.98))]" : ""
           } ${
             hasComposerContent ? "overflow-y-auto" : "overflow-y-hidden"
           }`}
@@ -277,7 +277,7 @@ export function QuickEntry({
               <motion.div
                 aria-hidden="true"
                 data-ui="cloudy-mode-surface"
-                className="absolute inset-x-0 top-0 h-full overflow-hidden bg-[#eadfff]"
+                className="absolute inset-x-0 top-0 h-full overflow-hidden bg-[linear-gradient(180deg,rgba(245,242,246,0.98),rgba(237,231,241,0.98))]"
                 initial={false}
                 animate={{
                   height: isCloudyMode ? "100%" : "0%",
@@ -288,7 +288,7 @@ export function QuickEntry({
               {cloudyLoading ? (
                 <motion.div
                   aria-hidden="true"
-                  className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.48),transparent_34%),linear-gradient(180deg,rgba(166,130,214,0.18),rgba(123,97,171,0.08))]"
+                  className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.58),transparent_34%),linear-gradient(180deg,rgba(197,188,203,0.18),rgba(143,133,149,0.08))]"
                   animate={{ opacity: [0.45, 0.75, 0.45], scale: [1, 1.02, 1] }}
                   transition={{
                     duration: 2.8,
@@ -311,24 +311,24 @@ export function QuickEntry({
                     align="center"
                     compact
                     className="min-h-9"
-                    buttonClassName="min-h-9 rounded-[0.9rem] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
+                    buttonClassName="min-h-9 rounded-[0.9rem] border-[rgba(143,133,149,0.12)] bg-[rgba(255,252,253,0.88)] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                   />
                 </div>
               </div>
 
-              <div className="joy-card rounded-[1.5rem] border-[rgba(145,123,181,0.2)] bg-[linear-gradient(180deg,rgba(251,249,255,0.9),rgba(243,232,255,0.94))] px-4 py-4 shadow-[0_24px_54px_-34px_rgba(77,51,122,0.38)]">
-                <p className="text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+              <div className="joy-card rounded-[1.5rem] border-[rgba(143,133,149,0.18)] bg-[linear-gradient(180deg,rgba(252,249,252,0.96),rgba(244,239,246,0.98))] px-4 py-4 shadow-[0_24px_54px_-34px_rgba(75,53,45,0.22)]">
+                <p className="text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8f8595]">
                   Rain Shelter
                 </p>
-                <p className="mt-2 text-[0.96rem] leading-7 text-[#5f5574]">
+                <p className="mt-2 text-[0.96rem] leading-7 text-[#4f4656]">
                   {copy.cloudyIntro}
                 </p>
-                <label className="mt-4 block rounded-[1.2rem] border border-[rgba(143,129,170,0.18)] bg-white/70 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.52)]">
+                <label className="mt-4 block rounded-[1.2rem] border border-[rgba(143,133,149,0.14)] bg-[rgba(255,252,253,0.76)] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.52)]">
                   <AutoGrowTextarea
                     value={content}
                     onChange={(event) => onContentChange(event.target.value)}
                     placeholder={copy.cloudyPlaceholder}
-                    className="min-h-28 w-full border-none bg-transparent p-0 text-[1.02rem] leading-8 text-[#4c4460] outline-none placeholder:text-[#8d84a0]"
+                    className="min-h-28 w-full border-none bg-transparent p-0 text-[1.02rem] leading-8 text-[#4f4656] outline-none placeholder:text-[#8d84a0]"
                   />
                 </label>
               </div>
@@ -338,7 +338,7 @@ export function QuickEntry({
                   data-ui="cloudy-loading-overlay"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="joy-card rounded-[1.35rem] border-[rgba(145,123,181,0.18)] bg-[rgba(255,255,255,0.68)] px-4 py-4 text-center text-[0.96rem] leading-7 text-[#5b5171] backdrop-blur-md"
+                  className="joy-card rounded-[1.35rem] border-[rgba(143,133,149,0.14)] bg-[rgba(255,252,253,0.76)] px-4 py-4 text-center text-[0.96rem] leading-7 text-[#5b5171] backdrop-blur-md"
                 >
                   {cloudyLoadingMessage}
                 </motion.div>
@@ -352,10 +352,21 @@ export function QuickEntry({
               ) : null}
             </div>
           ) : (
-            <div className="joy-card flex min-h-full flex-col gap-3 overflow-hidden rounded-[1.15rem] border-[rgba(221,193,179,0.45)] p-2.5 sm:p-3">
+            <div className="joy-card flex min-h-full flex-col gap-3 overflow-hidden rounded-[1.4rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.92)] p-2.5 shadow-[0_24px_44px_-34px_rgba(75,53,45,0.22)] sm:p-3">
+              <section
+                data-ui="quick-entry-intro"
+                className="rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,250,247,0.92)] px-3.5 py-3"
+              >
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--outline-strong)]">
+                  Editorial Note
+                </p>
+                <p className="mt-1.5 text-[0.86rem] leading-6 text-[var(--muted)]">
+                  {copy.mediaHint}
+                </p>
+              </section>
               <div
                 data-ui="quick-entry-media"
-                className="relative flex h-[10rem] flex-col justify-end overflow-hidden rounded-[0.95rem] border border-[rgba(155,69,0,0.05)] bg-[linear-gradient(180deg,rgba(248,246,201,0.96),rgba(242,240,196,0.96))] sm:h-[11.25rem]"
+                className="relative flex h-[7.6rem] flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))] sm:h-[8.25rem]"
               >
                 {imagePreviewUrl ? (
                   <Image
@@ -385,9 +396,6 @@ export function QuickEntry({
                       <span className="mt-2 text-[0.84rem] font-semibold text-[var(--muted)]/90">
                         {uploading ? copy.uploading : copy.upload}
                       </span>
-                      <p className="mt-1 max-w-xs text-[0.74rem] leading-5 text-[var(--muted)]/72">
-                        {copy.mediaHint}
-                      </p>
                     </>
                   ) : (
                     <span className="rounded-full bg-white/88 px-2.5 py-1 text-[0.68rem] font-semibold text-[var(--primary)] shadow-[0_10px_24px_-20px_rgba(29,29,3,0.22)]">
@@ -427,7 +435,7 @@ export function QuickEntry({
                       type="button"
                       data-ui="quick-entry-person-trigger"
                       onClick={() => setIsPersonMenuOpen((current) => !current)}
-                      className="joy-control-pill min-h-9 w-[9.6rem] justify-between rounded-[0.9rem] bg-[var(--surface-soft)] px-3 text-[0.75rem] text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
+                      className="joy-control-pill min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 text-[0.75rem] text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     >
                       <span className="truncate">
                         {selectedPerson?.name ?? copy.recordForEmpty}
@@ -438,7 +446,7 @@ export function QuickEntry({
                     {isPersonMenuOpen ? (
                       <div
                         data-ui="quick-entry-person-menu"
-                        className="absolute left-0 top-full z-20 mt-2 w-[min(15rem,calc(100vw-3rem))] rounded-[0.95rem] border border-[rgba(155,69,0,0.08)] bg-white/95 p-2.5 shadow-[0_16px_28px_-22px_rgba(29,29,3,0.28)] backdrop-blur"
+                        className="absolute left-0 top-full z-20 mt-2 w-[min(15rem,calc(100vw-3rem))] rounded-[1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.96)] p-2.5 shadow-[0_16px_28px_-22px_rgba(75,53,45,0.22)] backdrop-blur"
                       >
                         <div className="space-y-1.5">
                           {people.map((person) => (
@@ -447,7 +455,7 @@ export function QuickEntry({
                               className={`flex items-center gap-1.5 rounded-[0.95rem] px-2.5 py-2 transition-colors ${
                                 person.id === selectedPersonId
                                   ? "bg-[var(--primary-wash)] text-[var(--primary)]"
-                                  : "bg-[var(--surface-soft)] text-[var(--muted)]"
+                                  : "bg-[rgba(255,248,244,0.9)] text-[var(--muted)]"
                               }`}
                             >
                               <button
@@ -496,7 +504,7 @@ export function QuickEntry({
                                 setPersonFormMessage("");
                               }}
                               placeholder={copy.createPlaceholder}
-                              className="min-w-0 flex-1 rounded-full bg-white px-3 py-2 text-[0.8rem] text-[var(--foreground)] outline-none"
+                              className="min-w-0 flex-1 rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.94)] px-3 py-2 text-[0.8rem] text-[var(--foreground)] outline-none"
                             />
                             <button
                               type="button"
@@ -531,12 +539,12 @@ export function QuickEntry({
                       align="center"
                       compact
                       className="min-h-9"
-                      buttonClassName="min-h-9 rounded-[0.9rem] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(29,29,3,0.16)]"
+                      buttonClassName="min-h-9 rounded-full border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-2 text-[0.75rem] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     />
                   </div>
                 </div>
 
-                <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+                <label className="joy-soft-panel block rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.88)] px-3 py-3">
                   <span className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/58">
                     {copy.momentLabel}
                   </span>
@@ -548,7 +556,7 @@ export function QuickEntry({
                   />
                 </label>
 
-                <label className="joy-soft-panel block rounded-[1rem] px-3 py-3">
+                <label className="joy-soft-panel block rounded-[1.1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,248,244,0.88)] px-3 py-3">
                   <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tertiary)]/70">
                     <Lightbulb className="size-3.5" />
                     {copy.reasonLabel}
@@ -567,11 +575,15 @@ export function QuickEntry({
 
         <div
           data-ui="quick-entry-footer"
-          className={`relative z-10 min-h-[3rem] px-3 py-1 sm:px-5 ${isCloudyMode ? "bg-[#eadfff]" : ""}`}
+          className={`relative z-10 min-h-[3rem] px-3 py-1 sm:px-5 ${isCloudyMode ? "bg-[rgba(242,237,241,0.96)]" : ""}`}
         >
           <div
             data-ui="quick-entry-save-rail"
-            className="ml-auto flex w-fit items-center rounded-[1.4rem] border border-white/70 bg-[rgba(255,255,255,0.7)] px-2.5 py-2 shadow-[0_18px_34px_-26px_rgba(29,29,3,0.28)] backdrop-blur-md"
+            className={`ml-auto flex w-fit items-center rounded-[1.4rem] border px-2.5 py-2 shadow-[0_18px_34px_-26px_rgba(75,53,45,0.22)] backdrop-blur-md ${
+              isCloudyMode
+                ? "border-[rgba(143,133,149,0.14)] bg-[rgba(252,248,251,0.82)]"
+                : "border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.78)]"
+            }`}
           >
             <button
               type="submit"
@@ -590,7 +602,7 @@ export function QuickEntry({
 
         <div
           data-ui="quick-entry-nav-support"
-          className={isCloudyMode ? "bg-[#eadfff]" : ""}
+          className={isCloudyMode ? "bg-[rgba(242,237,241,0.96)]" : ""}
         >
           <AppBottomNav activeTab={activeTab} onTabChange={onTabChange} />
         </div>

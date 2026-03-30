@@ -1,0 +1,19 @@
+
+> little-joy-tracker@0.1.0 dev
+> node scripts/run-next-dev.js
+
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://198.18.0.1:3000
+- Environments: .env.local
+✓ Ready in 585ms
+
+ GET / 200 in 522ms (next.js: 261ms, application-code: 260ms)
+ GET /manifest.webmanifest 200 in 99ms (next.js: 82ms, application-code: 17ms)
+ POST /api/summary 200 in 12.2s (next.js: 33ms, application-code: 12.2s)
+ GET /preview/palette-systems 200 in 844ms (next.js: 49ms, application-code: 795ms)
+ GET /manifest.webmanifest 200 in 8ms (next.js: 3ms, application-code: 4ms)
+ GET /?tab=timeline&event=d88076ce-ab88-4df5-8a56-05cb05c09c72 200 in 55ms (next.js: 7ms, application-code: 48ms)
+ GET /manifest.webmanifest 200 in 11ms (next.js: 5ms, application-code: 6ms)
+ GET /preview/palette-systems/pearl-dawn 200 in 825ms (next.js: 34ms, application-code: 791ms)
+ GET /manifest.webmanifest 200 in 9ms (next.js: 4ms, application-code: 5ms)

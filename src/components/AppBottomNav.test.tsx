@@ -12,7 +12,7 @@ describe("AppBottomNav", () => {
       "default",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass(
-      "bg-[rgba(255,251,231,0.96)]",
+      "bg-[rgba(251,247,244,0.92)]",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).not.toHaveClass(
       "joy-blur-panel",
@@ -38,7 +38,7 @@ describe("AppBottomNav", () => {
       "warm",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass(
-      "bg-[rgba(255,251,231,0.96)]",
+      "bg-[rgba(246,241,245,0.94)]",
     );
   });
 

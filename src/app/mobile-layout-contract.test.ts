@@ -29,4 +29,15 @@ describe("mobile app shell contract", () => {
     expect(source).toContain("padding-top: env(safe-area-inset-top);");
     expect(source).toContain("@media (min-width: 640px)");
   });
+
+  it("defines the Editorial Focus rose-slate theme tokens in global css", () => {
+    const source = readSource("src", "app", "globals.css");
+
+    expect(source).toContain("--primary: #4b352d;");
+    expect(source).toContain("--joy-accent: #c17f66;");
+    expect(source).toContain("--joy-accent-soft: #f1d8d0;");
+    expect(source).toContain("--cloudy-accent: #8f8595;");
+    expect(source).toContain("--cloudy-accent-soft: #e3dde5;");
+    expect(source).toContain("--cloudy-surface: #f5f2f6;");
+  });
 });

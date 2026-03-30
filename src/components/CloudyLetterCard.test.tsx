@@ -309,4 +309,25 @@ describe("CloudyLetterCard", () => {
 
     expect(onFooterAction).toHaveBeenCalledTimes(1);
   });
+
+  it("uses the calmer editorial cloudy surface instead of the old saturated purple footer action", () => {
+    const { container } = render(
+      <CloudyLetterCard
+        letter={{
+          themeTitle: "先停一停",
+          hug: "我在。",
+          analysis: "慢一点没有关系。",
+          light: "看一分钟窗边的光。",
+        }}
+        onFooterAction={() => {}}
+      />,
+    );
+
+    expect(container.firstElementChild).toHaveClass(
+      "bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))]",
+    );
+    expect(screen.getByRole("button")).not.toHaveClass(
+      "bg-[linear-gradient(90deg,#8f7ac0,#b49ad8)]",
+    );
+  });
 });

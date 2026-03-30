@@ -211,6 +211,13 @@ describe("EventDetailPanel", () => {
   it("renders the persisted single-record AI cards in read mode", () => {
     render(<EventDetailPanel {...baseProps} />);
 
+    expect(document.querySelector('[data-ui="detail-reading-shell"]')).toHaveClass(
+      "space-y-5",
+    );
+    expect(screen.getByTestId("detail-ai-panel")).toHaveClass(
+      "bg-[rgba(255,251,247,0.9)]",
+      "border-[rgba(75,53,45,0.08)]",
+    );
     expect(screen.getByTestId("detail-ai-panel")).toHaveTextContent("The care behind the pause");
     expect(screen.getByTestId("detail-ai-panel")).toHaveTextContent("Growth gets noticed");
     expect(screen.getByTestId("detail-ai-panel")).toHaveTextContent("Emotion lifts");

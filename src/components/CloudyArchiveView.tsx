@@ -42,13 +42,13 @@ const statusCopy = {
 };
 
 const metaPillClass =
-  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(143,122,192,0.18)] bg-white/84 px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] shadow-[0_8px_18px_-18px_rgba(93,62,149,0.55)]";
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(143,133,149,0.16)] bg-[rgba(255,252,253,0.84)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] shadow-[0_8px_18px_-18px_rgba(75,53,45,0.22)]";
 const datePillClass = `${metaPillClass} text-[#6f638b]`;
-const statusPillClass = `${metaPillClass} bg-[rgba(143,122,192,0.14)] text-[#7a64a7]`;
+const statusPillClass = `${metaPillClass} bg-[rgba(227,221,229,0.86)] text-[#7a6470]`;
 const actionPillClass =
-  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(188,126,42,0.18)] bg-[linear-gradient(180deg,rgba(255,248,238,0.98),rgba(255,242,221,0.98))] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#b86116] shadow-[0_10px_20px_-18px_rgba(184,97,22,0.58)] transition-colors hover:bg-[linear-gradient(180deg,rgba(255,246,233,1),rgba(255,235,205,1))]";
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#4b352d] shadow-[0_10px_20px_-18px_rgba(75,53,45,0.24)] transition-colors hover:bg-[rgba(255,255,255,0.94)]";
 const deletePillClass =
-  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(214,110,86,0.18)] bg-[linear-gradient(180deg,rgba(255,247,243,0.98),rgba(255,236,230,0.98))] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#b75b39] shadow-[0_10px_20px_-18px_rgba(183,91,57,0.5)] disabled:opacity-70";
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(193,127,102,0.16)] bg-[rgba(255,243,237,0.9)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#8a5643] shadow-[0_10px_20px_-18px_rgba(75,53,45,0.18)] disabled:opacity-70";
 
 function getStatusLabel(status: CloudyArchiveItem["status"]) {
   if (status === "pending") {
@@ -112,11 +112,11 @@ export function CloudyArchiveView({
 
     return (
       <section data-ui="cloudy-archive-view" className="space-y-3 pb-5">
-        <section className="joy-card rounded-[1.35rem] border-[rgba(145,123,181,0.18)] bg-white/78 px-4 py-5">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+        <section className="joy-card rounded-[1.35rem] border-[rgba(143,133,149,0.16)] bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))] px-4 py-5">
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f8595]">
             The Healing Letter
           </p>
-          <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#53456c]">
+          <h3 className="mt-2 text-[1.2rem] font-black tracking-[-0.04em] text-[#4f4656]">
             这封回信暂时还打不开
           </h3>
           <p className="mt-3 text-[0.92rem] leading-7 text-[#5f5574]">
@@ -127,7 +127,7 @@ export function CloudyArchiveView({
               type="button"
               onClick={() => onRetryItem(selectedItem.id)}
               disabled={retryingId === selectedItem.id}
-              className="joy-topbar-button joy-topbar-button--primary w-full justify-center"
+              className="joy-topbar-button w-full justify-center border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] text-[#4b352d]"
             >
               {retryingId === selectedItem.id ? (
                 <LoaderCircle className="size-4 animate-spin" />
@@ -139,7 +139,7 @@ export function CloudyArchiveView({
             <button
               type="button"
               onClick={onBackToArchive}
-              className="joy-topbar-button w-full justify-center bg-white/78 text-[#6b5a86]"
+              className="joy-topbar-button w-full justify-center border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] text-[#5f5568]"
             >
               回到档案袋
             </button>
@@ -151,11 +151,14 @@ export function CloudyArchiveView({
 
   return (
     <section data-ui="cloudy-archive-view" className="space-y-3 pb-5">
-      <div className="joy-card rounded-[1.25rem] border-[rgba(145,123,181,0.18)] bg-white/72 px-4 py-4">
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+      <div
+        data-ui="cloudy-archive-intro"
+        className="joy-card rounded-[1.35rem] border-[rgba(143,133,149,0.16)] bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))] px-4 py-4 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.2)]"
+      >
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f8595]">
           Rain Shelter Archive
         </p>
-        <h3 className="mt-2 text-[1.35rem] font-black tracking-[-0.04em] text-[#53456c]">
+        <h3 className="mt-2 text-[1.35rem] font-black tracking-[-0.04em] text-[#4f4656]">
           解忧档案袋
         </h3>
         <p className="mt-2 text-[0.92rem] leading-7 text-[#5f5574]">
@@ -164,12 +167,12 @@ export function CloudyArchiveView({
       </div>
 
       {loading ? (
-        <div className="joy-card flex items-center gap-3 rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-white/78 px-4 py-4 text-[0.9rem] text-[#5f5574]">
-          <LoaderCircle className="size-4 animate-spin text-[#8f7ac0]" />
+        <div className="joy-card flex items-center gap-3 rounded-[1.25rem] border-[rgba(143,133,149,0.16)] bg-[rgba(255,252,253,0.82)] px-4 py-4 text-[0.9rem] text-[#5f5574]">
+          <LoaderCircle className="size-4 animate-spin text-[#8f8595]" />
           正在整理你的避雨记录...
         </div>
       ) : items.length === 0 ? (
-        <div className="joy-card rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-white/74 px-4 py-5 text-[0.92rem] leading-7 text-[#5f5574]">
+        <div className="joy-card rounded-[1.25rem] border-[rgba(143,133,149,0.16)] bg-[rgba(255,252,253,0.82)] px-4 py-5 text-[0.92rem] leading-7 text-[#5f5574]">
           暂时还没有被放进档案袋的记录。等下一场雨来时，这里会替你留下一盏灯。
         </div>
       ) : (
@@ -180,7 +183,7 @@ export function CloudyArchiveView({
                 <h4 className="shrink-0 text-[1.15rem] font-black tracking-[-0.04em] text-[#5a4d73]">
                   {formatTimelineHeading(group.date)}
                 </h4>
-                <div className="h-px flex-1 bg-[rgba(143,122,192,0.18)]" />
+                <div className="h-px flex-1 bg-[rgba(143,133,149,0.18)]" />
               </div>
 
               <div className="space-y-2.5">
@@ -193,7 +196,8 @@ export function CloudyArchiveView({
                   return (
                     <article
                       key={item.id}
-                      className="joy-card rounded-[1.2rem] border-[rgba(145,123,181,0.18)] bg-[linear-gradient(180deg,rgba(251,249,255,0.96),rgba(244,239,251,0.96))] px-4 py-4 transition-all"
+                      data-ui="cloudy-archive-card"
+                      className="joy-card rounded-[1.25rem] border-[rgba(143,133,149,0.16)] bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))] px-4 py-4 transition-all shadow-[0_18px_30px_-28px_rgba(75,53,45,0.18)]"
                     >
                       <div
                         data-ui="cloudy-archive-card-header"
@@ -238,12 +242,12 @@ export function CloudyArchiveView({
                           <button
                             type="button"
                             onClick={() => onOpenItem(item.id)}
-                            className="block w-full text-left text-[1rem] leading-8 text-[#4c4460]"
+                            className="block w-full text-left text-[1rem] leading-8 text-[#4f4656]"
                           >
                             {item.content}
                           </button>
                         ) : (
-                          <p className="text-[1rem] leading-8 text-[#4c4460]">
+                          <p className="text-[1rem] leading-8 text-[#4f4656]">
                             {item.content}
                           </p>
                         )}
@@ -258,7 +262,7 @@ export function CloudyArchiveView({
                           type="button"
                           onClick={() => onRetryItem(item.id)}
                           disabled={isRetrying}
-                          className="joy-topbar-button joy-topbar-button--primary mt-3 w-full justify-center"
+                          className="joy-topbar-button mt-3 w-full justify-center border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] text-[#4b352d]"
                         >
                           {isRetrying ? (
                             <LoaderCircle className="size-4 animate-spin" />

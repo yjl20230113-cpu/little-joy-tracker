@@ -19,7 +19,13 @@ describe("AppTopBar", () => {
     expect(
       container.querySelector('[data-ui="app-topbar-trailing"]'),
     ).toBeInTheDocument();
-    expect(screen.getByText("Little Joy Tracker")).toHaveClass("text-[1rem]");
+    expect(container.querySelector('[data-ui="app-topbar"]')).toHaveClass(
+      "bg-[rgba(252,248,245,0.82)]",
+    );
+    expect(screen.getByText("Little Joy Tracker")).toHaveClass(
+      "text-[0.96rem]",
+      "tracking-[-0.055em]",
+    );
   });
 
   it("renders a title accessory next to the brand without replacing the right slot", () => {

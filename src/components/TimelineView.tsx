@@ -82,12 +82,12 @@ export function TimelineView({
 }: TimelineViewProps) {
   const shellBackdrop =
     shellTone === "cloudy"
-      ? "bg-[linear-gradient(180deg,#f2eaff_0%,#ece2ff_100%)]"
-      : "bg-[linear-gradient(180deg,#fffef0_0%,#fff8c8_100%)]";
+      ? "bg-[linear-gradient(180deg,#f6f2f5_0%,#eee7ec_54%,#e6dde4_100%)]"
+      : "bg-[linear-gradient(180deg,#fcf8f5_0%,#f7efe9_52%,#f1e6df_100%)]";
   const shellGlow =
     shellTone === "cloudy"
-      ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.5),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]"
-      : "bg-[radial-gradient(circle_at_top,rgba(255,140,66,0.14),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.18),transparent_36%)]";
+      ? "bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.58),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.28),transparent_40%)]"
+      : "bg-[radial-gradient(circle_at_top,rgba(193,127,102,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.34),transparent_42%)]";
 
   return (
     <section
@@ -129,7 +129,7 @@ export function TimelineView({
                 <button
                   type="button"
                   onClick={onCloudyArchiveOpen}
-                  className="inline-flex w-full items-center justify-center rounded-[0.95rem] border border-[rgba(135,101,173,0.18)] bg-[rgba(245,239,255,0.92)] px-3.5 py-2 text-[0.74rem] font-semibold text-[#6d578f] shadow-[0_10px_20px_-20px_rgba(77,51,122,0.5)]"
+                  className="inline-flex w-full items-center justify-center rounded-[1rem] border border-[rgba(143,133,149,0.18)] bg-[rgba(247,242,245,0.94)] px-3.5 py-2 text-[0.74rem] font-semibold text-[#5f5568] shadow-[0_10px_20px_-20px_rgba(75,53,45,0.22)]"
                 >
                   {copy.archive}
                 </button>
@@ -138,8 +138,8 @@ export function TimelineView({
 
             <div className="space-y-4.5 pb-7">
               {groups.length === 0 ? (
-                <div className="joy-card flex flex-col items-center justify-center gap-3.5 rounded-[1.25rem] px-4.5 py-10 text-center">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(120,111,66,0.18)] text-[rgba(120,111,66,0.7)]">
+                <div className="joy-card flex flex-col items-center justify-center gap-3.5 rounded-[1.4rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.92)] px-4.5 py-10 text-center">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-[rgba(193,127,102,0.16)] text-[rgba(75,53,45,0.7)]">
                     <Sparkles className="size-6" />
                   </div>
                   <p className="text-[0.94rem] font-semibold text-[var(--muted)]">
@@ -153,13 +153,13 @@ export function TimelineView({
                 groups.map((group) => (
                   <section key={group.date} className="space-y-3">
                     <div className="flex items-center gap-2 pt-0.5">
-                      <h3 className="shrink-0 text-[1.32rem] font-black tracking-[-0.04em] text-[var(--foreground)]">
+                      <h3 className="shrink-0 text-[1.2rem] font-black tracking-[-0.04em] text-[var(--foreground)]">
                         {formatTimelineHeading(group.date)}
                       </h3>
-                      <div className="h-px flex-1 bg-[rgba(225,205,110,0.55)]" />
+                      <div className="h-px flex-1 bg-[rgba(193,127,102,0.24)]" />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {group.items.map((item) => {
                         const hasRealImage = Boolean(item.imageUrl?.trim());
                         const imageSrc = hasRealImage
@@ -170,10 +170,11 @@ export function TimelineView({
                           <button
                             key={item.id}
                             type="button"
+                            data-ui="timeline-event-card"
                             onClick={() => onEventOpen(item.id)}
-                            className="flex w-full items-start gap-2.5 rounded-[1rem] bg-white/94 px-2.5 py-2.5 text-left shadow-[0_8px_14px_-18px_rgba(29,29,3,0.12)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3"
+                            className="flex w-full items-start gap-2.5 rounded-[1.15rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.94)] px-2.75 py-2.75 text-left shadow-[0_14px_24px_-24px_rgba(75,53,45,0.18)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3.25"
                           >
-                            <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.82rem] bg-[var(--surface-soft)] sm:size-[3.75rem]">
+                            <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.95rem] bg-[rgba(241,233,226,0.88)] sm:size-[3.7rem]">
                               <Image
                                 src={imageSrc}
                                 alt={item.content}
@@ -184,12 +185,12 @@ export function TimelineView({
                             </div>
 
                             <div className="flex min-w-0 flex-1 flex-col justify-between gap-1">
-                              <div className="space-y-0.5">
-                                <span className="inline-flex rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-[0.64rem] font-bold tracking-[0.05em] text-[var(--primary)]">
+                              <div className="space-y-0.75">
+                                <span className="inline-flex rounded-full bg-[rgba(241,216,208,0.68)] px-2 py-0.5 text-[0.64rem] font-bold tracking-[0.05em] text-[var(--primary)]">
                                   {item.personName}
                                 </span>
                                 {hasRealImage && item.autoImageAttribution ? (
-                                  <span className="ml-1 inline-flex rounded-full bg-[rgba(14,14,4,0.06)] px-2 py-0.5 text-[0.58rem] font-semibold tracking-[0.08em] text-[var(--outline-strong)]">
+                                  <span className="ml-1 inline-flex rounded-full bg-[rgba(75,53,45,0.06)] px-2 py-0.5 text-[0.58rem] font-semibold tracking-[0.08em] text-[var(--outline-strong)]">
                                     Unsplash
                                   </span>
                                 ) : null}
@@ -207,7 +208,7 @@ export function TimelineView({
                                 ) : null}
                               </div>
 
-                              <span className="text-right text-[0.7rem] font-medium text-[var(--outline-strong)]">
+                              <span className="text-right text-[0.68rem] font-medium text-[var(--outline-strong)]">
                                 {formatTimelineTime(item.createdAt)}
                               </span>
                             </div>
@@ -227,7 +228,7 @@ export function TimelineView({
       {overlayContent ? (
         <div
           data-ui="timeline-shell-overlay"
-          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(29,29,3,0.24)] px-5"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(75,53,45,0.16)] px-5"
         >
           {overlayContent}
         </div>

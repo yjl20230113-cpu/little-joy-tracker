@@ -573,8 +573,8 @@ function renderInlineRichText(
 
 function getListClassName(ordered: boolean) {
   return ordered
-    ? "list-decimal space-y-3 pl-6 marker:font-semibold marker:text-[#8f81aa]"
-    : "list-disc space-y-3 pl-6 marker:text-[#8f81aa]";
+    ? "list-decimal space-y-3 pl-6 marker:font-semibold marker:text-[#8f8595]"
+    : "list-disc space-y-3 pl-6 marker:text-[#8f8595]";
 }
 
 export function CloudyLetterCard({
@@ -602,15 +602,15 @@ export function CloudyLetterCard({
       initial={{ opacity: 0, y: 16, filter: "blur(12px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.36, ease: "easeOut" }}
-      className="joy-card relative overflow-hidden rounded-[1.8rem] border border-[rgba(124,111,147,0.16)] bg-[linear-gradient(180deg,rgba(248,242,255,0.96),rgba(239,229,255,0.98))] px-4 py-5 shadow-xl sm:px-5 sm:py-6"
+      className="joy-card relative overflow-hidden rounded-[1.8rem] border border-[rgba(143,133,149,0.18)] bg-[linear-gradient(180deg,rgba(247,243,246,0.96),rgba(241,236,243,0.98))] px-4 py-5 shadow-[0_26px_44px_-34px_rgba(75,53,45,0.3)] sm:px-5 sm:py-6"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.72),transparent_28%),repeating-linear-gradient(180deg,rgba(124,111,147,0.035)_0px,rgba(124,111,147,0.035)_1px,transparent_1px,transparent_22px)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.78),transparent_28%),repeating-linear-gradient(180deg,rgba(143,133,149,0.035)_0px,rgba(143,133,149,0.035)_1px,transparent_1px,transparent_22px)]" />
       <div className="relative space-y-4">
-        <div className="border-b border-[rgba(124,111,147,0.12)] pb-3">
-          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+        <div className="border-b border-[rgba(143,133,149,0.16)] pb-3">
+          <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[#8f8595]">
             The Healing Letter
           </p>
-          <h3 className="mt-2 font-serif text-[1.55rem] tracking-[-0.04em] text-[#53456c]">
+          <h3 className="mt-2 font-serif text-[1.55rem] tracking-[-0.04em] text-[#4b352d]">
             {headerTitle}
           </h3>
         </div>
@@ -621,13 +621,13 @@ export function CloudyLetterCard({
           return (
             <section
               key={key}
-              className="rounded-[1.2rem] border border-[rgba(124,111,147,0.08)] bg-white/62 px-3.5 py-3.5 backdrop-blur-sm"
+              className="rounded-[1.2rem] border border-[rgba(143,133,149,0.1)] bg-[rgba(255,252,253,0.74)] px-3.5 py-3.5 backdrop-blur-sm"
             >
-              <p className="text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8f81aa]">
+              <p className="text-[0.74rem] font-semibold uppercase tracking-[0.22em] text-[#8f8595]">
                 {title}
                 <span className="sr-only">{legacySectionTitles[key]}</span>
               </p>
-              <div className="mt-3 space-y-3 text-[0.98rem] leading-7 text-[#4c4460]">
+              <div className="mt-3 space-y-3 text-[0.98rem] leading-7 text-[#4f4656]">
                 {blocks.map((block, blockIndex) =>
                   block.type === "paragraphs" ? (
                     <div key={`${key}-paragraphs-${blockIndex}`} className="space-y-3">
@@ -669,7 +669,7 @@ export function CloudyLetterCard({
         <button
           type="button"
           onClick={onFooterAction}
-          className="joy-topbar-button joy-topbar-button--primary w-full justify-center bg-[linear-gradient(90deg,#8f7ac0,#b49ad8)] shadow-[0_18px_30px_-24px_rgba(93,62,149,0.55)]"
+          className="joy-topbar-button w-full justify-center border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] text-[#4b352d] shadow-[0_18px_30px_-26px_rgba(75,53,45,0.28)]"
         >
           {footerActionLabel}
         </button>

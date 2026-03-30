@@ -71,10 +71,10 @@ describe("mobile density contract", () => {
     );
 
     expect(container.querySelector('[data-ui="app-topbar"]')).toHaveClass(
-      "min-h-[4rem]",
+      "min-h-[3.6rem]",
     );
     expect(container.querySelector('[data-ui="app-topbar-title"]')).toHaveClass(
-      "text-[1rem]",
+      "text-[0.96rem]",
     );
 
     expect(container.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass("px-2");
@@ -85,7 +85,7 @@ describe("mobile density contract", () => {
     expect(screen.getByRole("button", { name: "Daily Joy" })).toHaveClass("font-normal");
 
     const filterPanel = container.querySelector('[data-ui="timeline-filters"]');
-    expect(filterPanel).toHaveClass("rounded-[1rem]");
+    expect(filterPanel).toHaveClass("rounded-[1.15rem]");
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
       "grid-cols-2",
     );
