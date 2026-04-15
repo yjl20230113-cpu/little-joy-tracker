@@ -55,12 +55,13 @@ describe("QuickEntry", () => {
     ).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-intro"]'),
-    ).toHaveClass("bg-[rgba(255,250,247,0.92)]");
+    ).toHaveClass("bg-[rgba(251,245,240,0.94)]");
     expect(
       container.querySelector('[data-ui="quick-entry-media"]'),
     ).toHaveClass(
-      "h-[7.6rem]",
-      "bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]",
+      "aspect-square",
+      "w-full",
+      "bg-[linear-gradient(180deg,rgba(252,246,241,0.98),rgba(238,224,214,0.96))]",
     );
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("03-23");
     expect(
@@ -69,6 +70,20 @@ describe("QuickEntry", () => {
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveClass("h-9", "min-h-9");
 
     vi.useRealTimers();
+  });
+
+  it("uses a square media preview so the uploaded photo keeps more main subject visible", () => {
+    const { container } = render(
+      <QuickEntry
+        {...baseProps}
+        selectedImageName="portrait.jpg"
+        imagePreviewUrl="https://example.com/portrait.jpg"
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-ui="quick-entry-media"]'),
+    ).toHaveClass("aspect-square", "w-full");
   });
 
   it("opens a bottom action sheet for camera and gallery selection", () => {
@@ -141,7 +156,11 @@ describe("QuickEntry", () => {
     expect(footer?.querySelector('button[type="submit"]')).toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="quick-entry-save-rail"]'),
-    ).toHaveClass("bg-[rgba(255,250,247,0.78)]");
+    ).toHaveClass(
+      "w-full",
+      "bg-[rgba(247,240,235,0.9)]",
+      "justify-between",
+    );
     expect(
       footer?.querySelector('[data-testid="app-date-picker-trigger"]'),
     ).not.toBeInTheDocument();

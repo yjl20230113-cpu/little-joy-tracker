@@ -56,7 +56,7 @@ describe("TimelineView", () => {
     expect(screen.getByText("14:30")).toBeInTheDocument();
     expect(container.querySelector('[data-ui="timeline-event-card"]')).toHaveClass(
       "rounded-[1.15rem]",
-      "bg-[rgba(255,252,248,0.94)]",
+      "bg-[rgba(255,251,247,0.96)]",
     );
 
     fireEvent.click(screen.getByRole("button", { name: /晨光散步/i }));
@@ -274,7 +274,7 @@ describe("TimelineView", () => {
     const archiveButton = screen.getByRole("button", { name: "解忧档案袋" });
 
     expect(archiveButton).toHaveClass(
-      "bg-[rgba(247,242,245,0.94)]",
+      "bg-[rgba(95,82,102,0.08)]",
       "border-[rgba(143,133,149,0.18)]",
     );
 

@@ -129,7 +129,7 @@ export function TimelineView({
                 <button
                   type="button"
                   onClick={onCloudyArchiveOpen}
-                  className="inline-flex w-full items-center justify-center rounded-[1rem] border border-[rgba(143,133,149,0.18)] bg-[rgba(247,242,245,0.94)] px-3.5 py-2 text-[0.74rem] font-semibold text-[#5f5568] shadow-[0_10px_20px_-20px_rgba(75,53,45,0.22)]"
+                  className="joy-topbar-button joy-topbar-button--tonal w-full justify-center rounded-[1rem] border-[rgba(143,133,149,0.18)] bg-[rgba(95,82,102,0.08)] px-3.5 py-2 text-[0.74rem] text-[#5f5568]"
                 >
                   {copy.archive}
                 </button>
@@ -172,7 +172,7 @@ export function TimelineView({
                             type="button"
                             data-ui="timeline-event-card"
                             onClick={() => onEventOpen(item.id)}
-                            className="flex w-full items-start gap-2.5 rounded-[1.15rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.94)] px-2.75 py-2.75 text-left shadow-[0_14px_24px_-24px_rgba(75,53,45,0.18)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3.25"
+                            className="flex w-full items-start gap-2.5 rounded-[1.15rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,251,247,0.96)] px-2.75 py-2.75 text-left shadow-[0_14px_22px_-24px_rgba(75,53,45,0.16)] transition-transform hover:-translate-y-0.5 sm:gap-3 sm:px-3.25"
                           >
                             <div className="relative mt-0.5 size-[3.5rem] shrink-0 overflow-hidden rounded-[0.95rem] bg-[rgba(241,233,226,0.88)] sm:size-[3.7rem]">
                               <Image

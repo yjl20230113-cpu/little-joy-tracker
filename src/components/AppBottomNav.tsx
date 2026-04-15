@@ -42,8 +42,8 @@ export function AppBottomNav({
   const showProfileUpdateBadge = Boolean(updateAvailableBuildId);
   const navToneClass =
     tone === "warm"
-      ? "border-[rgba(143,133,149,0.12)] bg-[rgba(246,241,245,0.94)] shadow-[0_-16px_28px_-30px_rgba(95,82,102,0.18)] backdrop-blur-[20px]"
-      : "border-[rgba(75,53,45,0.08)] bg-[rgba(251,247,244,0.92)] shadow-[0_-16px_28px_-30px_rgba(75,53,45,0.16)] backdrop-blur-[20px]";
+      ? "border-[rgba(143,133,149,0.12)] bg-[rgba(244,239,243,0.96)] shadow-[0_-16px_28px_-30px_rgba(95,82,102,0.18)] backdrop-blur-[20px]"
+      : "border-[rgba(75,53,45,0.08)] bg-[rgba(249,244,240,0.96)] shadow-[0_-16px_28px_-30px_rgba(75,53,45,0.16)] backdrop-blur-[20px]";
 
   return (
     <nav
@@ -64,7 +64,7 @@ export function AppBottomNav({
               onClick={() => onTabChange(tab)}
               className={`mx-auto flex h-[3.72rem] w-[90%] flex-col items-center justify-center gap-[0.18rem] rounded-[1.3rem] px-1 text-[0.62rem] leading-[1.05] tracking-[0.005em] transition-all duration-200 ${
                 active
-                  ? `${activeItemClassName ?? "bg-[rgba(241,216,208,0.82)]"} font-medium text-[var(--primary)] shadow-[0_12px_18px_-18px_rgba(75,53,45,0.22)]`
+                  ? `${activeItemClassName ?? "bg-[rgba(75,53,45,0.08)]"} font-semibold text-[var(--primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.5),inset_0_0_0_1px_rgba(75,53,45,0.04),0_12px_18px_-18px_rgba(75,53,45,0.2)]`
                   : "font-normal text-[var(--muted)]"
               }`}
             >

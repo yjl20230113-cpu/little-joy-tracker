@@ -46,7 +46,7 @@ const metaPillClass =
 const datePillClass = `${metaPillClass} text-[#6f638b]`;
 const statusPillClass = `${metaPillClass} bg-[rgba(227,221,229,0.86)] text-[#7a6470]`;
 const actionPillClass =
-  "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#4b352d] shadow-[0_10px_20px_-18px_rgba(75,53,45,0.24)] transition-colors hover:bg-[rgba(255,255,255,0.94)]";
+  "inline-flex min-h-[1.9rem] items-center rounded-full border border-transparent bg-[rgba(75,53,45,0.9)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#fff8f4] shadow-[0_12px_20px_-18px_rgba(75,53,45,0.32)] transition-colors hover:bg-[rgba(75,53,45,0.96)]";
 const deletePillClass =
   "inline-flex min-h-[1.9rem] items-center rounded-full border border-[rgba(193,127,102,0.16)] bg-[rgba(255,243,237,0.9)] px-3 py-1 text-[0.68rem] font-semibold tracking-[0.02em] text-[#8a5643] shadow-[0_10px_20px_-18px_rgba(75,53,45,0.18)] disabled:opacity-70";
 

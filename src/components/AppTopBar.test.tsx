@@ -20,11 +20,11 @@ describe("AppTopBar", () => {
       container.querySelector('[data-ui="app-topbar-trailing"]'),
     ).toBeInTheDocument();
     expect(container.querySelector('[data-ui="app-topbar"]')).toHaveClass(
-      "bg-[rgba(252,248,245,0.82)]",
+      "bg-[rgba(250,246,242,0.72)]",
     );
     expect(screen.getByText("Little Joy Tracker")).toHaveClass(
-      "text-[0.96rem]",
-      "tracking-[-0.055em]",
+      "text-[0.98rem]",
+      "tracking-[-0.045em]",
     );
   });
 

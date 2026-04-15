@@ -12,7 +12,7 @@ describe("AppBottomNav", () => {
       "default",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass(
-      "bg-[rgba(251,247,244,0.92)]",
+      "bg-[rgba(249,244,240,0.96)]",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).not.toHaveClass(
       "joy-blur-panel",
@@ -23,6 +23,9 @@ describe("AppBottomNav", () => {
       "data-active",
       "true",
     );
+    expect(
+      document.querySelector('[data-ui="app-bottom-nav"] button[data-active="true"]'),
+    ).toHaveClass("bg-[rgba(75,53,45,0.08)]", "font-semibold");
     expect(screen.getByRole("button", { name: "治愈社区" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "治愈社区" }));
@@ -38,7 +41,7 @@ describe("AppBottomNav", () => {
       "warm",
     );
     expect(document.querySelector('[data-ui="app-bottom-nav"]')).toHaveClass(
-      "bg-[rgba(246,241,245,0.94)]",
+      "bg-[rgba(244,239,243,0.96)]",
     );
   });
 

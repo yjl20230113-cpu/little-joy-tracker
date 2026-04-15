@@ -165,8 +165,11 @@ export function EventDetailPanel({
     <div data-ui="event-detail-panel" className="relative space-y-3.5 pb-7">
       <section className="joy-card overflow-hidden rounded-[1.45rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,251,247,0.92)] p-3 sm:p-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.18)]">
         {!editing && imageSrc ? (
-          <div className="relative overflow-hidden rounded-[1.1rem] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]">
-            <div className="relative h-[10.75rem] overflow-hidden sm:h-[12rem]">
+          <div
+            data-ui="detail-reading-image"
+            className="relative aspect-square w-full overflow-hidden rounded-[1.1rem] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]"
+          >
+            <div className="relative size-full overflow-hidden">
               <Image
                 src={imageSrc}
                 alt={imageAlt}
@@ -188,7 +191,7 @@ export function EventDetailPanel({
           >
             <div
               data-testid="detail-editor-media"
-            className="relative flex h-[10rem] w-full flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))] sm:h-[11.25rem]"
+            className="relative flex aspect-square w-full flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))]"
             >
               {normalizedCurrentImageUrl ? (
                 <>
@@ -411,7 +414,7 @@ export function EventDetailPanel({
             {event.aiInsightStatus === "ready" && event.aiInsight ? (
               <section
                 data-testid="detail-ai-panel"
-                className="space-y-3.5 rounded-[1.1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,251,247,0.9)] px-3.5 py-3.5"
+                className="space-y-3.5 rounded-[1.1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,246,0.92)] px-3.5 py-3.5"
               >
                 <p className="text-[0.86rem] font-black tracking-[-0.03em] text-[var(--primary)]">
                   {copy.aiPanelTitle}

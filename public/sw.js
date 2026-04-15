@@ -6,7 +6,7 @@ const APP_SHELL = [
   "/icon-512.png",
   "/apple-touch-icon.png",
 ];
-const DEV_HOSTNAMES = new Set(["localhost", "127.0.0.1"]);
+const DEV_HOSTNAMES = new Set(["localhost", "127.0.0.1", "198.18.0.1"]);
 
 function isLocalDevHost() {
   return DEV_HOSTNAMES.has(self.location.hostname);

@@ -22,7 +22,7 @@ describe("TimelineFilters", () => {
     expect(screen.getAllByTestId("app-date-picker-trigger")[0]).toHaveTextContent("26-03-01");
     expect(screen.getAllByTestId("app-date-picker-trigger")[1]).toHaveTextContent("26-03-25");
     expect(container.querySelector('[data-ui="timeline-filters"]')).toHaveClass(
-      "bg-[rgba(255,250,247,0.82)]",
+      "bg-[rgba(255,248,243,0.88)]",
     );
     expect(container.querySelector('[data-ui="timeline-filters-range-row"]')).toHaveClass(
       "grid-cols-2",
@@ -193,7 +193,8 @@ describe("TimelineFilters", () => {
     );
     expect(screen.getByTestId("timeline-summary-button")).toHaveClass(
       "w-full",
-      "bg-[rgba(255,243,237,0.92)]",
+      "joy-topbar-button--primary",
+      "bg-[var(--primary)]",
     );
   });
 

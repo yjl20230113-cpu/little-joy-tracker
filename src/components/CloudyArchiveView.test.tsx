@@ -92,7 +92,7 @@ describe("CloudyArchiveView", () => {
     const readyCard = readyButton.closest("article");
 
     expect(readyCard).not.toBeNull();
-    expect(readyButton).toHaveClass("bg-[rgba(255,252,253,0.84)]");
+    expect(readyButton).toHaveClass("bg-[rgba(75,53,45,0.9)]", "text-[#fff8f4]");
 
     const header = readyCard?.querySelector('[data-ui="cloudy-archive-card-header"]');
     const content = readyCard?.querySelector('[data-ui="cloudy-archive-card-content"]');

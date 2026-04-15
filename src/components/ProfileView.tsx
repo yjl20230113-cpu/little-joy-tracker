@@ -117,7 +117,7 @@ export function ProfileView({
                 ? submitAction.disabled || !displayName.trim()
                 : submitAction.disabled
             }
-            className="joy-topbar-button border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.9)]"
+            className={`joy-topbar-button ${editing ? "joy-topbar-button--primary" : "joy-topbar-button--tonal"}`}
           >
             {editing && submitAction.disabled ? (
               <LoaderCircle className="size-4 animate-spin" />
@@ -135,7 +135,7 @@ export function ProfileView({
         <div className="space-y-3.5 pb-6">
           <section
             data-ui="profile-editorial-intro"
-            className="joy-card rounded-[1.35rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3.5 py-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.2)]"
+            className="joy-card rounded-[1.35rem] border-[rgba(75,53,45,0.08)] bg-[rgba(251,245,240,0.92)] px-3.5 py-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.2)]"
           >
             <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/62">
               {copy.title}
@@ -147,7 +147,7 @@ export function ProfileView({
 
           <section
             data-ui="profile-identity-card"
-            className="joy-soft-panel rounded-[1.35rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.94)] px-3.5 py-3.5 shadow-[0_22px_38px_-34px_rgba(75,53,45,0.18)]"
+            className="joy-soft-panel rounded-[1.35rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,246,0.96)] px-3.5 py-3.5 shadow-[0_22px_38px_-34px_rgba(75,53,45,0.18)]"
           >
             <div className="flex flex-col gap-4">
               <div className="flex items-start gap-3.5">
@@ -260,7 +260,7 @@ export function ProfileView({
                     }
                   }}
                   disabled={refreshDisabled}
-                  className="joy-topbar-button w-full justify-center border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.9)]"
+                  className="joy-topbar-button joy-topbar-button--tonal w-full justify-center"
                 >
                   {refreshing ? (
                     <LoaderCircle className="size-4 animate-spin" />
@@ -288,7 +288,7 @@ export function ProfileView({
               data-testid="profile-logout-action"
               onClick={onLogout}
               disabled={submitAction.disabled}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.9)] px-4 py-3 text-[0.92rem] font-bold text-[var(--primary)] shadow-[0_16px_26px_-22px_rgba(75,53,45,0.16)] transition disabled:opacity-70"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[rgba(75,53,45,0.1)] bg-[rgba(75,53,45,0.08)] px-4 py-3 text-[0.92rem] font-bold text-[var(--primary)] shadow-[0_16px_26px_-22px_rgba(75,53,45,0.14)] transition disabled:opacity-70"
             >
               <LogOut className="size-4" />
               {copy.logout}

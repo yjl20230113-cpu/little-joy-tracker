@@ -33,10 +33,10 @@ describe("ProfileView", () => {
     expect(screen.queryByTestId("profile-avatar-camera-badge")).not.toBeInTheDocument();
     expect(
       container.querySelector('[data-ui="profile-editorial-intro"]'),
-    ).toHaveClass("bg-[rgba(255,250,247,0.92)]");
+    ).toHaveClass("bg-[rgba(251,245,240,0.92)]");
     expect(
       container.querySelector('[data-ui="profile-identity-card"]'),
-    ).toHaveClass("bg-[rgba(255,252,248,0.94)]");
+    ).toHaveClass("bg-[rgba(255,250,246,0.96)]");
     expect(
       container.querySelector('[data-ui="app-topbar-trailing"] button'),
     ).toHaveTextContent("编辑");
@@ -139,9 +139,9 @@ describe("ProfileView", () => {
     expect(screen.getByTestId("profile-logout-action")).toHaveClass(
       "w-full",
       "justify-center",
-      "bg-[rgba(255,252,248,0.9)]",
+      "bg-[rgba(75,53,45,0.08)]",
       "text-[var(--primary)]",
-      "border-[rgba(75,53,45,0.08)]",
+      "border-[rgba(75,53,45,0.1)]",
     );
   });
 

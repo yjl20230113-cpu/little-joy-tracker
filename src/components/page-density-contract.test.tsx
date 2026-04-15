@@ -48,8 +48,8 @@ describe("page density contract", () => {
     );
     expect(screen.getByPlaceholderText("发生了什么？")).toHaveClass("text-[1.18rem]");
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-footer"]')).toHaveClass(
-      "min-h-[3rem]",
-      "py-1",
+      "min-h-[3.3rem]",
+      "py-1.5",
     );
     quickEntry.unmount();
 
@@ -214,7 +214,7 @@ describe("page density contract", () => {
     expect(screen.getByTestId("profile-display-name")).toHaveClass("text-[1rem]");
     expect(screen.getByTestId("profile-logout-slot")).toHaveClass("mt-8");
     expect(screen.getByTestId("profile-logout-action")).toHaveClass(
-      "bg-[rgba(255,252,248,0.9)]",
+      "bg-[rgba(75,53,45,0.08)]",
       "text-[var(--primary)]",
     );
   });

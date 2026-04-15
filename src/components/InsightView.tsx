@@ -55,14 +55,6 @@ const copy = {
   share: "保存/分享报告",
 };
 
-const keywordColors = [
-  "bg-orange-100 text-orange-600",
-  "bg-green-100 text-green-600",
-  "bg-purple-100 text-purple-600",
-  "bg-pink-100 text-pink-600",
-  "bg-sky-100 text-sky-600",
-];
-
 export function InsightView({
   activeTab,
   peopleFilters,
@@ -100,7 +92,7 @@ export function InsightView({
         <div className="space-y-3.5 pb-7">
           <section
             data-ui="insight-editorial-intro"
-            className="joy-card rounded-[1.35rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.9)] px-3.5 py-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.2)]"
+            className="joy-card rounded-[1.35rem] border-[rgba(75,53,45,0.08)] bg-[rgba(251,245,240,0.92)] px-3.5 py-3.5 shadow-[0_24px_42px_-34px_rgba(75,53,45,0.2)]"
           >
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--primary)]/62">
@@ -127,12 +119,12 @@ export function InsightView({
               />
             </div>
 
-            <div className="mt-3 rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,246,241,0.78)] p-1.5">
+            <div className="mt-3 rounded-[1rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(247,240,235,0.9)] p-1.5">
               <button
                 type="button"
                 onClick={onGenerate}
                 disabled={generateDisabled || loading}
-                className="joy-topbar-button w-full justify-center border-[rgba(193,127,102,0.16)] bg-[rgba(255,244,238,0.92)] text-[#6c4a3f]"
+                className="joy-topbar-button joy-topbar-button--primary w-full justify-center"
               >
                 {generateDisabled ? emptyHint : copy.generate}
               </button>
@@ -154,7 +146,7 @@ export function InsightView({
                       {report.mood_weather.description}
                     </p>
                   </div>
-                  <div className="flex flex-col items-center rounded-[0.9rem] bg-[rgba(241,216,208,0.72)] px-3 py-2.5 text-[var(--primary)]">
+                  <div className="flex flex-col items-center rounded-[0.95rem] bg-[rgba(75,53,45,0.92)] px-3 py-2.5 text-[#fff8f4] shadow-[0_16px_24px_-20px_rgba(75,53,45,0.34)]">
                     <InsightIcon iconName={report.mood_weather.icon} className="size-6" />
                     <AnimatedPercentage key={moodPercentTarget} target={moodPercentTarget} />
                   </div>
@@ -169,7 +161,7 @@ export function InsightView({
                   {report.keywords.map((keyword, index) => (
                     <span
                       key={`${keyword}-${index}`}
-                      className={`rounded-full px-2.5 py-1.5 text-[0.78rem] font-bold ${keywordColors[index % keywordColors.length]}`}
+                      className="rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(75,53,45,0.08)] px-2.5 py-1.5 text-[0.78rem] font-bold text-[var(--primary)]"
                     >
                       {keyword}
                     </span>
@@ -200,7 +192,7 @@ export function InsightView({
                       className="rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,250,247,0.96),rgba(255,246,241,0.98))] px-3 py-3"
                     >
                       <div className="flex items-start gap-2.5">
-                        <div className="mt-0.5 flex size-8.5 shrink-0 items-center justify-center rounded-full bg-[rgba(241,216,208,0.72)] text-[var(--primary)]">
+                        <div className="mt-0.5 flex size-8.5 shrink-0 items-center justify-center rounded-full bg-[rgba(75,53,45,0.08)] text-[var(--primary)]">
                           <InsightIcon iconName={suggestion.icon} className="size-4" />
                         </div>
                         <div>
@@ -220,7 +212,7 @@ export function InsightView({
               <button
                 type="button"
                 onClick={onShare}
-                className="joy-topbar-button w-full justify-center border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.9)]"
+                className="joy-topbar-button joy-topbar-button--tonal w-full justify-center"
               >
                 <Share2 className="size-4" />
                 {copy.share}
@@ -232,7 +224,7 @@ export function InsightView({
         {loading ? (
           <div
             data-testid="insight-loading-overlay"
-            className="absolute inset-x-3 top-2.5 bottom-4.5 z-20 flex items-center justify-center rounded-[1.35rem] bg-[rgba(250,245,241,0.76)] backdrop-blur-[2px] sm:inset-x-4.5"
+            className="absolute inset-x-3 top-2.5 bottom-4.5 z-20 flex items-center justify-center rounded-[1.35rem] bg-[rgba(247,240,235,0.8)] backdrop-blur-[2px] sm:inset-x-4.5"
           >
             <div className="rounded-full bg-[rgba(255,250,247,0.94)] px-4.5 py-2.5 text-center shadow-[0_10px_18px_-18px_rgba(75,53,45,0.18)]">
               <p className="text-[0.94rem] font-black tracking-[-0.03em] text-[var(--primary)]">

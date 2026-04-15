@@ -669,7 +669,7 @@ export function CloudyLetterCard({
         <button
           type="button"
           onClick={onFooterAction}
-          className="joy-topbar-button w-full justify-center border-[rgba(143,133,149,0.18)] bg-[rgba(255,252,253,0.84)] text-[#4b352d] shadow-[0_18px_30px_-26px_rgba(75,53,45,0.28)]"
+          className="joy-topbar-button joy-topbar-button--primary w-full justify-center shadow-[0_18px_30px_-26px_rgba(75,53,45,0.28)]"
         >
           {footerActionLabel}
         </button>

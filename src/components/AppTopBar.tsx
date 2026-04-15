@@ -22,8 +22,8 @@ export function AppTopBar({
 }: AppTopBarProps) {
   const barToneClass =
     tone === "cloudy"
-      ? "border-[rgba(143,133,149,0.1)] bg-[rgba(247,243,246,0.88)] shadow-[0_16px_28px_-28px_rgba(95,82,102,0.24)]"
-      : "border-[rgba(75,53,45,0.08)] bg-[rgba(252,248,245,0.82)] shadow-[0_16px_28px_-28px_rgba(75,53,45,0.22)]";
+      ? "border-[rgba(143,133,149,0.14)] bg-[rgba(245,241,245,0.84)] shadow-[0_18px_30px_-28px_rgba(95,82,102,0.28)] backdrop-blur-[18px]"
+      : "border-[rgba(75,53,45,0.08)] bg-[rgba(250,246,242,0.72)] shadow-[0_18px_28px_-28px_rgba(75,53,45,0.32)] backdrop-blur-[18px]";
 
   return (
     <header
@@ -37,14 +37,14 @@ export function AppTopBar({
         ) : LeadingIcon ? (
           <div
             data-ui="app-topbar-leading"
-            className="flex size-[1.95rem] shrink-0 items-center justify-center rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.88)] text-[var(--primary)] shadow-[0_12px_20px_-20px_rgba(75,53,45,0.2)]"
+            className="flex size-[1.95rem] shrink-0 items-center justify-center rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,249,244,0.9)] text-[var(--primary)] shadow-[0_12px_18px_-18px_rgba(75,53,45,0.18)]"
           >
             <LeadingIcon className="size-[0.96rem]" />
           </div>
         ) : null}
         <h2
           data-ui="app-topbar-title"
-          className="truncate text-[0.96rem] font-black tracking-[-0.055em] text-[var(--primary)] sm:text-[1.04rem]"
+          className="truncate text-[0.98rem] font-black tracking-[-0.045em] text-[var(--primary)] sm:text-[1.04rem]"
         >
           {title}
         </h2>
@@ -62,7 +62,7 @@ export function AppTopBar({
         ) : TrailingIcon ? (
           <div
             data-ui="app-topbar-trailing"
-            className="flex size-[1.95rem] items-center justify-center rounded-full border border-[rgba(75,53,45,0.06)] bg-[rgba(255,250,247,0.72)]"
+            className="flex size-[1.95rem] items-center justify-center rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,249,244,0.82)] shadow-[inset_0_1px_0_rgba(255,255,255,0.62)]"
           >
             <TrailingIcon className="size-[0.94rem] fill-current" />
           </div>

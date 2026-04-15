@@ -241,7 +241,7 @@ export function QuickEntry({
             <button
               type="button"
               onClick={onExitCloudyMode}
-              className="joy-topbar-button border-[rgba(143,133,149,0.16)] bg-[rgba(255,252,253,0.84)] text-[#5f5568]"
+              className="joy-topbar-button border-[rgba(143,133,149,0.16)] bg-[rgba(245,241,245,0.88)] text-[#5f5568]"
             >
               <Sun className="size-4" />
               {copy.cloudyReturn}
@@ -250,7 +250,7 @@ export function QuickEntry({
             <button
               type="button"
               onClick={onEnterCloudyMode}
-              className="joy-topbar-button border-[rgba(193,127,102,0.16)] bg-[rgba(255,244,238,0.92)] text-[#7a5548] shadow-[0_14px_22px_-18px_rgba(75,53,45,0.22)]"
+              className="joy-topbar-button joy-topbar-button--tonal border-[rgba(193,127,102,0.16)] text-[#7a5548]"
               aria-label={copy.cloudyEntry}
             >
               <Cloud className="size-4" />
@@ -355,7 +355,7 @@ export function QuickEntry({
             <div className="joy-card flex min-h-full flex-col gap-3 overflow-hidden rounded-[1.4rem] border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,248,0.92)] p-2.5 shadow-[0_24px_44px_-34px_rgba(75,53,45,0.22)] sm:p-3">
               <section
                 data-ui="quick-entry-intro"
-                className="rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(255,250,247,0.92)] px-3.5 py-3"
+                className="rounded-[1rem] border border-[rgba(75,53,45,0.07)] bg-[rgba(251,245,240,0.94)] px-3.5 py-3"
               >
                 <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[var(--outline-strong)]">
                   Editorial Note
@@ -366,7 +366,7 @@ export function QuickEntry({
               </section>
               <div
                 data-ui="quick-entry-media"
-                className="relative flex h-[7.6rem] flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.06)] bg-[linear-gradient(180deg,rgba(255,251,248,0.98),rgba(245,232,224,0.94))] sm:h-[8.25rem]"
+                className="relative flex aspect-square w-full flex-col justify-end overflow-hidden rounded-[1.05rem] border border-[rgba(75,53,45,0.08)] bg-[linear-gradient(180deg,rgba(252,246,241,0.98),rgba(238,224,214,0.96))]"
               >
                 {imagePreviewUrl ? (
                   <Image
@@ -428,14 +428,14 @@ export function QuickEntry({
               <div className="flex flex-1 flex-col gap-3 px-0.5 pb-0.5">
                 <div
                   data-ui="quick-entry-toolbar"
-                  className="flex items-center justify-start gap-2"
+                  className="flex items-center justify-start gap-2 rounded-[1rem] border border-[rgba(75,53,45,0.06)] bg-[rgba(251,245,240,0.62)] px-2 py-2"
                 >
                   <div className="relative min-w-0">
                     <button
                       type="button"
                       data-ui="quick-entry-person-trigger"
                       onClick={() => setIsPersonMenuOpen((current) => !current)}
-                      className="joy-control-pill h-9 min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-0 text-[0.75rem] font-semibold text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
+                      className="joy-control-pill h-9 min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.1)] bg-[rgba(255,249,244,0.94)] px-3 py-0 text-[0.75rem] font-semibold text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     >
                       <span className="truncate">
                         {selectedPerson?.name ?? copy.recordForEmpty}
@@ -539,7 +539,7 @@ export function QuickEntry({
                       align="center"
                       compact
                       className="min-h-9"
-                      buttonClassName="h-9 min-h-9 rounded-full border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-0 text-[0.75rem] font-semibold shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
+                      buttonClassName="h-9 min-h-9 rounded-full border-[rgba(75,53,45,0.1)] bg-[rgba(255,249,244,0.94)] px-3 py-0 text-[0.75rem] font-semibold shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
                     />
                   </div>
                 </div>
@@ -575,20 +575,28 @@ export function QuickEntry({
 
         <div
           data-ui="quick-entry-footer"
-          className={`relative z-10 min-h-[3rem] px-3 py-1 sm:px-5 ${isCloudyMode ? "bg-[rgba(242,237,241,0.96)]" : ""}`}
+          className={`relative z-10 min-h-[3.3rem] px-3 py-1.5 sm:px-5 ${isCloudyMode ? "bg-[rgba(242,237,241,0.96)]" : ""}`}
         >
           <div
             data-ui="quick-entry-save-rail"
-            className={`ml-auto flex w-fit items-center rounded-[1.4rem] border px-2.5 py-2 shadow-[0_18px_34px_-26px_rgba(75,53,45,0.22)] backdrop-blur-md ${
+            className={`flex w-full items-center justify-between gap-3 rounded-[1.15rem] border px-2.5 py-2 shadow-[0_18px_34px_-26px_rgba(75,53,45,0.22)] backdrop-blur-md ${
               isCloudyMode
-                ? "border-[rgba(143,133,149,0.14)] bg-[rgba(252,248,251,0.82)]"
-                : "border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.78)]"
+                ? "border-[rgba(143,133,149,0.14)] bg-[rgba(248,243,247,0.88)]"
+                : "border-[rgba(75,53,45,0.08)] bg-[rgba(247,240,235,0.9)]"
             }`}
           >
+            <div className="min-w-0 pl-0.5">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--outline-strong)]">
+                Primary Action
+              </p>
+              <p className="truncate text-[0.74rem] text-[var(--muted)]">
+                {isCloudyMode ? "把这段心事安放进档案袋" : "把这一刻收进今天的记录"}
+              </p>
+            </div>
             <button
               type="submit"
               disabled={submitAction.disabled}
-              className="joy-topbar-button joy-topbar-button--primary min-h-9 shrink-0 px-3.5 py-2 text-[0.78rem]"
+              className="joy-topbar-button joy-topbar-button--primary min-h-10 shrink-0 px-4 py-2.25 text-[0.78rem]"
             >
               {submitAction.disabled ? (
                 <LoaderCircle className="size-4 animate-spin" />

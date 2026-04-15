@@ -121,6 +121,14 @@ describe("EventDetailPanel", () => {
     expect(container.querySelector("img")).not.toBeInTheDocument();
   });
 
+  it("uses a square hero image in read mode to keep the main subject larger", () => {
+    const { container } = render(<EventDetailPanel {...baseProps} />);
+
+    expect(
+      container.querySelector('[data-ui="detail-reading-image"]'),
+    ).toHaveClass("aspect-square", "w-full");
+  });
+
   it("does not render the old inline detail header controls", () => {
     render(<EventDetailPanel {...baseProps} />);
 
@@ -159,6 +167,7 @@ describe("EventDetailPanel", () => {
     expect(trigger).toBeInTheDocument();
     expect(trigger?.querySelector("div")).not.toBeInTheDocument();
     expect(trigger?.querySelector("span")).toBeInTheDocument();
+    expect(media).toHaveClass("aspect-square", "w-full");
   });
 
   it("anchors the detail date picker below the trigger and centered on the viewport", () => {
@@ -215,7 +224,7 @@ describe("EventDetailPanel", () => {
       "space-y-5",
     );
     expect(screen.getByTestId("detail-ai-panel")).toHaveClass(
-      "bg-[rgba(255,251,247,0.9)]",
+      "bg-[rgba(255,250,246,0.92)]",
       "border-[rgba(75,53,45,0.08)]",
     );
     expect(screen.getByTestId("detail-ai-panel")).toHaveTextContent("The care behind the pause");

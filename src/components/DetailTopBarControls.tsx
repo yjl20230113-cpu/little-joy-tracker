@@ -74,12 +74,12 @@ export function DetailTopBarActionButtons({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={onEditToggle}
-        disabled={saving || deleting}
-        className="joy-topbar-button"
-      >
+        <button
+          type="button"
+          onClick={onEditToggle}
+          disabled={saving || deleting}
+          className="joy-topbar-button joy-topbar-button--tonal"
+        >
         <Pencil className="size-4" />
         编辑
       </button>

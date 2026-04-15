@@ -274,7 +274,7 @@ export function AppDatePicker({
             }
           : undefined
       }
-      className={`${centerPanelOnViewport ? "fixed left-1/2 -translate-x-1/2" : "absolute"} z-30 ${panelWidthClass} rounded-[1.15rem] border border-[rgba(75,53,45,0.08)] bg-[rgba(255,252,249,0.98)] p-2.5 shadow-[0_24px_40px_-28px_rgba(75,53,45,0.24)] backdrop-blur ${
+      className={`${centerPanelOnViewport ? "fixed left-1/2 -translate-x-1/2" : "absolute"} z-30 ${panelWidthClass} rounded-[1.15rem] border border-[rgba(75,53,45,0.1)] bg-[rgba(255,250,246,0.98)] p-2.5 shadow-[0_22px_34px_-26px_rgba(75,53,45,0.26)] backdrop-blur ${
         centerPanelOnViewport
           ? ""
           : placement === "bottom"
@@ -300,7 +300,7 @@ export function AppDatePicker({
             onClick={() =>
               setVisibleMonth((current) => addMonths(current.year, current.month, -1))
             }
-            className="flex size-7 items-center justify-center rounded-full bg-[rgba(241,233,226,0.82)] text-[var(--primary)]"
+            className="flex size-7 items-center justify-center rounded-full bg-[rgba(75,53,45,0.08)] text-[var(--primary)]"
             aria-label={copy.previousMonth}
           >
             <ChevronLeft className="size-3.5" />
@@ -310,7 +310,7 @@ export function AppDatePicker({
             onClick={() =>
               setVisibleMonth((current) => addMonths(current.year, current.month, 1))
             }
-            className="flex size-7 items-center justify-center rounded-full bg-[rgba(241,233,226,0.82)] text-[var(--primary)]"
+            className="flex size-7 items-center justify-center rounded-full bg-[rgba(75,53,45,0.08)] text-[var(--primary)]"
             aria-label={copy.nextMonth}
           >
             <ChevronRight className="size-3.5" />
@@ -341,10 +341,10 @@ export function AppDatePicker({
               }}
               className={`flex aspect-square items-center justify-center rounded-[0.72rem] text-[0.8rem] font-medium transition-colors ${
                 isSelected
-                  ? "bg-[var(--primary)] text-white shadow-[0_10px_16px_-16px_rgba(75,53,45,0.48)]"
-                  : cell.isCurrentMonth
-                    ? "text-[var(--foreground)] hover:bg-[rgba(241,233,226,0.72)]"
-                    : "text-[var(--outline-strong)]/55 hover:bg-[rgba(241,233,226,0.72)]"
+                    ? "bg-[var(--primary)] text-white shadow-[0_10px_16px_-16px_rgba(75,53,45,0.48)]"
+                    : cell.isCurrentMonth
+                    ? "text-[var(--foreground)] hover:bg-[rgba(75,53,45,0.08)]"
+                    : "text-[var(--outline-strong)]/55 hover:bg-[rgba(75,53,45,0.08)]"
               }`}
             >
               {cell.label}
@@ -361,7 +361,7 @@ export function AppDatePicker({
               onChange("");
               setIsOpen(false);
             }}
-            className="text-[#0d66d0]"
+            className="text-[var(--outline-strong)]"
           >
             {copy.clear}
           </button>
@@ -374,7 +374,7 @@ export function AppDatePicker({
             onChange(todayValue);
             setIsOpen(false);
           }}
-          className="text-[#0d66d0]"
+          className="text-[var(--primary)]"
         >
           {copy.today}
         </button>
@@ -412,7 +412,7 @@ export function AppDatePicker({
 
           setIsOpen((current) => !current);
         }}
-        className={`inline-flex w-full items-center justify-between gap-2 rounded-full border border-[rgba(75,53,45,0.08)] bg-[rgba(255,250,247,0.92)] px-3 py-2 text-[0.78rem] font-medium text-[var(--primary)] shadow-[0_14px_24px_-22px_rgba(75,53,45,0.26)] ${buttonClassName}`}
+        className={`inline-flex w-full items-center justify-between gap-2 rounded-full border border-[rgba(75,53,45,0.1)] bg-[rgba(255,249,244,0.94)] px-3 py-2 text-[0.78rem] font-medium text-[var(--primary)] shadow-[0_12px_20px_-20px_rgba(75,53,45,0.18)] ${buttonClassName}`}
       >
         <span className="inline-flex min-w-0 items-center gap-2">
           <CalendarDays className={`${compact ? "size-[0.88rem]" : "size-[0.95rem]"} shrink-0`} />
