@@ -35,13 +35,16 @@ describe("page density contract", () => {
     );
 
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-media"]')).toHaveClass(
-      "h-[7.6rem]",
+      "aspect-square",
+      "w-full",
     );
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-toolbar"]')).toHaveClass(
       "justify-start",
     );
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-person-trigger"]')).toHaveClass(
       "min-h-9",
+      "w-[7.25rem]",
+      "sm:w-[9.6rem]",
     );
     expect(quickEntry.container.querySelector('[data-ui="quick-entry-date"]')).toHaveClass(
       "min-h-9",

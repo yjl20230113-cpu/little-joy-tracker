@@ -435,7 +435,7 @@ export function QuickEntry({
                       type="button"
                       data-ui="quick-entry-person-trigger"
                       onClick={() => setIsPersonMenuOpen((current) => !current)}
-                      className="joy-control-pill h-9 min-h-9 w-[9.6rem] justify-between rounded-full border border-[rgba(75,53,45,0.1)] bg-[rgba(255,249,244,0.94)] px-3 py-0 text-[0.75rem] font-semibold text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)]"
+                      className="joy-control-pill h-9 min-h-9 w-[7.25rem] justify-between rounded-full border border-[rgba(75,53,45,0.1)] bg-[rgba(255,249,244,0.94)] px-3 py-0 text-[0.75rem] font-semibold text-[var(--muted)] shadow-[0_10px_18px_-18px_rgba(75,53,45,0.16)] sm:w-[9.6rem]"
                     >
                       <span className="truncate">
                         {selectedPerson?.name ?? copy.recordForEmpty}

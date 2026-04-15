@@ -66,7 +66,7 @@ describe("QuickEntry", () => {
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveTextContent("03-23");
     expect(
       container.querySelector('[data-ui="quick-entry-person-trigger"]'),
-    ).toHaveClass("h-9", "min-h-9");
+    ).toHaveClass("h-9", "min-h-9", "w-[7.25rem]", "sm:w-[9.6rem]");
     expect(screen.getByTestId("app-date-picker-trigger")).toHaveClass("h-9", "min-h-9");
 
     vi.useRealTimers();
@@ -84,6 +84,17 @@ describe("QuickEntry", () => {
     expect(
       container.querySelector('[data-ui="quick-entry-media"]'),
     ).toHaveClass("aspect-square", "w-full");
+  });
+
+  it("shortens the person picker on smaller screens so it does not collide with the date picker", () => {
+    const { container } = render(<QuickEntry {...baseProps} />);
+
+    expect(
+      container.querySelector('[data-ui="quick-entry-person-trigger"]'),
+    ).toHaveClass("w-[7.25rem]", "sm:w-[9.6rem]");
+    expect(
+      container.querySelector('[data-ui="quick-entry-date"]'),
+    ).toHaveClass("w-[10.2rem]");
   });
 
   it("opens a bottom action sheet for camera and gallery selection", () => {
